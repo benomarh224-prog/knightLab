@@ -281,6 +281,7 @@ function renderCoach(move, before, after) {
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
+  $('coach-brief').textContent = ready ? report.why || report.summary : report.summary;
   $('insight-text').textContent = report.summary;
   $('coach-details').hidden = !ready;
   $('coach-why-label').textContent = ['Inaccuracy','Mistake','Blunder'].includes(report.rating) ? 'Why this move is weaker' : 'What this move does';
@@ -335,11 +336,13 @@ function updateMoveRatings(items) {
   });
 }
 function goTo(ply) {
+  boardCoach.close();
   const restart=inline.active?inline.exit(false):false;
   const previous = state.ply;
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
   moveSounds.play(navigationSoundMove(state.parsed.moves, previous, state.ply)); render();
   if (state.tab === 'moves') document.querySelector(`.move-cell[data-ply="${state.ply}"]`)?.scrollIntoView({ block:'nearest', behavior:'instant' });
+  boardCoach.reveal();
   if(restart) startAnalysis();
 }
 
@@ -466,7 +469,7 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>Standard review uses 650 ms per position to give you a quick first pass. Deep review targets depth 18 with two candidate moves. If a position needs more time, Deepen remaining searches it again, allowing up to 80 seconds. You can pause and resume either review. The chart is capped at ±5 pawns.</p>
 <p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
 <p>Threats highlights only the leading new attack from the current move. The old highlight clears on the next move. Red means check or no immediate legal recapture; amber means a defended attack or risky exchange. Tap the square to see why. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
-<p>Open Coach beside the opening to read its explanation over the board. It describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
+<p>The compact coach stays above the board and updates with each move. Details expands the full explanation in the page. It describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
 <p><a href="./STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="./THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
 $('username-form').addEventListener('submit', searchPlayer);

@@ -1,50 +1,52 @@
 const $=id=>document.getElementById(id);
 
 export function createBoardCoach({showBoard,navigate}) {
-  const panel=$('coach-panel'), popover=$('board-coach-popover');
+  const panel=$('coach-panel'), card=$('board-coach-card');
+  const board=document.querySelector('.board-card');
   const triggers=['board-coach-toggle','board-coach','coach-tab','mobile-coach-tab'].map($);
-  popover.insertBefore(panel,$('coach-playback'));
+  const players=document.createElement('div');
+  players.className='board-players';
+  document.querySelector('.board-area').before(players,card);
+  players.append(...board.querySelectorAll(':scope > .player-row'));
+  card.insertBefore(panel,$('coach-playback'));
+  card.hidden=false; panel.hidden=false;
   panel.setAttribute('role','region');
   panel.setAttribute('aria-labelledby','board-coach-title');
-  let opened=false;
-  function fit() {
-    if(!opened)return;
-    const viewport=window.visualViewport;
-    const bottom=(viewport?.height||innerHeight)+(viewport?.offsetTop||0);
-    const dock=matchMedia('(max-width:860px)').matches&&!popover.closest('dialog[open]')?84:16;
-    popover.style.setProperty('--coach-available-height',`${Math.max(160,bottom-popover.getBoundingClientRect().top-dock)}px`);
-  }
-  function close(restoreFocus=true) {
-    const hadFocus=popover.contains(document.activeElement);
-    opened=false; popover.hidden=true; panel.hidden=true;
-    for(const trigger of triggers){trigger.setAttribute('aria-expanded','false');trigger.classList.remove('toggled');}
-    if(restoreFocus && hadFocus) $('board-coach-toggle').focus({preventScroll:true});
-  }
-  function position() {
-    const rect=$('board-top').getBoundingClientRect();
-    if(rect.top<70 || rect.bottom>innerHeight-300) $('board-top').scrollIntoView({block:'start',behavior:'instant'});
-    fit();
+  for(const trigger of triggers)trigger.setAttribute('aria-expanded','true');
+  function close(restoreFocus=false) {
+    card.classList.remove('is-expanded');
+    $('board-coach-close').textContent='Details';
+    $('board-coach-close').setAttribute('aria-expanded','false');
+    $('board-coach-close').setAttribute('aria-label','Show coach details');
+    if(restoreFocus)$('board-coach-close').focus({preventScroll:true});
   }
   function open() {
-    showBoard(); opened=true; panel.hidden=false; popover.hidden=false;
-    for(const trigger of triggers){trigger.setAttribute('aria-expanded','true');trigger.classList.add('toggled');}
-    position();
-    $('board-coach-close').focus({preventScroll:true});
+    showBoard(); close();
+    reveal();
   }
-  $('board-coach-toggle').onclick=()=>opened?close():open();
-  for(const trigger of triggers.slice(1))trigger.onclick=open;
-  $('board-coach-close').onclick=()=>close();
-  $('coach-previous').onclick=()=>{navigate(-1);position();};
-  $('coach-next').onclick=()=>{navigate(1);position();};
-  window.addEventListener('resize',fit,{passive:true});
-  window.addEventListener('scroll',fit,{passive:true});
-  window.visualViewport?.addEventListener('resize',fit,{passive:true});
-  window.visualViewport?.addEventListener('scroll',fit,{passive:true});
-  document.addEventListener('click',event=>{
-    if(opened && !popover.contains(event.target) && !triggers.some(trigger=>trigger.contains(event.target)))close(false);
-  });
+  function reveal() {
+    if(!matchMedia('(max-width:860px)').matches)return;
+    const area=board.querySelector('#board').getBoundingClientRect();
+    if(!area.height)return;
+    const focus=Boolean(board.closest('dialog[open]'));
+    if(card.getBoundingClientRect().top<(focus?12:96)||area.bottom>innerHeight-(focus?12:64)){
+      $('board-top').scrollIntoView({block:'start',behavior:'instant'});
+    }
+  }
+  for(const trigger of triggers)trigger.onclick=open;
+  $('board-coach-close').onclick=()=>{
+    if(card.classList.contains('is-expanded')){close();return;}
+    card.classList.add('is-expanded');
+    $('board-coach-close').textContent='Less';
+    $('board-coach-close').setAttribute('aria-expanded','true');
+    $('board-coach-close').setAttribute('aria-label','Collapse coach details');
+  };
+  $('coach-previous').onclick=()=>navigate(-1);
+  $('coach-next').onclick=()=>navigate(1);
   document.addEventListener('keydown',event=>{
-    if(opened && event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();close();}
+    if(card.classList.contains('is-expanded') && event.key==='Escape'){
+      event.preventDefault();event.stopImmediatePropagation();close(true);
+    }
   },true);
-  return {open,close};
+  return {open,close,reveal};
 }
