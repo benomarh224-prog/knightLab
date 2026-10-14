@@ -67,6 +67,8 @@ The move coach is always visible in a compact card above the chessboard, followi
 
 Focus mode sits beside the opening. Explain, Explore, Sound and Best arrow launch buttons stay hidden; sound and on-board engine arrows retain their behavior. The coach can still start an inline engine continuation.
 
-Large Back/Next controls remain below the board. Advancing collapses optional long details and keeps the compact coach and board together on mobile. Flip and Threats remain as labeled icon controls beside the move caption. The old floating popup and its duplicate playback footer are retired.
+Large Back/Next controls remain below the board. Advancing collapses optional long details and keeps the compact coach and board together on mobile. First/last position, Flip and Threats are available in the Board actions (⋯) disclosure beside the move caption. The old floating popup and its duplicate playback footer are retired.
 
 The refined review uses a forest/ivory palette, a light coach card with move-quality accents and a compact engine-choice line. Repeated Coach tabs are hidden because the note is always visible. The evaluation bar is horizontal above the full-width board, labels signed scores from White’s perspective and keeps that perspective when the board flips. Large playback controls and a prominent Next button remain beneath the board. Expanded coaching stays in normal page flow.
+
+The compact coach combines its rating, notation and Details button in one header. Engine’s choice appears in the compact card only when it differs from the played move. The opening is a collapsed chip, and the game library is collapsed initially. My games and completed username searches open the library; choosing a game collapses it again. Focus mode stays visible beside the opening, and Back/Next remain the only primary playback buttons.

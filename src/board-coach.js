@@ -9,6 +9,8 @@ export function createBoardCoach({showBoard,navigate}) {
   document.querySelector('.board-area').before(players,card);
   players.append(...board.querySelectorAll(':scope > .player-row'));
   card.insertBefore(panel,$('coach-playback'));
+  panel.querySelector('.insight-heading').append($('board-coach-close'));
+  card.querySelector('.coach-card-heading').className='sr-only';
   card.hidden=false; panel.hidden=false;
   panel.setAttribute('role','region');
   panel.setAttribute('aria-labelledby','board-coach-title');

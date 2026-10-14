@@ -84,9 +84,42 @@ const explorer = createExploreUI({
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound:move=>moveSounds.play(move)});
 const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove});
+const actionsToggle=$('board-actions-toggle'), actionsPanel=$('board-actions-panel');
+for(const id of ['first-move','last-move','flip-board','toggle-threats']) {
+  const button=$(id);
+  if(id==='first-move'||id==='last-move') {
+    const label=document.createElement('span');
+    label.textContent=id==='first-move'?'First position':'Last position';
+    button.append(label);
+  }
+  actionsPanel.append(button);
+}
+function closeBoardActions(restoreFocus=false) {
+  actionsPanel.hidden=true;
+  actionsToggle.setAttribute('aria-expanded','false');
+  if(restoreFocus)actionsToggle.focus({preventScroll:true});
+}
+actionsToggle.onclick=()=>{
+  const opening=actionsPanel.hidden;
+  actionsPanel.hidden=!opening;
+  actionsToggle.setAttribute('aria-expanded',String(opening));
+};
+actionsPanel.addEventListener('click',event=>{
+  if(!event.target.closest('button'))return;
+  closeBoardActions(true); boardCoach.reveal();
+});
+document.addEventListener('click',event=>{
+  if(!event.target.closest('.board-actions'))closeBoardActions();
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&!actionsPanel.hidden){
+    event.preventDefault();event.stopImmediatePropagation();closeBoardActions(true);boardCoach.reveal();
+  }
+},true);
 const boardHome = document.createComment('Board position');
 boardCard.before(boardHome);
 $('focus-mode').onclick = () => {
+  closeBoardActions();
   boardCoach.close();
   $('focus-body').append(boardCard); document.body.classList.add('focus-active');
   $('focus-dialog').showModal(); positionOpeningCard();
@@ -100,6 +133,7 @@ let toastTimer;
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 3500); }
 function searchStatus(message, error = false) { $('search-status').hidden = !message; $('search-status').textContent = message; $('search-status').classList.toggle('error', error); }
 function scrollToSection(element) {
+  if(element.id==='game-library')setLibraryOpen(true);
   if (element.id === 'game-library' || element.matches('.workspace')) {
     $('library-nav').classList.toggle('active', element.id === 'game-library');
     $('games-nav').classList.toggle('active', element.id !== 'game-library');
@@ -107,9 +141,16 @@ function scrollToSection(element) {
   element.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
 }
 
+function setLibraryOpen(open) {
+  $('library-body').hidden=!open;
+  $('library-toggle').setAttribute('aria-expanded',String(open));
+}
+$('library-toggle').onclick=()=>setLibraryOpen($('library-body').hidden);
+
 function setGame(game, { demo = false, analyze = true } = {}) {
   const parsed = parseGame(game.pgn);
   inline.reset(); selectedThreat=null; threatFen=null; boardCoach.close(false);
+  closeBoardActions(); setLibraryOpen(false);
   training.reset();
   explorer.reset();
   if ($('focus-dialog').open) $('focus-dialog').close();
@@ -288,6 +329,8 @@ function renderCoach(move, before, after) {
     .replace(/^Engine[’']s first choice\.\s*/,'').replace(/^In Stockfish[’']s continuation,\s*/,'Engine line: ');
   $('coach-brief').textContent = brief.split(/(?<=[.!?])\s+/)[0];
   $('board-coach-card').classList.toggle('coach-ready',ready);
+  const played=move ? move.from+move.to+(move.promotion||'') : null;
+  $('board-coach-card').classList.toggle('has-alternative',Boolean(ready&&report.bestMove&&report.bestMove!==played));
   $('insight-text').textContent = report.summary;
   $('coach-details').hidden = !ready;
   $('coach-why-label').textContent = ['Inaccuracy','Mistake','Blunder'].includes(report.rating) ? 'Why this move is weaker' : 'What this move does';
@@ -388,6 +431,7 @@ async function startAnalysis() {
 
 function renderGames() {
   document.body.classList.toggle('has-games', Boolean(state.profile || state.games.length));
+  $('library-count').textContent=state.games.length ? `${state.games.length} ${state.games.length===1?'game':'games'}` : 'Connect or import';
   if (!state.profile && !state.games.length) return;
   const { entries, total, pages, page, start } = pageGames(state.games, state.filter, state.libraryPage);
   state.libraryPage = page;
