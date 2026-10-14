@@ -35,7 +35,7 @@ export function createBoardCoach({showBoard,navigate}) {
   }
   for(const trigger of triggers)trigger.onclick=open;
   $('board-coach-close').onclick=()=>{
-    if(card.classList.contains('is-expanded')){close();return;}
+    if(card.classList.contains('is-expanded')){close();reveal();return;}
     card.classList.add('is-expanded');
     $('board-coach-close').textContent='Less';
     $('board-coach-close').setAttribute('aria-expanded','true');
@@ -45,7 +45,7 @@ export function createBoardCoach({showBoard,navigate}) {
   $('coach-next').onclick=()=>navigate(1);
   document.addEventListener('keydown',event=>{
     if(card.classList.contains('is-expanded') && event.key==='Escape'){
-      event.preventDefault();event.stopImmediatePropagation();close(true);
+      event.preventDefault();event.stopImmediatePropagation();close(true);reveal();
     }
   },true);
   return {open,close,reveal};

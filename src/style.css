@@ -1139,3 +1139,83 @@ main { max-width: 1580px; margin: 0 auto; padding: 14px 22px 24px; }
   .workspace .board-tools .board-tool, .focus-dialog .board-tools .board-tool { width: 32px; min-height: 32px; height: 32px; padding: 5px; }
   .board-tools .board-tool>span:last-child { display: none; }
 }
+/* Forest, ivory and sage: one clear review surface across screen sizes. */
+:root { --bg: #0e1612; --text: #edf2e9; --muted: #9bb09f; --lime: #bce18e; }
+body, .app-shell, .main-shell { background: #0e1612; }
+.topbar { background: #111b15; border-color: #2a3c30; }
+.brand { letter-spacing: -.7px; }
+.topbar .primary-button { background: #bce18e; color: #1a2d1c; border-radius: 10px; font-weight: 700; }
+.main-nav { background: #131f18; border-color: #304334; }
+.nav-item.active { background: #bce18e16; color: #d4eac0; }
+.mobile-workspace-tabs { background: #0e1612; border-color: #293b2e; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.mobile-workspace-tabs button { font-weight: 600; letter-spacing: .1px; }
+.mobile-workspace-tabs button.selected { color: #d9edc9; background: #bce18e13; }
+.review-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.board-top { margin-bottom: 0; }
+.board-card .opening-card h3 { color: #acbfae; font-size: 11px; font-weight: 550; }
+.board-card .opening-eco { color: #c0d4b7; background: #bce18e0c; border-color: #3c5541; font-size: 9px; }
+.board-card .opening-toggle { color: #879e8d; font-size: 10px; }
+.board-header-actions #focus-mode { min-height: 36px; height: 36px; background: #1c2a20; border-color: #3a5240; border-radius: 8px; font-size: 10px; color: #c4d6c6; }
+.board-players { position: relative; gap: 40px; padding: 3px 0; }
+.board-players .player-row { max-width: calc(50% - 20px); }
+.board-players .player-identity strong { color: #d5e2d7; font-weight: 650; letter-spacing: .1px; }
+.board-players .player-avatar { border-radius: 6px; border-color: #61786455; background: #263a2c; color: #c4d6c8; }
+.board-players .white-avatar { background: #dbe5d4; color: #263e2d; }
+.board-players .result-pill { position: absolute; left: 50%; transform: translateX(-50%); color: #b7cdbb; background: #1a2a20; border: 1px solid #3c5744; border-radius: 5px; padding: 2px 5px; font-size: 9px; }
+.board-coach-card { --coach-accent: #8ca494; border: 1px solid #d8e2cf; border-left: 4px solid var(--coach-accent); border-radius: 12px; background: #f0f3e9; color: #1f3828; box-shadow: 0 5px 18px #0002; }
+.coach-card-heading { padding: 2px 10px; background: transparent; min-height: 30px; }
+.coach-card-heading strong { display: flex; align-items: center; gap: 5px; color: #5b735e; font-size: 10px; font-weight: 650; letter-spacing: .2px; }
+.coach-card-heading strong svg { width: 13px; height: 13px; }
+.coach-card-heading button { min-height: 28px; padding: 3px 8px; font-size: 10px; text-decoration: none; border: 1px solid #cddbc7; background: #e7edde; color: #456048; border-radius: 6px; }
+.board-coach-card .move-insight { padding: 0 11px 9px; }
+.board-coach-card .insight-heading { min-height: 25px; margin: 0 0 4px; }
+.board-coach-card #insight-title { color: #1a3321; font-size: 13px; font-weight: 750; }
+.board-coach-card #insight-move { color: #365640; font-size: 11px; font-weight: 750; background: #dce7d6; padding: 2px 7px; border-radius: 5px; }
+.board-coach-card .quality-icon { color: #2f6141 !important; background: color-mix(in srgb,var(--coach-accent) 30%,white); border: 1px solid #26442d18; border-radius: 7px; width: 24px; height: 24px; }
+.board-coach-card[data-verdict="Blunder"] .quality-icon, .board-coach-card[data-verdict="Mistake"] .quality-icon { color: #a43a34 !important; }
+.board-coach-card[data-verdict="Inaccuracy"] .quality-icon { color: #896320 !important; }
+.board-coach-card .coach-brief { color: #435c49; font-size: 12px; line-height: 1.5; min-height: 36px; font-weight: 450; }
+.board-coach-card:not(.is-expanded) .best-line { display: flex; gap: 7px; align-items: center; padding: 3px 0 0; margin-top: 3px; border-top: 1px solid #cedac7; font-size: 10px; color: #667c67; }
+.board-coach-card:not(.is-expanded) #engine-depth { display: none; }
+.board-coach-card .best-line strong { color: #2c5b37; background: #dce8d4; padding: 1px 6px; border-radius: 4px; font-size: 10px; }
+.board-coach-card.is-expanded .move-insight p { color: #405a48; }
+.board-coach-card.is-expanded .coach-explanation strong { color: #274a31; }
+.board-coach-card.is-expanded .best-line { border-color: #cbd9c2; color: #536f59; }
+.board-coach-card.is-expanded .coach-lines { border-color: #bdcfb4; background: #e7eddf; color: #2d4b34; }
+.board-coach-card.is-expanded .coach-lesson { background: #e0ead8; border-color: #c2d5b8; }
+.board-coach-card.is-expanded .coach-note { display: block; font-size: 10px; line-height: 1.6; color: #617967; }
+.board-coach-card.is-expanded .primary-button { background: #365f3f; color: #eff6e9; border-radius: 8px; }
+.board-area { display: grid; grid-template-columns: minmax(0,1fr); gap: 6px; }
+.board-area .evaluation-bar { width: 100%; height: 16px; border-radius: 4px; border: 1px solid #536b58; background: #283a2e; }
+.board-area .evaluation-bar>div { left: 0; top: 0; bottom: auto; height: 100%; width: 50%; background: #e5eddd; transition: width .3s ease; }
+.board-area .evaluation-bar>span { writing-mode: horizontal-tb; left: 7px; top: 50%; bottom: auto; transform: translateY(-50%); color: #1e3625; background: #e5eddd; padding: 0 3px; border-radius: 2px; font: 750 10px/1.2 'DM Sans',sans-serif; }
+.board-wrapper { padding: 0; border-color: #536c59; border-radius: 6px; background: #16291c; box-shadow: 0 8px 24px #0003; }
+.chess-board { border-radius: 5px; }
+.square { background: #e6ecdc; }
+.square.dark { background: #6d8877; }
+.square.last { background: #d6dda0; }
+.square.dark.last { background: #a2b27b; }
+#best-arrow { stroke: #95d3a3; }
+#best-arrowhead path { fill: #95d3a3; }
+.board-controls { padding-top: 2px; gap: 7px; }
+.playback-heading strong { font-size: 10px; color: #9cb4a2; }
+.workspace .board-tools .board-tool, .focus-dialog .board-tools .board-tool { width: 36px; min-height: 36px; height: 36px; border-radius: 8px; background: #1a2a20; border-color: #344e3c; color: #a7c3ae; }
+.workspace .board-tools .board-tool.toggled, .focus-dialog .board-tools .board-tool.toggled { background: #254030; color: #b5d9ae; border-color: #47654c; }
+.move-controls { grid-template-columns: 44px minmax(0,1fr) minmax(0,1fr) 44px; gap: 7px; }
+.workspace .move-controls .step-button, .workspace .move-controls .boundary-button, .focus-dialog .move-controls .step-button, .focus-dialog .move-controls .boundary-button { min-height: 48px; height: 48px; padding: 8px; border-radius: 10px; background: #1d3024; color: #c4d7c7; border-color: #3b5743; }
+.workspace .move-controls .boundary-button, .focus-dialog .move-controls .boundary-button { width: 44px; min-width: 44px; }
+.workspace .move-controls .step-button.forward, .focus-dialog .move-controls .step-button.forward { background: #bce18e; color: #1b321f; border-color: #c6e99d; box-shadow: 0 3px 0 #526f3d; font-weight: 750; }
+.move-controls button:active { transform: translateY(1px); }
+.game-library { border-color: #2e4636; background: #142219; }
+.focus-dialog { background: #0e1612; color: #edf2e9; border-color: #304b38; }
+.focus-dialog .board-card { background: transparent; border-color: #304b38; }
+@media(min-width:861px) { .workspace .board-card { max-width: min(100%,max(340px,calc(100dvh - 410px))); } }
+@media(max-width:860px) { .board-top { scroll-margin-top: 96px; } .focus-dialog .board-top { scroll-margin-top: 12px; } }
+@media(max-width:860px) and (max-height:780px) {
+  .workspace .board-card, .focus-dialog .board-card { gap: 3px; }
+  .board-coach-card:not(.is-expanded) .coach-brief { min-height: 18px; -webkit-line-clamp: 1; }
+  .board-coach-card:not(.is-expanded) .best-line { display: none; }
+  .board-area { max-width: min(100%,max(220px,calc(100dvh - 445px))); align-self: center; }
+  .focus-dialog .board-area { max-width: min(100%,max(220px,calc(100dvh - 350px))); }
+}
+@media(prefers-reduced-motion:reduce) { .board-area .evaluation-bar>div { transition: none; } .move-controls button:active { transform: none; } }

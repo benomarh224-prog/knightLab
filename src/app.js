@@ -87,6 +87,7 @@ const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),na
 const boardHome = document.createComment('Board position');
 boardCard.before(boardHome);
 $('focus-mode').onclick = () => {
+  boardCoach.close();
   $('focus-body').append(boardCard); document.body.classList.add('focus-active');
   $('focus-dialog').showModal(); positionOpeningCard();
 };
@@ -219,11 +220,10 @@ function renderBoard() {
   if(detail){$('threat-title').textContent=detail.label; $('threat-text').textContent=detail.explanation; $('threat-arrow').setAttribute('d',arrowPath(detail.attackers[0].from,detail.attackers[0].to,state.flipped));}
   inline.paint();
   const percent = evaluation ? 50 + 45 * Math.tanh(evaluation.cp / 450) : 50;
-  $('eval-fill').style.height = `${state.flipped ? 100 - percent : percent}%`;
-  $('eval-fill').style.background = state.flipped ? '#34415e' : '#edf1fa';
-  document.querySelector('.evaluation-bar').style.background = state.flipped ? '#edf1fa' : '#34415e';
-  $('bar-score').textContent = evaluation ? (evaluation.mate !== null ? 'M' + Math.abs(evaluation.mate) : Math.abs(evaluation.cp / 100).toFixed(1)) : '—';
-  $('bar-score').style.color = state.flipped ? '#edf1fa' : '#34415e';
+  $('eval-fill').style.width = `${percent}%`;
+  $('eval-fill').style.height = '100%';
+  $('bar-score').textContent = formatEvaluation(evaluation);
+  document.querySelector('.evaluation-bar').setAttribute('aria-label',`Position evaluation from White’s perspective: ${formatEvaluation(evaluation)}`);
   updatePlayers();
 }
 
@@ -252,6 +252,8 @@ function render() {
   $('insight-move').textContent = move ? `${Number(move.before.split(' ')[5])}${move.color === 'w' ? '.' : '...'} ${move.san}` : '';
   $('move-quality').innerHTML = item ? qualityGlyph(item.label) : icon('spark');
   $('move-quality').style.color = item ? qualityColors[item.label] : 'var(--lime)';
+  $('board-coach-card').dataset.verdict = item?.label || 'Waiting';
+  $('board-coach-card').style.setProperty('--coach-accent',item ? qualityColors[item.label] : '#8ca494');
   $('insight-title').textContent = item ? qualityLabels[item.label] : state.ply === 0 ? 'Every move starts here' : 'A closer look at this move';
   const previous = view.before || score;
   $('recommended-move').textContent = move ? uciToSan(move.before, previous?.best) : uciToSan(view.fen, score?.best);
@@ -281,7 +283,9 @@ function renderCoach(move, before, after) {
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
-  $('coach-brief').textContent = ready ? report.why || report.summary : report.summary;
+  const brief=(ready ? report.why || report.summary : report.summary).replace(/^In Stockfish[’']s continuation,\s*/,'');
+  $('coach-brief').textContent = brief.split(/(?<=[.!?])\s+/)[0];
+  $('board-coach-card').classList.toggle('coach-ready',ready);
   $('insight-text').textContent = report.summary;
   $('coach-details').hidden = !ready;
   $('coach-why-label').textContent = ['Inaccuracy','Mistake','Blunder'].includes(report.rating) ? 'Why this move is weaker' : 'What this move does';
@@ -549,7 +553,7 @@ $('board').addEventListener('keydown',event=>{
   const file=square.charCodeAt(0)+dx*sign,rank=Number(square[1])-dy*sign;
   if(file>=97&&file<=104&&rank>=1&&rank<=8)$('board').querySelector(`[data-square="${String.fromCharCode(file)+rank}"]`)?.focus();
 });
-$('flip-board').onclick = () => { state.flipped = !state.flipped; renderBoard(); };
+$('flip-board').onclick = () => { state.flipped = !state.flipped; renderBoard(); boardCoach.reveal(); };
 $('toggle-arrow').onclick = () => { state.showArrow = !state.showArrow; $('toggle-arrow').classList.toggle('toggled', state.showArrow); $('toggle-arrow').setAttribute('aria-pressed', String(state.showArrow)); renderBoard(); };
 function renderSoundControl() {
   const enabled = moveSounds.enabled;
@@ -617,7 +621,7 @@ document.addEventListener('keydown', event => {
   if (event.key === 'ArrowRight') { event.preventDefault(); stepMove(1); }
   if (event.key === 'Home') { event.preventDefault(); $('first-move').onclick(); }
   if (event.key === 'End') { event.preventDefault(); $('last-move').onclick(); }
-  if (event.key.toLowerCase() === 'f') { state.flipped = !state.flipped; renderBoard(); }
+  if (event.key.toLowerCase() === 'f') $('flip-board').onclick();
 });
 window.addEventListener('pagehide', () => { inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
 try { $('username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
