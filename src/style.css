@@ -1079,3 +1079,10 @@ main { max-width: 1580px; margin: 0 auto; padding: 14px 22px 24px; }
 .board-controls>.move-controls { grid-column: 1/-1; grid-row: 3; }
 .workspace .board-tools .board-tool, .focus-dialog .board-tools .board-tool { flex-direction: row; min-height: 44px; height: 44px; gap: 7px; font-size: 12px; }
 .focus-dialog .board-header-actions { grid-template-columns: minmax(0,1fr); }
+.coach-popover { display: flex; flex-direction: column; max-height: min(65dvh,540px,var(--coach-available-height,65dvh)); overflow: hidden; }
+.coach-popover-heading { position: static; flex-shrink: 0; }
+.coach-popover #coach-panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #597a62 transparent; }
+.coach-playback { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 8px; flex-shrink: 0; padding: 9px 12px 12px; background: #263e2e; border-top: 1px solid #6c93774d; }
+.coach-playback strong { grid-column: 1/-1; text-align: center; font-size: 11px; font-weight: 550; color: #c7ddce; }
+.coach-playback button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border: 1px solid #64856d; border-radius: 8px; background: #344d3c; font-size: 14px; font-weight: 650; }
+.coach-playback #coach-next { background: #a2d6b0; border-color: #a2d6b0; color: #15251b; }

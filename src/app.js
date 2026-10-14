@@ -83,7 +83,7 @@ const explorer = createExploreUI({
 });
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound:move=>moveSounds.play(move)});
 const boardCard = document.querySelector('.board-card');
-const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board')});
+const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove});
 const boardHome = document.createComment('Board position');
 boardCard.before(boardHome);
 $('focus-mode').onclick = () => {
@@ -195,9 +195,12 @@ function renderBoard() {
   const fullMove = Number(chess.fen().split(' ')[5]);
   $('move-position').textContent = inline.active ? `Explore · ${last?.san||'Starting position'} · ${inline.line.cursor}/${inline.line.entries.length}` : state.ply ? `Move ${state.parsed.moves[state.ply-1].san} · ${Math.ceil(state.ply / 2)}/${Math.ceil(state.parsed.moves.length / 2)}` : 'Starting position';
   $('review-move-label').textContent = $('move-position').textContent;
+  $('coach-move-position').textContent = $('move-position').textContent;
   const cursor=inline.active?inline.line.cursor:state.ply, end=inline.active?inline.line.entries.length:state.parsed.moves.length;
   $('review-previous').disabled = cursor===0;
   $('review-next').disabled = cursor===end;
+  $('coach-previous').disabled = cursor===0;
+  $('coach-next').disabled = cursor===end;
   for (const id of ['first-move', 'previous-move']) $(id).disabled = cursor===0;
   for (const id of ['last-move', 'next-move']) $(id).disabled = cursor===end;
   const evaluation = view.score;
@@ -274,7 +277,7 @@ function render() {
 let coachContext = null, coachReport = null;
 function renderCoach(move, before, after) {
   if (!coachContext || coachContext[0] !== move || coachContext[1] !== before || coachContext[2] !== after) {
-    if (coachContext?.[0] !== move) $('coach-lines').open = false;
+    if (coachContext?.[0] !== move) { $('coach-lines').open = false; $('coach-panel').scrollTop=0; }
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
