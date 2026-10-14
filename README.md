@@ -29,6 +29,8 @@ The build copies the unmodified Stockfish lite single-threaded JS and WASM files
 
 ## Analysis method
 
+All boards share an original Staunton-inspired SVG piece set, with ivory and obsidian palettes, sculpted bases, curved highlights, dimensional gradients, and contact shadows. Each SVG uses unique paint IDs so multiple boards can render together. Pieces stay decorative and do not intercept square controls or move-rating badges.
+
 Try Another Move opens an independent variation from the selected game position. Tap a piece and legal destination, play both sides, request Stockfish's best reply, undo, reset, or flip the board. Castling, en passant, and explicit promotions follow chess.js rules. Each position receives a 650 ms Stockfish evaluation from White's perspective. Old engine requests are cancelled when the variation changes or closes. Exploration pauses an ongoing game review and resumes it on close, while preserving the original PGN and playback position. Variations last until the dialog closes.
 
 Focus Mode opens the existing replay board in a full-viewport dialog, with the opening name, players, evaluation bar, move badges, arrows, sound controls, and large navigation buttons. The board fills the available width rather than shrinking with viewport height. On mobile, compact opening and player rows leave more room for the board, and Try Another Move sits below playback controls. Short screens scroll vertically. Escape or Exit Focus restores the board to its original layout without changing the selected move. It works without the browser Fullscreen API.

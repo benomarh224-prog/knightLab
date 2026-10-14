@@ -156,7 +156,7 @@ h2 { font: 650 23px 'Manrope', sans-serif; letter-spacing: -.65px; margin: 0 0 6
 .piece-rating.tooltip-below .piece-rating-label { bottom: auto; top: calc(100% + 7px); }
 .piece-rating.tooltip-left .piece-rating-label { right: auto; left: 0; }
 @media (hover: hover) { .piece-rating:hover .piece-rating-label { display: block; } }
-.square .piece { width: 94%; height: 94%; filter: drop-shadow(0 3px 1px #0913242b); }
+.square .piece { width: 100%; height: 100%; pointer-events: none; }
 .square .rank, .square .file { position: absolute; z-index: 1; font-size: 10px; font-weight: 700; color: #647797; }
 .square.dark .rank, .square.dark .file { color: #e6eefc; }
 .rank { top: 3px; left: 4px; }
