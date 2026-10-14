@@ -20,19 +20,22 @@ export function createBoardCoach({showBoard,navigate}) {
     for(const trigger of triggers){trigger.setAttribute('aria-expanded','false');trigger.classList.remove('toggled');}
     if(restoreFocus && hadFocus) $('board-coach-toggle').focus({preventScroll:true});
   }
-  function open() {
-    showBoard(); opened=true; panel.hidden=false; popover.hidden=false;
-    for(const trigger of triggers){trigger.setAttribute('aria-expanded','true');trigger.classList.add('toggled');}
+  function position() {
     const rect=$('board-top').getBoundingClientRect();
     if(rect.top<70 || rect.bottom>innerHeight-300) $('board-top').scrollIntoView({block:'start',behavior:'instant'});
     fit();
+  }
+  function open() {
+    showBoard(); opened=true; panel.hidden=false; popover.hidden=false;
+    for(const trigger of triggers){trigger.setAttribute('aria-expanded','true');trigger.classList.add('toggled');}
+    position();
     $('board-coach-close').focus({preventScroll:true});
   }
   $('board-coach-toggle').onclick=()=>opened?close():open();
   for(const trigger of triggers.slice(1))trigger.onclick=open;
   $('board-coach-close').onclick=()=>close();
-  $('coach-previous').onclick=()=>navigate(-1);
-  $('coach-next').onclick=()=>navigate(1);
+  $('coach-previous').onclick=()=>{navigate(-1);position();};
+  $('coach-next').onclick=()=>{navigate(1);position();};
   window.addEventListener('resize',fit,{passive:true});
   window.addEventListener('scroll',fit,{passive:true});
   window.visualViewport?.addEventListener('resize',fit,{passive:true});
