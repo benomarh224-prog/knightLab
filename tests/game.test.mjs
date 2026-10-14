@@ -128,3 +128,12 @@ test('API errors give useful missing-user and rate-limit feedback', async () => 
     await assert.rejects(loadPlayer('test',new AbortController().signal),/too many requests/);
   } finally { globalThis.fetch = original; }
 });
+test('archive loading preserves Chess.com accuracy on the corresponding game', async () => {
+  const original = globalThis.fetch;
+  const game = {rules:'chess',pgn:'1. e4 e5 *',white:{username:'boss899765'},black:{username:'elliotx12'},accuracies:{white:75.66,black:74.12},url:'https://www.chess.com/game/live/185315756376',end_time:1};
+  globalThis.fetch = async () => new Response(JSON.stringify({games:[game]}),{status:200});
+  try {
+    const games = await loadArchive('https://api.chess.com/pub/player/elliotx12/games/2026/10',new AbortController().signal);
+    assert.deepEqual(games[0].accuracies,game.accuracies); assert.equal(games[0].url,game.url);
+  } finally { globalThis.fetch = original; }
+});

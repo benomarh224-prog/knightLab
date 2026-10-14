@@ -203,6 +203,9 @@ kbd { padding: 1px 4px; border: 1px solid #354059; border-bottom-width: 2px; bor
 .accuracy-track i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #9b8bdc, #c5b6ff); }
 .accuracy-player small { font-size: 10px; color: #a2afc8; }
 .accuracy-card>p { font-size: 10px; color: #9caac5; line-height: 1.7; margin: 14px 0 0; }
+.accuracy-card[data-source="chesscom"] { border-color: #79e3d34a; background: linear-gradient(120deg, #79e3d310, #141c2c); }
+.accuracy-card[data-source="chesscom"] .accuracy-heading>span { color: #9cdbd0; }
+.accuracy-card[data-source="chesscom"] .accuracy-track i { background: linear-gradient(90deg, #4cad9f, #79e3d3); }
 .coach-explanation { margin-top: 17px; }
 .coach-explanation>strong { font-size: 12px; color: #e1d8ff; }
 .coach-card .coach-explanation p { margin: 7px 0 0; line-height: 1.8; }

@@ -5,7 +5,7 @@ import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
 import { pageGames } from './library.js';
 import { identifyOpening } from './opening.js';
-import { gameAccuracy } from './accuracy.js';
+import { accuracyPresentation } from './accuracy.js';
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
@@ -240,17 +240,20 @@ function render() {
 }
 
 function renderAccuracy() {
-  const accuracy = gameAccuracy(state.parsed, state.evaluations);
-  for (const [color, player] of Object.entries(accuracy)) {
+  const accuracy = accuracyPresentation(state.selected, state.parsed, state.evaluations);
+  document.querySelector('.accuracy-card').dataset.source = accuracy.source;
+  $('accuracy-title').textContent = accuracy.title;
+  $('accuracy-note').textContent = accuracy.note;
+  for (const [color, player] of Object.entries(accuracy.players)) {
     const side = color === 'w' ? 'white' : 'black';
     const label = state.selected[side]?.username || state.parsed.headers[color === 'w' ? 'White' : 'Black'] || (color === 'w' ? 'White' : 'Black');
     $('accuracy-' + color + '-name').textContent = label;
     $('accuracy-' + color + '-name').title = label;
-    $('accuracy-' + color + '-score').textContent = player.score === null ? '—' : `${player.score.toFixed(1)}%`;
-    $('accuracy-' + color + '-coverage').textContent = !player.total ? 'No moves' : `${player.reviewed}/${player.total} moves reviewed`;
+    $('accuracy-' + color + '-score').textContent = player.score === null ? '—' : `${player.score.toFixed(1)}${accuracy.source === 'chesscom' ? '%' : ''}`;
+    $('accuracy-' + color + '-coverage').textContent = accuracy.source === 'chesscom' ? player.score === null ? 'Not supplied by Chess.com' : 'Source: Chess.com' : !player.total ? 'No moves' : `/100 · ${player.reviewed}/${player.total} moves reviewed`;
     $('accuracy-' + color + '-bar').style.width = `${player.score ?? 0}%`;
   }
-  $('accuracy-status').textContent = accuracy.w.complete && accuracy.b.complete ? 'Review complete' : 'Provisional';
+  $('accuracy-status').textContent = accuracy.status;
 }
 
 let coachContext = null, coachReport = null;
@@ -440,7 +443,8 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>These are Knightlab’s approximate move ratings, based on evaluation loss from the player’s perspective. They are not Chess.com’s classifications or accuracy scores. Mate scores use a large capped value for the chart and loss calculation.</p>
 <p>Quick review gives each position 140 ms; deep review gives it 650 ms. Depth varies with your device and the position. Deeper searches can change the score or preferred move. The chart is capped at ±5 pawns.</p>
 <p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
-<p>Estimated accuracy is Knightlab’s independent score, not Chess.com Accuracy. Exact first-choice moves score 100; other moves are penalized for a drop in an evaluation-derived scoring proxy. Each player’s displayed score is the mean of their reviewed move scores. Missing positions are excluded, and provisional coverage is shown until the review finishes. This is not a calibrated winning-probability prediction.</p>
+<p>Chess.com accuracy is displayed directly from the game’s published <code>accuracies</code> data when available. These stored scores are not recalculated by Knightlab and can be subject to Chess.com’s public-data caching.</p>
+<p>When Chess.com has not supplied accuracy, the card is labeled Knightlab review score. It is an independent 0–100 engine score, not Chess.com Accuracy or a calibrated winning probability. Exact first-choice moves score 100; other moves are penalized for a drop in an evaluation-derived scoring proxy. The game score is the mean of reviewed move scores; missing positions are excluded and partial coverage is shown.</p>
 <p>The coach describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. A short search may not establish every strategic reason. Use Deep review to confirm critical decisions.</p>
 <p><a href="./STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="./THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 

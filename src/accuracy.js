@@ -25,3 +25,21 @@ export function gameAccuracy(parsed, evaluations) {
   }
   return players;
 }
+
+export function accuracyPresentation(game, parsed, evaluations) {
+  const supplied = game?.accuracies;
+  const official = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? value : null;
+  const white = official(supplied?.white), black = official(supplied?.black);
+  // Never blend an official score with a local estimate in the same card.
+  if (white !== null || black !== null) return {
+    source: 'chesscom', title: 'Chess.com accuracy', status: 'Published game data',
+    players: { w: { score:white }, b: { score:black } },
+    note: 'Stored accuracy supplied by Chess.com. Local analysis does not change these scores.',
+  };
+  const players = gameAccuracy(parsed, evaluations);
+  return {
+    source: 'knightlab', title: 'Knightlab review score',
+    status: players.w.complete && players.b.complete ? 'Local estimate' : 'Provisional', players,
+    note: 'Chess.com accuracy is unavailable in this game’s data. This independent 0–100 score is calculated differently and is not comparable to Chess.com Accuracy.',
+  };
+}
