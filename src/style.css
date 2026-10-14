@@ -991,3 +991,51 @@ main { max-width: 1580px; margin: 0 auto; padding: 14px 22px 24px; }
   .board-card>.opening-card { margin-bottom: 2px; }
   .board-card .opening-summary, .board-card .opening-toggle { min-height: 32px; }
 }
+/* On-board variations, attack explanations and aligned arrows. */
+.board-arrows { inset: 0; width: 100%; height: 100%; overflow: visible; z-index: 3; }
+.best-arrow-shadow { stroke: #173f2c; stroke-width: 26; opacity: .5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.best-move-arrow { stroke: #86edbc; stroke-width: 17; opacity: .8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.threat-move-arrow { stroke: #ffb18c; stroke-width: 12; opacity: .95; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 20 10; }
+#board .square[role="button"] { cursor: pointer; }
+#board .square:focus-visible { outline: 3px solid #15251b; outline-offset: -4px; z-index: 5; }
+#board .threatened::before { content: ''; position: absolute; inset: 2px; z-index: 2; border: 3px solid #edaa64; border-radius: 4px; background: #ffab4e19; box-shadow: inset 0 0 18px #ffad5c66; pointer-events: none; }
+#board .threat-loose::before, #board .threat-check::before { border-color: #fb6c70; background: #ff687127; box-shadow: inset 0 0 20px #fa687377; }
+.threat-dot { position: absolute; bottom: 3px; right: 4px; z-index: 3; width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; background: #e7a65d; color: #281a0c; font: 800 11px/1 sans-serif; pointer-events: none; }
+.threat-loose .threat-dot, .threat-check .threat-dot { background: #ef6c73; color: #fff; }
+#board .piece-selected { box-shadow: inset 0 0 0 4px #487857; }
+#board .legal-target::after { content: ''; position: absolute; z-index: 3; width: 25%; height: 25%; border-radius: 50%; background: #153a25aa; pointer-events: none; }
+#board .legal-target:has(svg)::after { width: 85%; height: 85%; border: 5px solid #214e36aa; background: none; }
+.line-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 6px 10px; border: 1px solid #6dbd934a; border-radius: 8px; background: #244c33; }
+.line-toolbar>span { font-size: 10px; letter-spacing: 1px; color: #c1e2c9; }
+.line-toolbar strong { font-size: 16px; margin-left: 5px; font-variant-numeric: tabular-nums; }
+.line-toolbar button { min-height: 36px; padding: 6px 8px; font-size: 12px; color: #e3f5e7; }
+.line-controls, .threat-details { padding: 12px; margin: 8px 0; border-radius: 9px; border: 1px solid #567b6166; background: #1e3024; }
+.line-controls>p, .threat-details p { margin: 0 0 10px; font-size: 12px; line-height: 1.65; color: #c3d6c9; }
+.threat-details { border-color: #ffb18c66; background: #382c24; }
+.threat-details>div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.threat-details strong { font-size: 13px; color: #ffd0b9; }
+.threat-details p { margin-bottom: 0; }
+.threat-details button { width: 40px; height: 40px; flex-shrink: 0; }
+.line-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.line-actions button, .line-promotion button { min-height: 44px; border: 1px solid #597c63; border-radius: 7px; padding: 8px 12px; background: #2c4b36; font-size: 12px; }
+.line-moves { display: flex; gap: 5px; overflow-x: auto; margin: 8px 0 12px; scrollbar-width: thin; }
+.line-moves button { min-height: 40px; white-space: nowrap; padding: 6px 10px; border-radius: 6px; font-size: 12px; }
+.line-moves button[aria-current="step"] { color: #17261c; background: #a2d6b0; }
+.line-promotion { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.workspace .board-tools { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.workspace .board-tools .board-tool { flex-direction: column; gap: 2px; height: 48px; min-height: 48px; padding: 4px; font-size: 9px; }
+@media(min-width:861px) {
+  .workspace .line-toolbar, .workspace .line-controls, .workspace .threat-details { grid-column: 1/-1; }
+  .workspace .board-card.exploring>.line-toolbar { grid-row: 2; }
+  .workspace .board-card.exploring>.player-row { grid-row: 3; }
+  .workspace .board-card.exploring>.board-area { grid-row: 4; }
+  .workspace .board-card.exploring>.line-controls { grid-row: 5; margin: 0; }
+  .workspace .board-card.exploring>.board-controls { grid-row: 6; }
+  .workspace .board-card.exploring>.board-explore-tools { grid-row: 7; }
+}
+@media(max-width:860px) { .board-explore-tools .explore-launch { font-size: 10px; } }
+#board .square.rated { z-index: 4; }
+#board .square[draggable="true"] { cursor: grab; }
+#board .square[draggable="true"]:active { cursor: grabbing; }
+.focus-dialog .board-tools { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.focus-dialog .board-tools .board-tool { flex-direction: column; min-height: 48px; gap: 2px; font-size: 10px; }

@@ -9,6 +9,8 @@ import { evaluationReady, reviewSearch } from './review-quality.js';
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
+import { createInlineAnalysis } from './inline-analysis.js';
+import { positionThreats, arrowPath } from './board-visuals.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
 import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceMoveVerdict } from './verdict.js';
 
@@ -39,6 +41,15 @@ document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = 
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
 const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'deep', tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
+let boardDragging=false, inline, showThreats=true, selectedThreat=null, threatFen=null, threats=[];
+function pauseWorkspace() {
+  const running=state.running, restoring=inline?.active ? inline.exit(false) : false;
+  stopAnalysis(); render(); return running || restoring;
+}
+function boardView() {
+  if (inline?.active) return {fen:inline.line.fen,last:inline.line.last,before:inline.line.scores[inline.line.cursor-1],score:inline.line.score};
+  return {fen:state.parsed.fens[state.ply],last:state.parsed.moves[state.ply-1],before:state.evaluations[state.ply-1],score:state.evaluations[state.ply]};
+}
 function positionOpeningCard() {
   const card = $('opening-card');
   document.querySelector('.board-card').prepend(card);
@@ -57,7 +68,7 @@ const moveSounds = new MoveSounds({ enabled: soundEnabled, onState: audioState =
 const training = createTrainingUI({
   context: () => ({ parsed: state.parsed, evaluations: state.evaluations, color: playerColor(), running: state.running, ply: state.ply }),
   navigate: goTo,
-  pause: () => { const running = state.running; stopAnalysis(); render(); return running; },
+  pause: pauseWorkspace,
   resume: startAnalysis,
   scrollToBoard: () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); },
   icon,
@@ -65,10 +76,11 @@ const training = createTrainingUI({
 });
 const explorer = createExploreUI({
   context: () => ({ parsed: state.parsed, ply: state.ply, flipped: state.flipped }),
-  pause: () => { const running = state.running; stopAnalysis(); render(); return running; },
+  pause: pauseWorkspace,
   resume: startAnalysis,
   playSound: move => moveSounds.play(move),
 });
+inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound:move=>moveSounds.play(move)});
 const boardCard = document.querySelector('.board-card');
 const boardHome = document.createComment('Board position');
 boardCard.before(boardHome);
@@ -94,6 +106,7 @@ function scrollToSection(element) {
 
 function setGame(game, { demo = false, analyze = true } = {}) {
   const parsed = parseGame(game.pgn);
+  inline.reset(); selectedThreat=null;
   training.reset();
   explorer.reset();
   if ($('focus-dialog').open) $('focus-dialog').close();
@@ -146,11 +159,16 @@ function updatePlayers() {
 }
 
 function renderBoard() {
-  const chess = new Chess(state.parsed.fens[state.ply]);
+  if(boardDragging)return;
+  const view=boardView(), chess = new Chess(view.fen);
+  if (threatFen!==view.fen) { threatFen=view.fen; threats=positionThreats(view.fen); selectedThreat=null; }
+  const threatened=new Map((showThreats?threats:[]).map(item=>[item.square,item]));
+  const targets=inline.targets, selection=inline.selected;
+  const focusedSquare=document.activeElement?.closest('#board [data-square]')?.dataset.square;
   const files = state.flipped ? 'hgfedcba' : 'abcdefgh';
   const ranks = state.flipped ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
-  const last = state.parsed.moves[state.ply - 1];
-  const classification = last ? classifyMove(last, state.evaluations[state.ply - 1], state.evaluations[state.ply]) : null;
+  const last = view.last;
+  const classification = last ? classifyMove(last, view.before, view.score) : null;
   const rating = pieceMoveVerdict(last, classification);
   const existingBadge = $('board').querySelector('.piece-rating');
   const showRating = existingBadge?.dataset.ply === String(state.ply) && existingBadge.getAttribute('aria-pressed') === 'true';
@@ -163,30 +181,38 @@ function renderBoard() {
     const dark = (files.charCodeAt(f) - 97 + ranks[r]) % 2 === 1;
     const highlight = last && (last.from === square || last.to === square);
     const rated = rating?.square === square;
+    const threat=threatened.get(square);
     const badge = rated ? `<button class="piece-rating ${rating.tone}${r === 0 ? ' edge-top' : ''}${f === 7 ? ' edge-right' : ''}${r < 2 ? ' tooltip-below' : ''}${f < 2 ? ' tooltip-left' : ''}" data-ply="${state.ply}" aria-label="${escape(rating.move + ': ' + rating.label)}" aria-pressed="${Boolean(showRating)}" title="${escape(rating.label)}"><span class="piece-rating-symbol" aria-hidden="true">${qualityGlyph(classification.label)}</span><span class="piece-rating-label" aria-hidden="true">${escape(rating.label)}</span></button>` : '';
-    squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}" title="${square}${piece ? ': ' + (piece.color === 'w' ? 'White ' : 'Black ') + names[piece.type] : ''}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${badge}</div>`;
+    const label=`${square}${piece ? ': ' + (piece.color === 'w' ? 'White ' : 'Black ') + names[piece.type] : ': empty'}${threat ? '. '+threat.explanation : ''}${targets.has(square)?'. Legal destination':''}`;
+    squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}${threat?' threatened threat-'+threat.kind:''}${selection===square?' piece-selected':''}${targets.has(square)?' legal-target':''}" data-square="${square}" ${inline.active||threat?`role="button" tabindex="${!inline.active||focusedSquare===square||!focusedSquare&&(selection===square||!selection&&f===0&&r===7)?0:-1}" aria-label="${escape(label)}"`:''} ${inline.active&&piece?.color===chess.turn()?'draggable="true"':''} title="${escape(label)}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${threat?'<span class="threat-dot" aria-hidden="true">!</span>':''}${badge}</div>`;
   }
   $('board').innerHTML = squares;
+  if (focusedSquare && !restoreBadgeFocus) $('board').querySelector(`[data-square="${focusedSquare}"]`)?.focus({preventScroll:true});
   if (restoreBadgeFocus) $('board').querySelector('.piece-rating')?.focus({preventScroll: true});
-  $('board').setAttribute('aria-label', `Chess position after ${state.ply} half-moves. ${chess.turn() === 'w' ? 'White' : 'Black'} to move.${rating ? ' ' + rating.move + ': ' + rating.label + '.' : ''} ${chess.fen()}`);
+  $('board').setAttribute('aria-label', `${inline.active?'Explored continuation':'Chess position after '+state.ply+' half-moves'}. ${chess.turn() === 'w' ? 'White' : 'Black'} to move.${rating ? ' ' + rating.move + ': ' + rating.label + '.' : ''} ${chess.fen()}`);
   const fullMove = Number(chess.fen().split(' ')[5]);
-  $('move-position').textContent = state.ply ? `Move ${state.parsed.moves[state.ply-1].san} · ${Math.ceil(state.ply / 2)}/${Math.ceil(state.parsed.moves.length / 2)}` : 'Starting position';
+  $('move-position').textContent = inline.active ? `Explore · ${last?.san||'Starting position'} · ${inline.line.cursor}/${inline.line.entries.length}` : state.ply ? `Move ${state.parsed.moves[state.ply-1].san} · ${Math.ceil(state.ply / 2)}/${Math.ceil(state.parsed.moves.length / 2)}` : 'Starting position';
   $('review-move-label').textContent = $('move-position').textContent;
-  $('review-previous').disabled = state.ply === 0;
-  $('review-next').disabled = state.ply === state.parsed.moves.length;
-  for (const id of ['first-move', 'previous-move']) $(id).disabled = state.ply === 0;
-  for (const id of ['last-move', 'next-move']) $(id).disabled = state.ply === state.parsed.moves.length;
-  const evaluation = state.evaluations[state.ply];
+  const cursor=inline.active?inline.line.cursor:state.ply, end=inline.active?inline.line.entries.length:state.parsed.moves.length;
+  $('review-previous').disabled = cursor===0;
+  $('review-next').disabled = cursor===end;
+  for (const id of ['first-move', 'previous-move']) $(id).disabled = cursor===0;
+  for (const id of ['last-move', 'next-move']) $(id).disabled = cursor===end;
+  const evaluation = view.score;
   const best = evaluation?.best;
   const arrow = $('best-arrow');
   const hideArrow = !state.showArrow || !best || best === '(none)' || !/^[a-h][1-8][a-h][1-8]/.test(best);
   arrow.toggleAttribute('hidden', hideArrow);
+  $('best-arrow-shadow').toggleAttribute('hidden',hideArrow);
   if (!hideArrow) {
-    for (const [start, suffix] of [[0, '1'], [2, '2']]) {
-      arrow.setAttribute('x' + suffix, files.indexOf(best[start]) * 100 + 50);
-      arrow.setAttribute('y' + suffix, ranks.indexOf(Number(best[start + 1])) * 100 + 50);
-    }
+    const path=arrowPath(best.slice(0,2),best.slice(2,4),state.flipped);
+    arrow.setAttribute('d',path); $('best-arrow-shadow').setAttribute('d',path);
   }
+  const detail=showThreats?threatened.get(selectedThreat):null;
+  $('threat-details').hidden=!detail;
+  $('threat-arrow').toggleAttribute('hidden',!detail);
+  if(detail){$('threat-title').textContent=detail.label; $('threat-text').textContent=detail.explanation; $('threat-arrow').setAttribute('d',arrowPath(detail.attackers[0].from,detail.attackers[0].to,state.flipped));}
+  inline.paint();
   const percent = evaluation ? 50 + 45 * Math.tanh(evaluation.cp / 450) : 50;
   $('eval-fill').style.height = `${state.flipped ? 100 - percent : percent}%`;
   $('eval-fill').style.background = state.flipped ? '#34415e' : '#edf1fa';
@@ -204,7 +230,7 @@ function playerColor() {
 function render() {
   if (!state.parsed) return;
   renderBoard(); renderChart();
-  const score = state.evaluations[state.ply];
+  const view=boardView(), score = view.score;
   $('evaluation').textContent = formatEvaluation(score);
   $('position-verdict').textContent = !score ? 'Waiting for the engine' : score.terminal ? (score.cp ? 'Checkmate' : 'Drawn position') : score.mate !== null ? `${score.cp > 0 ? 'White' : 'Black'} has forced mate` : Math.abs(score.cp) < 50 ? 'A balanced position' : `${score.cp > 0 ? 'White' : 'Black'} ${Math.abs(score.cp) > 200 ? 'is winning' : 'has the advantage'}`;
   const summary = summarize(state.parsed, state.evaluations, playerColor());
@@ -213,8 +239,8 @@ function render() {
   $('blunder-count').textContent = summary.count ? summary.counts.Blunder : '—';
   $('loss-summary').textContent = summary.count ? `${playerColor() ? 'Your' : 'All'} moves · Avg. loss ${(summary.averageLoss / 100).toFixed(2)} pawns` : `${playerColor() ? 'Your' : 'All'} moves · engine review`;
   $('next-mistake').disabled = !summary.items.some((item, index) => item && ['Mistake', 'Blunder', 'Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()));
-  const move = state.parsed.moves[state.ply - 1];
-  const item = move ? summary.items[state.ply - 1] : null;
+  const move = view.last;
+  const item = move ? inline.active?classifyMove(move,view.before,score):summary.items[state.ply - 1] : null;
   const verdict = selectedMoveVerdict(move, item);
   const announcement = `${verdict.move === '—' ? '' : verdict.move + ': '}${verdict.label}`;
   if ($('move-rating-announcement').textContent !== announcement) $('move-rating-announcement').textContent = announcement;
@@ -222,10 +248,11 @@ function render() {
   $('move-quality').innerHTML = item ? qualityGlyph(item.label) : icon('spark');
   $('move-quality').style.color = item ? qualityColors[item.label] : 'var(--lime)';
   $('insight-title').textContent = item ? qualityLabels[item.label] : state.ply === 0 ? 'Every move starts here' : 'A closer look at this move';
-  const previous = state.evaluations[Math.max(0, state.ply - 1)];
-  $('recommended-move').textContent = move ? uciToSan(move.before, previous?.best) : uciToSan(state.parsed.fens[0], score?.best);
+  const previous = view.before || score;
+  $('recommended-move').textContent = move ? uciToSan(move.before, previous?.best) : uciToSan(view.fen, score?.best);
   $('engine-depth').textContent = previous?.depth ? `Depth ${previous.depth}` : 'Stockfish 19';
-  renderCoach(move, move ? state.evaluations[state.ply - 1] : null, score);
+  renderCoach(move, move ? view.before : null, score);
+  document.querySelector('.insight-kicker').textContent=inline.active?'YOUR EXPLORED CONTINUATION':'YOUR MOVE COACH';
   const analyzed = state.parsed.fens.filter((_, index) => evaluationReady(state.evaluations[index], state.mode)).length;
   const searched = state.parsed.fens.filter((_, index) => state.evaluations[index]).length;
   const total = state.parsed.fens.length;
@@ -235,8 +262,9 @@ function render() {
   $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? `Reviewing position ${state.reviewIndex + 1} of ${total}${state.mode === 'precise' ? ' · depth 18' : ''}` : analyzed === total ? 'Review complete' : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
   document.querySelector('.engine-progress').classList.toggle('running', state.running);
   $('analyze-label').textContent = state.running ? 'Pause review' : analyzed === total ? 'Review complete' : searched === total ? 'Deepen remaining' : searched ? 'Resume review' : 'Review this game';
-  $('analyze-button').disabled = analyzed === total && !state.running;
-  $('analysis-speed').disabled = state.running;
+  $('analyze-button').disabled = inline.active || analyzed === total && !state.running;
+  $('analysis-speed').disabled = state.running || inline.active;
+  if(inline.active) $('analyze-label').textContent='Exploring line';
   updateMoveRatings(summary.items);
   training.render();
 }
@@ -261,7 +289,7 @@ function renderCoach(move, before, after) {
   $('coach-reply-row').hidden = !report.replyLine;
   $('coach-lines').hidden = !report.bestLine && !report.replyLine;
   $('coach-try-idea').disabled = !report.bestMove;
-  $('coach-try-idea').onclick = () => { if (report.bestMove && move) explorer.tryMove(move.before, report.bestMove); };
+  $('coach-try-idea').onclick = () => { if (report.bestMove && move) { inline.tryBest(report.bestMove); selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); } };
   $('coach-note').textContent = ready ? `Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${before.depth}` : ''}. Deeper review can change the recommendation.` : 'The coach updates as each move is reviewed.';
 }
 
@@ -302,10 +330,12 @@ function updateMoveRatings(items) {
   });
 }
 function goTo(ply) {
+  const restart=inline.active?inline.exit(false):false;
   const previous = state.ply;
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
   moveSounds.play(navigationSoundMove(state.parsed.moves, previous, state.ply)); render();
   if (state.tab === 'moves') document.querySelector(`.move-cell[data-ply="${state.ply}"]`)?.scrollIntoView({ block:'nearest', behavior:'instant' });
+  if(restart) startAnalysis();
 }
 
 function stopAnalysis() {
@@ -430,6 +460,7 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>Move ratings are based on evaluation loss from the player’s perspective. They can change with deeper analysis. Mate scores use a large capped value for the chart and loss calculation.</p>
 <p>Standard review uses 650 ms per position to give you a quick first pass. Deep review targets depth 18 with two candidate moves. If a position needs more time, Deepen remaining searches it again, allowing up to 80 seconds. You can pause and resume either review. The chart is capped at ±5 pawns.</p>
 <p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
+<p>Threats highlights attacked pieces: red for check or no immediate legal recapture, amber for defended attacks and risky exchanges. Tap a highlighted square to see why. An attack does not automatically mean a piece will be lost. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
 <p>The coach describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
 <p><a href="./STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="./THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
@@ -469,14 +500,47 @@ $('games-list').onclick = event => {
 document.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { state.filter = button.dataset.filter; state.libraryPage = 0; document.querySelectorAll('[data-filter]').forEach(element => { element.classList.toggle('selected', element === button); element.setAttribute('aria-pressed', String(element === button)); }); renderGames(); });
 for (const [id, change] of [['library-prev', -1], ['library-next', 1]]) $(id).onclick = () => { state.libraryPage += change; renderGames(); scrollToSection($('game-library')); };
 $('load-more').onclick = loadOlder;
-$('first-move').onclick = () => goTo(0);
-$('previous-move').onclick = () => goTo(state.ply - 1);
-$('next-move').onclick = () => goTo(state.ply + 1);
-$('last-move').onclick = () => goTo(state.parsed.moves.length);
+function stepMove(delta) { if(inline.active) inline.jump(inline.line.cursor+delta); else goTo(state.ply+delta); }
+$('first-move').onclick = () => inline.active?inline.jump(0):goTo(0);
+$('previous-move').onclick = () => stepMove(-1);
+$('next-move').onclick = () => stepMove(1);
+$('last-move').onclick = () => inline.active?inline.jump(inline.line.entries.length):goTo(state.parsed.moves.length);
+$('try-move').onclick=()=>{
+  if(inline.active) inline.exit();
+  else { inline.start(); selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); }
+};
+$('toggle-threats').onclick=()=>{showThreats=!showThreats;selectedThreat=null;$('toggle-threats').classList.toggle('toggled',showThreats);$('toggle-threats').setAttribute('aria-pressed',String(showThreats));renderBoard();};
+$('threat-close').onclick=()=>{selectedThreat=null;renderBoard();};
 $('board').onclick = event => {
   const badge = event.target.closest('.piece-rating');
-  if (badge) badge.setAttribute('aria-pressed', String(badge.getAttribute('aria-pressed') !== 'true'));
+  if (badge) { badge.setAttribute('aria-pressed', String(badge.getAttribute('aria-pressed') !== 'true'));return; }
+  const square=event.target.closest('[data-square]')?.dataset.square;
+  if(!square) return;
+  if(inline.active) inline.click(square);
+  if(showThreats && threats.some(item=>item.square===square)) {selectedThreat=square;renderBoard();}
 };
+$('board').addEventListener('dragstart',event=>{
+  const square=event.target.closest('[data-square]')?.dataset.square;
+  if(!inline.active||!square){event.preventDefault();return;}
+  boardDragging=true; inline.select(square,false); event.dataTransfer.setData('text/plain',square);event.dataTransfer.effectAllowed='move';
+  for(const tile of $('board').querySelectorAll('[data-square]')) {tile.classList.toggle('piece-selected',tile.dataset.square===inline.selected);tile.classList.toggle('legal-target',inline.targets.has(tile.dataset.square));}
+});
+$('board').addEventListener('dragend',()=>{boardDragging=false;renderBoard();});
+$('board').addEventListener('dragover',event=>{if(inline.active)event.preventDefault();});
+$('board').addEventListener('drop',event=>{
+  if(!inline.active)return;event.preventDefault();boardDragging=false;
+  const from=event.dataTransfer.getData('text/plain'),to=event.target.closest('[data-square]')?.dataset.square;
+  if(/^[a-h][1-8]$/.test(from)&&to)inline.attempt(from,to);
+});
+$('board').addEventListener('keydown',event=>{
+  const square=event.target.closest('[data-square]')?.dataset.square;if(!square||event.target.closest('.piece-rating'))return;
+  if(event.key==='Enter'||event.key===' '){event.preventDefault();event.target.click();return;}
+  const offsets={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+  if(!inline.active||!offsets[event.key])return;
+  event.preventDefault();const [dx,dy]=offsets[event.key],sign=state.flipped?-1:1;
+  const file=square.charCodeAt(0)+dx*sign,rank=Number(square[1])-dy*sign;
+  if(file>=97&&file<=104&&rank>=1&&rank<=8)$('board').querySelector(`[data-square="${String.fromCharCode(file)+rank}"]`)?.focus();
+});
 $('flip-board').onclick = () => { state.flipped = !state.flipped; renderBoard(); };
 $('toggle-arrow').onclick = () => { state.showArrow = !state.showArrow; $('toggle-arrow').classList.toggle('toggled', state.showArrow); $('toggle-arrow').setAttribute('aria-pressed', String(state.showArrow)); renderBoard(); };
 function renderSoundControl() {
@@ -519,8 +583,8 @@ $('board-coach').onclick = () => {
   selectWorkspaceView('coach');
   if (compactLayout.matches) scrollToSection(document.querySelector('.workspace'));
 };
-$('review-previous').onclick = () => goTo(state.ply-1);
-$('review-next').onclick = () => goTo(state.ply+1);
+$('review-previous').onclick = () => stepMove(-1);
+$('review-next').onclick = () => stepMove(1);
 for (const tablist of document.querySelectorAll('[role="tablist"]')) tablist.addEventListener('keydown', event => {
   if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
   const tabs = [...tablist.querySelectorAll('[role="tab"]')];
@@ -542,14 +606,15 @@ $('download-pgn').onclick = () => {
   const link = document.createElement('a'); link.href = url; link.download = 'knightlab-game.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000); toast('PGN downloaded.');
 };
 document.addEventListener('keydown', event => {
+  if(inline.active && event.target.closest('#board'))return;
   if (event.target.closest('[role="tablist"]') || ['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName) || document.querySelector('dialog[open]:not(#focus-dialog)')) return;
   if (event.ctrlKey || event.metaKey || event.altKey) return;
-  if (event.key === 'ArrowLeft') { event.preventDefault(); goTo(state.ply-1); }
-  if (event.key === 'ArrowRight') { event.preventDefault(); goTo(state.ply+1); }
-  if (event.key === 'Home') { event.preventDefault(); goTo(0); }
-  if (event.key === 'End') { event.preventDefault(); goTo(state.parsed.moves.length); }
+  if (event.key === 'ArrowLeft') { event.preventDefault(); stepMove(-1); }
+  if (event.key === 'ArrowRight') { event.preventDefault(); stepMove(1); }
+  if (event.key === 'Home') { event.preventDefault(); $('first-move').onclick(); }
+  if (event.key === 'End') { event.preventDefault(); $('last-move').onclick(); }
   if (event.key.toLowerCase() === 'f') { state.flipped = !state.flipped; renderBoard(); }
 });
-window.addEventListener('pagehide', () => { explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
+window.addEventListener('pagehide', () => { inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
 try { $('username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
 setGame({ pgn: DEMO_PGN }, { demo:true });
