@@ -190,6 +190,39 @@ kbd { padding: 1px 4px; border: 1px solid #354059; border-bottom-width: 2px; bor
 .review-panel { padding: 21px; }
 .intelligence-heading { margin-bottom: 16px; }
 .intelligence-heading svg { color: var(--lime); }
+.accuracy-card { margin: 17px 0 22px; padding: 17px; border: 1px solid #b4a8ff38; border-radius: 14px; background: linear-gradient(120deg, #b4a8ff10, #141c2c); }
+.accuracy-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+.accuracy-heading h3 { margin: 0; font: 650 15px 'Manrope', sans-serif; }
+.accuracy-heading>span { color: #c9bdf5; font-size: 10px; }
+.accuracy-players { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px; }
+.accuracy-player { min-width: 0; }
+.accuracy-player>.accuracy-side { display: block; font-size: 9px; letter-spacing: 1.6px; color: #9eacc8; }
+.accuracy-player>strong { display: block; margin: 6px 0 4px; font: 700 32px/1.2 'Manrope', sans-serif; color: #e5dcff; }
+.accuracy-player>span:not(.accuracy-side) { display: block; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #c8d2e6; }
+.accuracy-track { height: 5px; border-radius: 8px; overflow: hidden; background: #35405a; margin: 12px 0 7px; }
+.accuracy-track i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #9b8bdc, #c5b6ff); }
+.accuracy-player small { font-size: 10px; color: #a2afc8; }
+.accuracy-card>p { font-size: 10px; color: #9caac5; line-height: 1.7; margin: 14px 0 0; }
+.coach-explanation { margin-top: 17px; }
+.coach-explanation>strong { font-size: 12px; color: #e1d8ff; }
+.coach-card .coach-explanation p { margin: 7px 0 0; line-height: 1.8; }
+.coach-lines { margin-top: 17px; border: 1px solid #46506b; border-radius: 10px; background: #0f172570; padding: 0 12px; }
+.coach-lines summary { min-height: 46px; padding: 12px 0; cursor: pointer; font-size: 12px; color: #cfdaed; }
+.coach-lines>div { margin: 3px 0 14px; }
+.coach-lines>div>span { font-size: 10px; color: #97acc9; }
+.coach-card .coach-lines p { font-size: 12px; color: #d7e2f3; font-weight: 550; margin: 6px 0 0; overflow-wrap: anywhere; }
+.coach-lines small { display: block; color: #a4b5d1; font-size: 10px; margin: 0 0 13px; }
+.coach-lesson { margin: 17px 0; padding: 13px; border: 1px solid #79e3d32c; border-radius: 10px; background: #79e3d30a; }
+.coach-lesson>span { font-size: 8px; letter-spacing: 1px; color: #94dacf; font-weight: 650; }
+.coach-card .coach-lesson p { font-size: 12px; color: #bed7d8; margin: 7px 0 0; line-height: 1.7; }
+.coach-card #coach-try-idea { width: 100%; min-height: 48px; font-size: 12px; }
+.coach-note { display: block; font-size: 10px; line-height: 1.7; color: #a0adc5; margin-top: 13px; }
+@media (max-width: 470px) {
+  .accuracy-card { padding: 14px; }
+  .accuracy-heading h3 { font-size: 13px; }
+  .accuracy-players { gap: 14px; }
+  .accuracy-player>strong { font-size: 28px; }
+}
 .opening-card { margin: 0 0 20px; padding: 18px; border: 1px solid #b4a8ff3d; border-radius: 13px; background: linear-gradient(125deg, #b4a8ff12, #1b2233); }
 .opening-summary { display: flex; align-items: center; gap: 12px; list-style: none; cursor: pointer; border-radius: 6px; }
 .opening-summary::-webkit-details-marker { display: none; }

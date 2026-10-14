@@ -5,6 +5,8 @@ import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
 import { pageGames } from './library.js';
 import { identifyOpening } from './opening.js';
+import { gameAccuracy } from './accuracy.js';
+import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
@@ -211,6 +213,7 @@ function render() {
   $('next-mistake').disabled = !summary.items.some((item, index) => item && ['Mistake', 'Blunder', 'Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()));
   const move = state.parsed.moves[state.ply - 1];
   const item = move ? summary.items[state.ply - 1] : null;
+  renderAccuracy();
   const verdict = selectedMoveVerdict(move, item);
   const announcement = `${verdict.move === '—' ? '' : verdict.move + ': '}${verdict.label}`;
   if ($('move-rating-announcement').textContent !== announcement) $('move-rating-announcement').textContent = announcement;
@@ -218,10 +221,10 @@ function render() {
   $('move-quality').innerHTML = item ? qualityGlyph(item.label) : icon('spark');
   $('move-quality').style.color = item ? qualityColors[item.label] : 'var(--lime)';
   $('insight-title').textContent = item ? qualityLabels[item.label] : state.ply === 0 ? 'Every move starts here' : 'A closer look at this move';
-  $('insight-text').textContent = !move ? 'Explore the moves with the arrows below the board. The chart tracks the evaluation from White’s perspective.' : !item ? 'The engine has not rated this move yet. You can keep exploring the board while the review progresses.' : item.label === 'Great' ? `${move.san} is the engine’s first choice and scores at least one pawn better than its next option at the same search depth. You found a standout move.` : item.label === 'Best' ? `${move.san} matches the engine’s first choice in this position.${move.san.endsWith('#') ? ' It finishes the game with checkmate.' : ' Keep exploring to see how the game develops.'}` : item.label === 'Good' ? `${move.san} keeps the evaluation close to the engine’s preferred move${item.best !== '—' ? ', ' + item.best : ''}. The estimated loss is ${(item.loss / 100).toFixed(2)} pawns.` : `${move.san} gives up about ${(item.loss / 100).toFixed(2)} pawns in the engine’s evaluation.${item.best !== '—' ? ' Consider ' + item.best + ' instead. Step back one move to see it on the board.' : ''}`;
   const previous = state.evaluations[Math.max(0, state.ply - 1)];
   $('recommended-move').textContent = move ? uciToSan(move.before, previous?.best) : uciToSan(state.parsed.fens[0], score?.best);
   $('engine-depth').textContent = previous?.depth ? `Depth ${previous.depth}` : 'Stockfish 19';
+  renderCoach(move, move ? state.evaluations[state.ply - 1] : null, score);
   const analyzed = state.evaluations.filter(Boolean).length;
   const total = state.parsed.fens.length;
   const percent = Math.round(analyzed / total * 100);
@@ -234,6 +237,44 @@ function render() {
   $('analysis-speed').disabled = state.running;
   updateMoveRatings(summary.items);
   training.render();
+}
+
+function renderAccuracy() {
+  const accuracy = gameAccuracy(state.parsed, state.evaluations);
+  for (const [color, player] of Object.entries(accuracy)) {
+    const side = color === 'w' ? 'white' : 'black';
+    const label = state.selected[side]?.username || state.parsed.headers[color === 'w' ? 'White' : 'Black'] || (color === 'w' ? 'White' : 'Black');
+    $('accuracy-' + color + '-name').textContent = label;
+    $('accuracy-' + color + '-name').title = label;
+    $('accuracy-' + color + '-score').textContent = player.score === null ? '—' : `${player.score.toFixed(1)}%`;
+    $('accuracy-' + color + '-coverage').textContent = !player.total ? 'No moves' : `${player.reviewed}/${player.total} moves reviewed`;
+    $('accuracy-' + color + '-bar').style.width = `${player.score ?? 0}%`;
+  }
+  $('accuracy-status').textContent = accuracy.w.complete && accuracy.b.complete ? 'Review complete' : 'Provisional';
+}
+
+let coachContext = null, coachReport = null;
+function renderCoach(move, before, after) {
+  if (!coachContext || coachContext[0] !== move || coachContext[1] !== before || coachContext[2] !== after) {
+    if (coachContext?.[0] !== move) $('coach-lines').open = false;
+    coachReport = coachMove(move, before, after); coachContext = [move, before, after];
+  }
+  const report = coachReport, ready = report.status === 'ready';
+  $('insight-text').textContent = report.summary;
+  $('coach-details').hidden = !ready;
+  $('coach-why-label').textContent = ['Inaccuracy','Mistake','Blunder'].includes(report.rating) ? 'Why this move is weaker' : 'What this move does';
+  $('coach-why').textContent = report.why;
+  $('coach-better').textContent = report.better;
+  $('coach-lesson').textContent = report.lesson;
+  $('coach-comparison').textContent = report.comparison || '';
+  $('coach-best-line').textContent = report.bestLine;
+  $('coach-reply-line').textContent = report.replyLine;
+  $('coach-best-row').hidden = !report.bestLine;
+  $('coach-reply-row').hidden = !report.replyLine;
+  $('coach-lines').hidden = !report.bestLine && !report.replyLine;
+  $('coach-try-idea').disabled = !report.bestMove;
+  $('coach-try-idea').onclick = () => { if (report.bestMove && move) explorer.tryMove(move.before, report.bestMove); };
+  $('coach-note').textContent = ready ? `Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${before.depth}` : ''}. Deeper review can change the recommendation.` : 'The coach updates as each move is reviewed.';
 }
 
 function renderChart() {
@@ -399,6 +440,8 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>These are Knightlab’s approximate move ratings, based on evaluation loss from the player’s perspective. They are not Chess.com’s classifications or accuracy scores. Mate scores use a large capped value for the chart and loss calculation.</p>
 <p>Quick review gives each position 140 ms; deep review gives it 650 ms. Depth varies with your device and the position. Deeper searches can change the score or preferred move. The chart is capped at ±5 pawns.</p>
 <p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
+<p>Estimated accuracy is Knightlab’s independent score, not Chess.com Accuracy. Exact first-choice moves score 100; other moves are penalized for a drop in an evaluation-derived scoring proxy. Each player’s displayed score is the mean of their reviewed move scores. Missing positions are excluded, and provisional coverage is shown until the review finishes. This is not a calibrated winning-probability prediction.</p>
+<p>The coach describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. A short search may not establish every strategic reason. Use Deep review to confirm critical decisions.</p>
 <p><a href="./STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="./THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
 $('username-form').addEventListener('submit', searchPlayer);
@@ -407,7 +450,7 @@ $('games-nav').onclick = () => scrollToSection(document.querySelector('.workspac
 $('library-nav').onclick = () => scrollToSection($('game-library'));
 for (const id of ['sidebar-import','hero-import']) $(id).onclick = openImport;
 $('how-it-works').onclick = () => showInfo('A better way to review', instructions);
-$('analysis-method').onclick = () => showInfo('How move ratings work', method);
+$('analysis-method').onclick = () => showInfo('How ratings & accuracy work', method);
 document.querySelectorAll('.close-dialog').forEach(button => button.onclick = () => button.closest('dialog').close());
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } }));
 $('pgn-file').addEventListener('change', async event => {

@@ -92,9 +92,9 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     $('explore-feedback').textContent = variation.engineTurn ? 'Stockfish is preparing the first move.' : 'Tap a piece, then a highlighted square to play.';
     evaluate();
   }
-  function open(fromGame) {
+  function open(fromGame, fenOverride = null) {
     const current = context(); savedGame = current.parsed; resumeReview = pause();
-    originFen = current.parsed.fens[current.ply];
+    originFen = fenOverride || current.parsed.fens[current.ply];
     $('play-origin').value = fromGame ? 'current' : 'new';
     $('play-mode').value = fromGame ? 'free' : 'engine';
     $('play-color').value = fromGame ? new Chess(originFen).turn() : 'w';
@@ -144,5 +144,9 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     const link = document.createElement('a'); link.href = url; link.download = 'knightlab-play.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
   };
   dialog.addEventListener('close', () => { cancel(); variation = null; if (resumeReview && savedGame === context().parsed) resume(); resumeReview = false; });
-  return { reset };
+  return { reset, tryMove: (fen, uci) => {
+    if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci || '')) return;
+    open(true, fen); $('explore-origin').textContent = 'Trying the coach’s idea · From before the selected move';
+    attempt(uci.slice(0,2), uci.slice(2,4), uci[4]);
+  } };
 }
