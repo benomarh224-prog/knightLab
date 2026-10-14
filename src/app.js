@@ -283,7 +283,9 @@ function renderCoach(move, before, after) {
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
-  const brief=(ready ? report.why || report.summary : report.summary).replace(/^In Stockfish[’']s continuation,\s*/,'');
+  const positive=ready && ['Best','Great'].includes(report.rating);
+  const brief=(ready ? positive ? report.better : report.why || report.summary : report.summary)
+    .replace(/^Engine[’']s first choice\.\s*/,'').replace(/^In Stockfish[’']s continuation,\s*/,'Engine line: ');
   $('coach-brief').textContent = brief.split(/(?<=[.!?])\s+/)[0];
   $('board-coach-card').classList.toggle('coach-ready',ready);
   $('insight-text').textContent = report.summary;
