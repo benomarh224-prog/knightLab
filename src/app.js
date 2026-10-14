@@ -5,7 +5,6 @@ import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
 import { pageGames } from './library.js';
 import { identifyOpening } from './opening.js';
-import { accuracyPresentation } from './accuracy.js';
 import { evaluationReady, reviewSearch } from './review-quality.js';
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
@@ -38,15 +37,13 @@ const iconPaths = {
 function icon(name) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || ''}</svg>`; }
 document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = icon(element.dataset.icon));
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
-const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'precise', tab: 'overview', demo: true };
-const compactOpening = matchMedia('(max-width: 1020px)');
+const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'deep', tab: 'moves', mobileView: 'board', demo: true };
+const compactLayout = matchMedia('(max-width: 860px)');
 function positionOpeningCard() {
   const card = $('opening-card');
-  if (compactOpening.matches || $('focus-dialog').open) document.querySelector('.board-card').prepend(card);
-  else document.querySelector('.intelligence-heading').after(card);
-  card.open = !compactOpening.matches && !$('focus-dialog').open;
+  document.querySelector('.board-card').prepend(card);
+  card.open = false;
 }
-compactOpening.addEventListener('change', positionOpeningCard);
 $('opening-card').addEventListener('toggle', () => {
   $('opening-toggle-label').textContent = $('opening-card').open ? 'Less' : 'Details';
 });
@@ -62,7 +59,7 @@ const training = createTrainingUI({
   navigate: goTo,
   pause: () => { const running = state.running; stopAnalysis(); render(); return running; },
   resume: startAnalysis,
-  scrollToBoard: () => scrollToSection(document.querySelector('.board-card')),
+  scrollToBoard: () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); },
   icon,
   playSound: move => moveSounds.play(move),
 });
@@ -102,12 +99,13 @@ function setGame(game, { demo = false, analyze = true } = {}) {
   if ($('focus-dialog').open) $('focus-dialog').close();
   stopAnalysis();
   state.parsed = parsed; state.selected = game; state.demo = demo;
+  selectWorkspaceView('board');
   state.ply = demo ? 19 : 0;
   state.flipped = Boolean(state.username && game.black?.username?.toLowerCase() === state.username);
   state.evaluations = state.cache.get(game.pgn + state.mode) || [];
   $('analysis-error').hidden = true;
   $('demo-badge').hidden = !demo;
-  $('workspace-title').textContent = demo ? 'Inside the analysis lab' : 'Your game, move by move';
+  $('workspace-title').textContent = demo ? 'The Opera Game' : `${game.white?.username || parsed.headers.White || 'White'} vs ${game.black?.username || parsed.headers.Black || 'Black'}`;
   const { headers } = parsed;
   $('game-subtitle').textContent = demo ? 'The Opera Game · Paris, 1858' : `${game.time_class ? game.time_class[0].toUpperCase() + game.time_class.slice(1) + ' · ' : ''}${headers.Event || 'Imported game'}${game.end_time ? ' · ' + new Date(game.end_time * 1000).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : ''}`;
   $('game-result').textContent = (headers.Result || '*').replaceAll('-', '–');
@@ -125,10 +123,10 @@ function renderOpening() {
   $('opening-line').textContent = opening.line;
   $('opening-line').hidden = !opening.line;
   $('opening-position').hidden = opening.ply === null;
-  $('opening-card').open = !compactOpening.matches;
+  $('opening-card').open = false;
   $('opening-position').onclick = () => {
-    if (compactOpening.matches) $('opening-card').open = false;
-    goTo(opening.ply); scrollToSection(document.querySelector('.board-card'));
+    $('opening-card').open = false;
+    goTo(opening.ply); selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace'));
   };
 }
 
@@ -173,6 +171,9 @@ function renderBoard() {
   $('board').setAttribute('aria-label', `Chess position after ${state.ply} half-moves. ${chess.turn() === 'w' ? 'White' : 'Black'} to move.${rating ? ' ' + rating.move + ': ' + rating.label + '.' : ''} ${chess.fen()}`);
   const fullMove = Number(chess.fen().split(' ')[5]);
   $('move-position').textContent = state.ply ? `Move ${state.parsed.moves[state.ply-1].san} · ${Math.ceil(state.ply / 2)}/${Math.ceil(state.parsed.moves.length / 2)}` : 'Starting position';
+  $('review-move-label').textContent = $('move-position').textContent;
+  $('review-previous').disabled = state.ply === 0;
+  $('review-next').disabled = state.ply === state.parsed.moves.length;
   for (const id of ['first-move', 'previous-move']) $(id).disabled = state.ply === 0;
   for (const id of ['last-move', 'next-move']) $(id).disabled = state.ply === state.parsed.moves.length;
   const evaluation = state.evaluations[state.ply];
@@ -214,7 +215,6 @@ function render() {
   $('next-mistake').disabled = !summary.items.some((item, index) => item && ['Mistake', 'Blunder', 'Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()));
   const move = state.parsed.moves[state.ply - 1];
   const item = move ? summary.items[state.ply - 1] : null;
-  renderAccuracy();
   const verdict = selectedMoveVerdict(move, item);
   const announcement = `${verdict.move === '—' ? '' : verdict.move + ': '}${verdict.label}`;
   if ($('move-rating-announcement').textContent !== announcement) $('move-rating-announcement').textContent = announcement;
@@ -239,27 +239,6 @@ function render() {
   $('analysis-speed').disabled = state.running;
   updateMoveRatings(summary.items);
   training.render();
-}
-
-function renderAccuracy() {
-  const accuracy = accuracyPresentation(state.selected, state.parsed, state.evaluations, state.mode);
-  document.querySelector('.accuracy-card').dataset.source = accuracy.source;
-  $('accuracy-title').textContent = accuracy.title;
-  $('accuracy-note').textContent = accuracy.note;
-  for (const [color, player] of Object.entries(accuracy.players)) {
-    const side = color === 'w' ? 'white' : 'black';
-    const label = state.selected[side]?.username || state.parsed.headers[color === 'w' ? 'White' : 'Black'] || (color === 'w' ? 'White' : 'Black');
-    $('accuracy-' + color + '-name').textContent = label;
-    $('accuracy-' + color + '-name').title = label;
-    $('accuracy-' + color + '-score').textContent = player.score === null ? '—' : `${player.score.toFixed(1)}%`;
-    $('accuracy-' + color + '-coverage').textContent = !player.total ? 'No moves' : `${state.mode === 'precise' ? player.qualified : player.reviewed}/${player.total} moves${player.minDepth === null ? '' : ` · min depth ${player.minDepth}`}`;
-    $('accuracy-' + color + '-bar').style.width = `${player.score ?? 0}%`;
-  }
-  $('accuracy-status').textContent = accuracy.status;
-  const reference = accuracy.reference;
-  $('accuracy-reference').hidden = reference.w === null && reference.b === null;
-  $('accuracy-reference').textContent = `Chess.com published accuracy (separate metric): White ${reference.w === null ? 'unavailable' : reference.w.toFixed(1) + '%'} · Black ${reference.b === null ? 'unavailable' : reference.b.toFixed(1) + '%'}`;
-  $('precise-review').hidden = state.mode === 'precise';
 }
 
 let coachContext = null, coachReport = null;
@@ -421,7 +400,7 @@ async function searchPlayer(event) {
     try { localStorage.setItem('knightlab-username', username); } catch {}
     if (games.length) setGame(state.games[0]);
     else setGame({ pgn: DEMO_PGN }, { demo: true });
-    $('username').blur(); scrollToSection($('game-library')); $('game-library').focus({ preventScroll: true });
+    $('connect-dialog').close(); $('username').blur(); scrollToSection($('game-library')); $('game-library').focus({ preventScroll: true });
   } catch (error) { if (!controller.signal.aborted) searchStatus(error.message, true); }
   finally { if (state.request === controller) { $('connect-button').disabled = false; $('connect-button').innerHTML = `Find my games ${icon('arrow')}`; } }
 }
@@ -442,28 +421,27 @@ async function loadOlder() {
   finally { button.disabled = false; button.innerHTML = 'Load older games <span>↓</span>'; }
 }
 
-function openImport() { $('import-error').hidden = true; $('import-dialog').showModal(); }
+function openImport() { if ($('connect-dialog').open) $('connect-dialog').close(); $('import-error').hidden = true; $('import-dialog').showModal(); }
 function showInfo(title, content) { $('info-title').textContent = title; $('info-body').innerHTML = content; $('info-dialog').showModal(); }
 const instructions = '<div class="info-step"><b>1</b><div><strong>Bring your games</strong><p>Enter your public Chess.com username. No sign-in or password is needed. You can also import a single PGN game.</p></div></div><div class="info-step"><b>2</b><div><strong>Choose a game</strong><p>Your most recent completed standard chess games appear in the library. Filter by time control or load older games.</p></div></div><div class="info-step"><b>3</b><div><strong>Find your turning points</strong><p>Stockfish reviews the positions on your device. Explore the board, click the evaluation chart, and jump to mistakes. The best-move arrow shows the recommended move from the position currently on the board.</p></div></div><p>The public Chess.com API may take up to 24 hours to refresh. Live games and chess variants are not supported.</p>';
 const method = `<p>Each position is evaluated by <a href="https://github.com/nmrugg/stockfish.js/tree/v19.0.1" target="_blank" rel="noopener noreferrer">Stockfish 19 Lite</a>. A positive score favors White; a negative score favors Black. One pawn equals 100 centipawns. “M” means a forced mate.</p>
 <table class="method-table"><tbody><tr><td>Great</td><td>Top choice, clearly ahead of the alternative</td></tr><tr><td>Best</td><td>Matches the engine’s first choice</td></tr><tr><td>Good</td><td>Less than 0.50 pawn lost</td></tr><tr><td>Inaccuracy</td><td>0.50–0.99 pawn lost</td></tr><tr><td>Mistake</td><td>1.00–1.99 pawns lost</td></tr><tr><td>Blunder</td><td>2.00+ pawns lost</td></tr></tbody></table>
 <p>Great moves match the engine’s top choice, beat its next candidate by at least one pawn at the same search depth of at least 8, and lose no more than 0.30 pawn in the resulting position. Best / Great counts combine both categories.</p>
-<p>These are Knightlab’s approximate move ratings, based on evaluation loss from the player’s perspective. They are not Chess.com’s classifications or accuracy scores. Mate scores use a large capped value for the chart and loss calculation.</p>
-<p>Precise review is the default and targets depth 18 for every position, with two candidate moves. Each search can take up to 20 seconds on the first pass. If the time limit is reached first, the accuracy stays pending; Deepen remaining retries only positions below the target, allowing up to 80 seconds per position. Quick (140 ms) and Deep (650 ms) reviews are exploratory estimates. You can pause and resume any review. The chart is capped at ±5 pawns.</p>
+<p>Move ratings are based on evaluation loss from the player’s perspective. They can change with deeper analysis. Mate scores use a large capped value for the chart and loss calculation.</p>
+<p>Standard review uses 650 ms per position to give you a quick first pass. Deep review targets depth 18 with two candidate moves. If a position needs more time, Deepen remaining searches it again, allowing up to 80 seconds. You can pause and resume either review. The chart is capped at ±5 pawns.</p>
 <p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
-<p>Knightlab accuracy uses <a href="https://lichess.org/page/accuracy" target="_blank" rel="noopener noreferrer">Lichess’s documented model</a>: centipawns map to estimated winning chances, and a move is penalized for reducing those chances. The game score combines a volatility-weighted mean with a harmonic mean, so critical errors are not hidden by a long sequence of easy moves. There is no automatic 100 just for matching the engine’s first choice.</p>
-<p>Scores appear only after all positions have been analyzed; Precise review also requires depth 18 or a terminal position throughout. Actual minimum depth and move coverage are displayed. Custom PGNs use their actual starting evaluation, including games starting with Black. This is an independent metric; it need not match Chess.com or Lichess’s own engine results, and deeper analysis can still change it.</p>
-<p>When supplied, Chess.com’s stored <code>accuracies</code> values appear as a separate reference. They never replace or alter the independent score and may be subject to public-data caching.</p>
-<p>The coach describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Precise review to investigate critical decisions.</p>
+<p>The coach describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
 <p><a href="./STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="./THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
 $('username-form').addEventListener('submit', searchPlayer);
-$('focus-username').onclick = () => { $('username').focus({ preventScroll: true }); scrollToSection(document.querySelector('.connect-card')); };
-$('games-nav').onclick = () => scrollToSection(document.querySelector('.workspace'));
+function openConnect() { $('connect-dialog').showModal(); $('username').focus({preventScroll:true}); }
+$('focus-username').onclick = openConnect;
+$('open-connect').onclick = openConnect;
+$('games-nav').onclick = () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); };
 $('library-nav').onclick = () => scrollToSection($('game-library'));
 for (const id of ['sidebar-import','hero-import']) $(id).onclick = openImport;
 $('how-it-works').onclick = () => showInfo('A better way to review', instructions);
-$('analysis-method').onclick = () => showInfo('How ratings & accuracy work', method);
+$('analysis-method').onclick = () => showInfo('How move ratings work', method);
 document.querySelectorAll('.close-dialog').forEach(button => button.onclick = () => button.closest('dialog').close());
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } }));
 $('pgn-file').addEventListener('change', async event => {
@@ -517,15 +495,42 @@ $('toggle-sound').onclick = () => {
 };
 renderSoundControl();
 $('chart').onclick = event => { const rect = $('chart').getBoundingClientRect(); goTo(Math.round(Math.max(0,Math.min(1,(event.clientX - rect.left)/rect.width)) * state.parsed.moves.length)); };
-$('move-list').onclick = event => { const button = event.target.closest('[data-ply]'); if (button) goTo(Number(button.dataset.ply)); };
-for (const tab of ['overview', 'moves']) $(tab + '-tab').onclick = () => {
-  state.tab = tab;
-  for (const name of ['overview','moves']) { $(name+'-panel').hidden = name !== tab; $(name+'-tab').classList.toggle('selected',name === tab); $(name+'-tab').setAttribute('aria-selected',String(name === tab)); }
-  if (tab === 'moves') goTo(state.ply);
+$('move-list').onclick = event => { const button = event.target.closest('[data-ply]'); if (button) { goTo(Number(button.dataset.ply)); if (compactLayout.matches) { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); $('mobile-board-tab').focus({preventScroll:true}); } } };
+function selectWorkspaceView(view) {
+  state.mobileView = view;
+  document.querySelector('.workspace').dataset.mobileView = view;
+  if (view !== 'board') state.tab = view;
+  for (const name of ['moves','coach','overview']) {
+    $(name+'-panel').hidden = name !== state.tab;
+    $(name+'-tab').classList.toggle('selected', name === state.tab);
+    $(name+'-tab').setAttribute('aria-selected', String(name === state.tab));
+    $(name+'-tab').tabIndex = name === state.tab ? 0 : -1;
+  }
+  for (const name of ['board','coach','moves','overview']) {
+    $('mobile-'+name+'-tab').classList.toggle('selected', name === view);
+    $('mobile-'+name+'-tab').setAttribute('aria-selected', String(name === view));
+    $('mobile-'+name+'-tab').tabIndex = name === view ? 0 : -1;
+  }
+}
+for (const name of ['moves','coach','overview']) $(name+'-tab').onclick = () => selectWorkspaceView(name);
+for (const name of ['board','coach','moves','overview']) $('mobile-'+name+'-tab').onclick = () => { selectWorkspaceView(name); scrollToSection(document.querySelector('.workspace')); };
+$('board-coach').onclick = () => {
+  if ($('focus-dialog').open) $('focus-dialog').close();
+  selectWorkspaceView('coach');
+  if (compactLayout.matches) scrollToSection(document.querySelector('.workspace'));
 };
+$('review-previous').onclick = () => goTo(state.ply-1);
+$('review-next').onclick = () => goTo(state.ply+1);
+for (const tablist of document.querySelectorAll('[role="tablist"]')) tablist.addEventListener('keydown', event => {
+  if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+  const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+  const index = tabs.indexOf(event.target); if (index < 0) return;
+  event.preventDefault();
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length-1 : (index+(event.key === 'ArrowRight' ? 1 : -1)+tabs.length)%tabs.length;
+  tabs[next].click(); tabs[next].focus({preventScroll:true});
+});
 $('analyze-button').onclick = () => { if (state.running) { stopAnalysis(); render(); } else startAnalysis(); };
 $('analysis-speed').onchange = () => { stopAnalysis(); state.mode = $('analysis-speed').value; state.evaluations = state.cache.get(state.selected.pgn + state.mode) || []; render(); startAnalysis(); };
-$('precise-review').onclick = () => { $('analysis-speed').value = 'precise'; $('analysis-speed').onchange(); };
 $('next-mistake').onclick = () => {
   const { items } = summarize(state.parsed, state.evaluations, playerColor());
   const mistakes = items.map((item,index) => item && ['Mistake','Blunder','Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()) ? index + 1 : null).filter(Boolean);
@@ -537,7 +542,7 @@ $('download-pgn').onclick = () => {
   const link = document.createElement('a'); link.href = url; link.download = 'knightlab-game.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000); toast('PGN downloaded.');
 };
 document.addEventListener('keydown', event => {
-  if (['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName) || document.querySelector('dialog[open]:not(#focus-dialog)')) return;
+  if (event.target.closest('[role="tablist"]') || ['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName) || document.querySelector('dialog[open]:not(#focus-dialog)')) return;
   if (event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.key === 'ArrowLeft') { event.preventDefault(); goTo(state.ply-1); }
   if (event.key === 'ArrowRight') { event.preventDefault(); goTo(state.ply+1); }
