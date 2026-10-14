@@ -1026,12 +1026,19 @@ main { max-width: 1580px; margin: 0 auto; padding: 14px 22px 24px; }
 .workspace .board-tools .board-tool { flex-direction: column; gap: 2px; height: 48px; min-height: 48px; padding: 4px; font-size: 9px; }
 @media(min-width:861px) {
   .workspace .line-toolbar, .workspace .line-controls, .workspace .threat-details { grid-column: 1/-1; }
+  .workspace .board-card>.threat-details { grid-row: 4; margin: 0; }
+  .workspace .board-card:has(>.threat-details:not([hidden]))>.board-controls { grid-row: 5; }
+  .workspace .board-card:has(>.threat-details:not([hidden]))>.board-explore-tools { grid-row: 6; }
   .workspace .board-card.exploring>.line-toolbar { grid-row: 2; }
   .workspace .board-card.exploring>.player-row { grid-row: 3; }
   .workspace .board-card.exploring>.board-area { grid-row: 4; }
   .workspace .board-card.exploring>.line-controls { grid-row: 5; margin: 0; }
   .workspace .board-card.exploring>.board-controls { grid-row: 6; }
   .workspace .board-card.exploring>.board-explore-tools { grid-row: 7; }
+  .workspace .board-card.exploring>.threat-details { grid-row: 5; }
+  .workspace .board-card.exploring:has(>.threat-details:not([hidden]))>.line-controls { grid-row: 6; }
+  .workspace .board-card.exploring:has(>.threat-details:not([hidden]))>.board-controls { grid-row: 7; }
+  .workspace .board-card.exploring:has(>.threat-details:not([hidden]))>.board-explore-tools { grid-row: 8; }
 }
 @media(max-width:860px) { .board-explore-tools .explore-launch { font-size: 10px; } }
 #board .square.rated { z-index: 4; }
