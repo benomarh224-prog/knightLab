@@ -1067,3 +1067,15 @@ main { max-width: 1580px; margin: 0 auto; padding: 14px 22px 24px; }
 @media(max-width:860px) { .board-top { gap: 6px; margin-bottom: 6px; } .board-coach-toggle { min-height: 36px; padding: 6px 10px; font-size: 11px; } }
 .focus-dialog .board-top { scroll-margin-top: 12px; }
 @media(min-width:861px) and (max-width:1400px) { .workspace .board-controls { grid-template-columns: 1fr; } }
+/* Keep coaching above the board and playback as the final control row. */
+.board-top { grid-template-columns: minmax(0,1fr); }
+.board-header-actions { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; grid-row: 1; }
+.board-header-actions .board-coach-toggle { min-height: 44px; font-size: 13px; }
+.board-header-actions #focus-mode { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 1px solid #435f4c; border-radius: 8px; background: #202e25; color: #b7cdbf; font-size: 12px; }
+.board-top>.opening-card { grid-row: 2; }
+.workspace .board-controls, .focus-dialog .board-controls { display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; }
+.board-controls>.board-tools { grid-column: 1/-1; grid-row: 1; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.board-controls>.playback-heading { grid-column: 1/-1; grid-row: 2; margin-top: 4px; }
+.board-controls>.move-controls { grid-column: 1/-1; grid-row: 3; }
+.workspace .board-tools .board-tool, .focus-dialog .board-tools .board-tool { flex-direction: row; min-height: 44px; height: 44px; gap: 7px; font-size: 12px; }
+.focus-dialog .board-header-actions { grid-template-columns: minmax(0,1fr); }
