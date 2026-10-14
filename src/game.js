@@ -35,10 +35,17 @@ export function scoreFromInfo(line, turn) {
     pv: line.match(/\bpv (.+)$/)?.[1]?.split(' ') || [] };
 }
 
-export function terminalEvaluation(fen) {
-  const game = new Chess(fen);
+export function terminalEvaluation(fen, history) {
+  const game = new Chess(history?.startFen || fen);
+  if (history) {
+    for (const uci of history.moves) {
+      if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) throw new Error('Invalid analysis move history.');
+      game.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
+    }
+    if (game.fen() !== fen) throw new Error('Analysis history does not match the position.');
+  }
   if (game.isCheckmate()) return { cp: game.turn() === 'w' ? -10000 : 10000, mate: game.turn() === 'w' ? -0 : 0, terminal: true, depth: 0, best: null, pv: [] };
-  if (game.isStalemate() || game.isInsufficientMaterial() || game.isDrawByFiftyMoves()) return { cp: 0, mate: null, terminal: true, depth: 0, best: null, pv: [] };
+  if (game.isStalemate() || game.isInsufficientMaterial() || game.isDrawByFiftyMoves() || game.isThreefoldRepetition()) return { cp: 0, mate: null, terminal: true, depth: 0, best: null, pv: [] };
   return null;
 }
 

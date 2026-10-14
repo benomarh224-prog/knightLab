@@ -25,15 +25,21 @@ export class Engine {
     });
     return this.initializing;
   }
-  async evaluate(fen, milliseconds) {
-    const terminal = terminalEvaluation(fen);
+  async evaluate(fen, search, history) {
+    const options = typeof search === 'number' ? { milliseconds: search } : search;
+    const { milliseconds, depth, clearHash } = options || {};
+    if (!Number.isFinite(milliseconds) || milliseconds <= 0 || milliseconds > 120000 ||
+        (depth !== undefined && (!Number.isInteger(depth) || depth < 1 || depth > 30))) {
+      throw new Error('Invalid engine search limits.');
+    }
+    const terminal = terminalEvaluation(fen, history);
     if (terminal) return terminal;
     await this.init();
     if (this.pending) throw new Error('The engine is already evaluating a position.');
     return new Promise((resolve, reject) => {
       let info = null;
       let alternative = null;
-      const timeout = setTimeout(() => { this.destroy(new Error('Engine analysis timed out. Please try again.')); }, Math.max(15000, milliseconds * 4));
+      const timeout = setTimeout(() => { this.destroy(new Error('Engine analysis timed out. Please try again.')); }, Math.max(15000, milliseconds + 15000));
       this.rejectPending = error => { clearTimeout(timeout); reject(error); };
       this.pending = line => {
         if (line.startsWith('info ')) {
@@ -44,11 +50,12 @@ export class Engine {
         if (line.startsWith('bestmove ')) {
           clearTimeout(timeout); this.pending = null; this.rejectPending = null;
           if (!info) { reject(new Error('The engine did not return a score for this position.')); return; }
-          resolve({ ...info, best: line.split(' ')[1], alternative: alternative?.depth === info.depth ? alternative : null });
+          resolve({ ...info, searchTime: milliseconds, best: line.split(' ')[1], alternative: alternative?.depth === info.depth ? alternative : null });
         }
       };
-      this.worker.postMessage(`position fen ${fen}`);
-      this.worker.postMessage(`go movetime ${milliseconds}`);
+      if (clearHash) this.worker.postMessage('setoption name Clear Hash');
+      this.worker.postMessage(history ? `position fen ${history.startFen}${history.moves.length ? ` moves ${history.moves.join(' ')}` : ''}` : `position fen ${fen}`);
+      this.worker.postMessage(`go ${depth ? `depth ${depth} ` : ''}movetime ${milliseconds}`);
     });
   }
   destroy(error = new Error('Analysis paused.')) { this.cancelInitialization?.(error); this.cancelInitialization = null; this.rejectPending?.(error); this.rejectPending = null; this.worker?.terminate(); this.worker = null; this.pending = null; this.initializing = null; }
