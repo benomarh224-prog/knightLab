@@ -1,8 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Chess } from 'chess.js';
 import { parseGame } from '../src/game.js';
 import { AnalysisLine } from '../src/analysis-line.js';
-import { positionThreats, arrowPath } from '../src/board-visuals.js';
+import { positionThreats, primaryMoveThreat, arrowPath } from '../src/board-visuals.js';
+
+test('only the leading new attack is shown and an unrelated move clears it',()=>{
+ const board=new Chess('4k3/8/8/8/8/2r5/P2Q4/4K3 b - - 0 1');
+ const attack=board.move('Rc2');
+ assert.ok(positionThreats(board.fen()).length>1);
+ assert.equal(primaryMoveThreat(board.fen(),attack).square,'d2');
+ const reply=board.move('Kf1');
+ assert.ok(positionThreats(board.fen()).some(item=>item.square==='d2'));
+ assert.equal(primaryMoveThreat(board.fen(),reply),null);
+});
+
+test('the single primary warning prioritizes check and supports imported starting positions',()=>{
+ const board=new Chess('4k3/8/8/8/8/8/R7/4K3 w - - 0 1');
+ const move=board.move('Re2+');
+ assert.equal(primaryMoveThreat(board.fen(),move).kind,'check');
+ const threat=primaryMoveThreat('8/p7/2p2pkp/1p4p1/1P4P1/P1P2RP1/3rr1PK/R7 w - - 1 30');
+ assert.equal(threat.square,'g2');
+});
 
 test('inline exploration branches without changing the original PGN or its FENs',()=>{
  const parsed=parseGame('1. e4 e5 2. Nf3 Nc6 *'),original=JSON.stringify(parsed);

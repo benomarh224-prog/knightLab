@@ -10,7 +10,8 @@ import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
 import { createInlineAnalysis } from './inline-analysis.js';
-import { positionThreats, arrowPath } from './board-visuals.js';
+import { primaryMoveThreat, arrowPath } from './board-visuals.js';
+import { createBoardCoach } from './board-coach.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
 import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceMoveVerdict } from './verdict.js';
 
@@ -52,7 +53,7 @@ function boardView() {
 }
 function positionOpeningCard() {
   const card = $('opening-card');
-  document.querySelector('.board-card').prepend(card);
+  document.querySelector('.board-card').prepend($('board-top'));
   card.open = false;
 }
 $('opening-card').addEventListener('toggle', () => {
@@ -82,6 +83,7 @@ const explorer = createExploreUI({
 });
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound:move=>moveSounds.play(move)});
 const boardCard = document.querySelector('.board-card');
+const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board')});
 const boardHome = document.createComment('Board position');
 boardCard.before(boardHome);
 $('focus-mode').onclick = () => {
@@ -106,7 +108,7 @@ function scrollToSection(element) {
 
 function setGame(game, { demo = false, analyze = true } = {}) {
   const parsed = parseGame(game.pgn);
-  inline.reset(); selectedThreat=null;
+  inline.reset(); selectedThreat=null; threatFen=null; boardCoach.close(false);
   training.reset();
   explorer.reset();
   if ($('focus-dialog').open) $('focus-dialog').close();
@@ -161,7 +163,7 @@ function updatePlayers() {
 function renderBoard() {
   if(boardDragging)return;
   const view=boardView(), chess = new Chess(view.fen);
-  if (threatFen!==view.fen) { threatFen=view.fen; threats=positionThreats(view.fen); selectedThreat=null; }
+  if (threatFen!==view.fen) { threatFen=view.fen; const primary=primaryMoveThreat(view.fen,view.last); threats=primary?[primary]:[]; selectedThreat=null; }
   const threatened=new Map((showThreats?threats:[]).map(item=>[item.square,item]));
   const targets=inline.targets, selection=inline.selected;
   const focusedSquare=document.activeElement?.closest('#board [data-square]')?.dataset.square;
@@ -289,7 +291,7 @@ function renderCoach(move, before, after) {
   $('coach-reply-row').hidden = !report.replyLine;
   $('coach-lines').hidden = !report.bestLine && !report.replyLine;
   $('coach-try-idea').disabled = !report.bestMove;
-  $('coach-try-idea').onclick = () => { if (report.bestMove && move) { inline.tryBest(report.bestMove); selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); } };
+  $('coach-try-idea').onclick = () => { if (report.bestMove && move) { boardCoach.close(); inline.tryBest(report.bestMove); selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); } };
   $('coach-note').textContent = ready ? `Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${before.depth}` : ''}. Deeper review can change the recommendation.` : 'The coach updates as each move is reviewed.';
 }
 
@@ -460,8 +462,8 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>Move ratings are based on evaluation loss from the player’s perspective. They can change with deeper analysis. Mate scores use a large capped value for the chart and loss calculation.</p>
 <p>Standard review uses 650 ms per position to give you a quick first pass. Deep review targets depth 18 with two candidate moves. If a position needs more time, Deepen remaining searches it again, allowing up to 80 seconds. You can pause and resume either review. The chart is capped at ±5 pawns.</p>
 <p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
-<p>Threats highlights attacked pieces: red for check or no immediate legal recapture, amber for defended attacks and risky exchanges. Tap a highlighted square to see why. An attack does not automatically mean a piece will be lost. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
-<p>The coach describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
+<p>Threats highlights only the leading new attack from the current move. The old highlight clears on the next move. Red means check or no immediate legal recapture; amber means a defended attack or risky exchange. Tap the square to see why. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
+<p>Open Coach beside the opening to read its explanation over the board. It describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
 <p><a href="./STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="./THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
 $('username-form').addEventListener('submit', searchPlayer);
@@ -561,28 +563,24 @@ renderSoundControl();
 $('chart').onclick = event => { const rect = $('chart').getBoundingClientRect(); goTo(Math.round(Math.max(0,Math.min(1,(event.clientX - rect.left)/rect.width)) * state.parsed.moves.length)); };
 $('move-list').onclick = event => { const button = event.target.closest('[data-ply]'); if (button) { goTo(Number(button.dataset.ply)); if (compactLayout.matches) { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); $('mobile-board-tab').focus({preventScroll:true}); } } };
 function selectWorkspaceView(view) {
+  if(view==='coach'){boardCoach.open();return;}
   state.mobileView = view;
   document.querySelector('.workspace').dataset.mobileView = view;
   if (view !== 'board') state.tab = view;
-  for (const name of ['moves','coach','overview']) {
+  for (const name of ['moves','overview']) {
     $(name+'-panel').hidden = name !== state.tab;
     $(name+'-tab').classList.toggle('selected', name === state.tab);
     $(name+'-tab').setAttribute('aria-selected', String(name === state.tab));
     $(name+'-tab').tabIndex = name === state.tab ? 0 : -1;
   }
-  for (const name of ['board','coach','moves','overview']) {
+  for (const name of ['board','moves','overview']) {
     $('mobile-'+name+'-tab').classList.toggle('selected', name === view);
     $('mobile-'+name+'-tab').setAttribute('aria-selected', String(name === view));
     $('mobile-'+name+'-tab').tabIndex = name === view ? 0 : -1;
   }
 }
-for (const name of ['moves','coach','overview']) $(name+'-tab').onclick = () => selectWorkspaceView(name);
-for (const name of ['board','coach','moves','overview']) $('mobile-'+name+'-tab').onclick = () => { selectWorkspaceView(name); scrollToSection(document.querySelector('.workspace')); };
-$('board-coach').onclick = () => {
-  if ($('focus-dialog').open) $('focus-dialog').close();
-  selectWorkspaceView('coach');
-  if (compactLayout.matches) scrollToSection(document.querySelector('.workspace'));
-};
+for (const name of ['moves','overview']) $(name+'-tab').onclick = () => selectWorkspaceView(name);
+for (const name of ['board','moves','overview']) $('mobile-'+name+'-tab').onclick = () => { selectWorkspaceView(name); scrollToSection(document.querySelector('.workspace')); };
 $('review-previous').onclick = () => stepMove(-1);
 $('review-next').onclick = () => stepMove(1);
 for (const tablist of document.querySelectorAll('[role="tablist"]')) tablist.addEventListener('keydown', event => {

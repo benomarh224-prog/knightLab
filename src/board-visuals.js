@@ -43,6 +43,19 @@ export function positionThreats(fen) {
   });
 }
 
+// Only the leading attack introduced by this move belongs on the board.
+// Comparing positions clears an old threat when an unrelated piece moves.
+export function primaryMoveThreat(fen,last=null) {
+  let candidates=positionThreats(fen);
+  if(last?.before) {
+    const previous=positionThreats(last.before);
+    candidates=candidates.filter(item=>item.piece.color!==last.color && (item.kind==='check' || item.attackers.some(attack=>!previous.some(old=>old.square===item.square && old.piece.color===item.piece.color && old.attackers.some(prior=>prior.from===attack.from && prior.to===attack.to)))));
+  }
+  const priority={check:4,loose:3,exchange:2,defended:1};
+  candidates.sort((a,b)=>priority[b.kind]-priority[a.kind] || value[b.piece.type]-value[a.piece.type] || a.square.localeCompare(b.square));
+  return candidates[0] || null;
+}
+
 export function arrowPath(from,to,flipped=false) {
   if (!/^[a-h][1-8]$/.test(from||'') || !/^[a-h][1-8]$/.test(to||'') || from===to) return '';
   const point=square=>[flipped?(7-(square.charCodeAt(0)-97))*100+50:(square.charCodeAt(0)-97)*100+50,flipped?(Number(square[1])-1)*100+50:(8-Number(square[1]))*100+50];
