@@ -1,0 +1,17 @@
+import { build } from 'esbuild';
+import { mkdir, copyFile, readdir, readFile } from 'node:fs/promises';
+await mkdir('dist/engine', { recursive: true });
+await build({ entryPoints: ['src/app.js'], bundle: true, minify: true, sourcemap: true, outfile: 'dist/app.js', format: 'esm', target: ['es2022'] });
+await Promise.all(['index.html', 'style.css', 'favicon.svg'].map(file => copyFile(`src/${file}`, `dist/${file}`)));
+const files = await readdir('node_modules/stockfish/bin');
+const engine = files.find(file => /lite-single\.js$/.test(file));
+if (!engine) throw new Error('Stockfish lite single-threaded engine is missing.');
+await copyFile(`node_modules/stockfish/bin/${engine}`, `dist/engine/${engine}`);
+await copyFile(`node_modules/stockfish/bin/${engine.replace('.js', '.wasm')}`, `dist/engine/${engine.replace('.js', '.wasm')}`);
+await copyFile('node_modules/chess.js/LICENSE', 'dist/CHESS-JS-LICENSE.txt');
+const license = (await readdir('node_modules/stockfish')).find(file => /^(copying|license)(\.txt|\.md)?$/i.test(file));
+if (license) await copyFile(`node_modules/stockfish/${license}`, 'dist/STOCKFISH-LICENSE.txt');
+else await copyFile('src/STOCKFISH-LICENSE.txt', 'dist/STOCKFISH-LICENSE.txt');
+await copyFile('src/THIRD-PARTY-NOTICES.txt', 'dist/THIRD-PARTY-NOTICES.txt');
+await copyFile('src/OPENINGS-LICENSE.txt', 'dist/OPENINGS-LICENSE.txt');
+console.log(`Built Knightlab with ${engine}.`);
