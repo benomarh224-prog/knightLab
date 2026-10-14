@@ -983,3 +983,11 @@ main { max-width: 1580px; margin: 0 auto; padding: 14px 22px 24px; }
   .workspace .board-explore-tools { grid-column: 1/-1; grid-row: 5; margin-top: 0; }
 }
 @media (max-width: 860px) { .topbar { backdrop-filter: none; } }
+@media (max-width: 860px) {
+  .mobile-workspace-tabs { margin-bottom: 4px; }
+  .workspace-heading { min-height: 32px; margin-bottom: 4px; }
+  .workspace-heading>div>span:last-child { display: none; }
+  .workspace-heading .download-button { min-height: 32px; height: 32px; }
+  .board-card>.opening-card { margin-bottom: 2px; }
+  .board-card .opening-summary, .board-card .opening-toggle { min-height: 32px; }
+}
