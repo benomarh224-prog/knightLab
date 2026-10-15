@@ -629,6 +629,13 @@ document.querySelectorAll('[data-home-filter]').forEach(button=>button.onclick=(
   for(const option of document.querySelectorAll('[data-home-filter]'))option.setAttribute('aria-pressed',String(option===button));
   for(const card of document.querySelectorAll('[data-home-category]'))card.hidden=button.dataset.homeFilter!=='all'&&card.dataset.homeCategory!==button.dataset.homeFilter;
 });
+
+function selectLearningCategory(category){
+  for(const button of document.querySelectorAll('[data-learn-filter]'))button.setAttribute('aria-pressed',String(button.dataset.learnFilter===category));
+  for(const section of document.querySelectorAll('[data-learn-category]'))section.hidden=section.dataset.learnCategory!==category;
+}
+document.querySelectorAll('[data-learn-filter]').forEach(button=>button.onclick=()=>selectLearningCategory(button.dataset.learnFilter));
+document.querySelectorAll('[data-learn-category-link]').forEach(link=>link.onclick=()=>selectLearningCategory(link.dataset.learnCategoryLink));
 document.querySelectorAll('[data-home-answer]').forEach(button=>{
   button.setAttribute('aria-pressed','false');
   button.onclick=()=>{

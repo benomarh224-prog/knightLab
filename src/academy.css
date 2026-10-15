@@ -33,6 +33,14 @@ body:not([data-page="home"]) .main-nav .nav-item.active { color:#f6ffe4; backgro
 .course-cover-copy>p,.course-cover-copy ul { color:#66785e; }
 .learn-page .course-progress-caption { color:#627b4f; }
 .learn-footnote { color:#69785f; }
+.learn-categories { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 28px; }
+.learn-categories button { display:flex; align-items:center; justify-content:center; gap:10px; min-height:44px; padding:10px 20px; border:1px solid #dce2d2; border-radius:24px; background:#eeece3; color:#40573c; font-size:13px; font-weight:600; }
+.learn-categories button[aria-pressed="true"] { background:#153b29; border-color:#153b29; color:#fffdf2; }
+.learn-categories button>span { display:grid; place-items:center; min-width:22px; height:22px; border-radius:50%; background:#153b2912; font-size:10px; }
+.learn-categories button[aria-pressed="true"]>span { background:#ffffff1a; }
+.learn-category-heading { margin-bottom:20px; }
+.learn-category-heading h2 { margin:0 0 5px; color:#17291c; font:700 30px/1.1 'Cormorant Garamond',Georgia,serif; }
+.learn-category-heading p { margin:0; color:#6c7968; font-size:13px; }
 .learn-page .course-cover+.course-cover { margin-top:24px; }
 body:is([data-page="tactics"],[data-page="opengames"]) .lesson-idea-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
 .tactics-method { margin-bottom:12px; font-size:11px; line-height:1.8; color:#617b4e; }
