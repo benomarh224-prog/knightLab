@@ -200,7 +200,10 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('course-lessons').onclick=event=>{const item=event.target.closest('[data-lesson]');if(item){selectLesson(item.dataset.lesson);layout.close();$('lesson-title').focus({preventScroll:true});document.querySelector('.lesson-page-heading').scrollIntoView({block:'start'});}};
   $('lesson-reset').onclick=()=>{player.reset();clearTurn();render();};
   $('lesson-undo').onclick=()=>{const exploring=player.exploring;clearTurn();if(player.undo())message=exploring?'Move taken back. Try another continuation.':'Back to your previous decision. Your earned completion is saved.';render();};
-  function toggleExploration(){clearTurn();if(player.exploring)player.stopExploring();else player.startExploring();render();}
+  function toggleExploration(){
+    clearTurn();if(player.exploring)player.stopExploring();else player.startExploring();render();
+    ($('lesson-explore-toggle').hidden?$('lesson-explore-start'):$('lesson-explore-toggle')).focus({preventScroll:true});
+  }
   $('lesson-explore-toggle').onclick=toggleExploration;$('lesson-explore-start').onclick=toggleExploration;
   $('lesson-focus').onclick=()=>{focus=!focus;render();$('lesson-focus').focus({preventScroll:true});document.querySelector('.lesson-topline').scrollIntoView({block:'start'});};
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&focus&&!document.querySelector('dialog[open]')){focus=false;render();$('lesson-focus').focus({preventScroll:true});}});
