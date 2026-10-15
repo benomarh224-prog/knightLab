@@ -15,6 +15,13 @@ export function createLearningUI({storage,onAnalyze}){
     $('course-progress-label').textContent=`${completed.length} / ${FRENCH_LESSONS.length} lessons practiced`;
     $('learn-progress-label').textContent=completed.length?`${completed.length} of ${FRENCH_LESSONS.length} lessons practiced`:'8 focused lessons · Interactive practice';
     $('course-progress-fill').style.width=`${completed.length/FRENCH_LESSONS.length*100}%`;
+    $('home-course-progress').textContent=`French Defense · ${completed.length} of ${FRENCH_LESSONS.length} lessons practiced`;
+    $('home-course-progress-fill').style.width=`${completed.length/FRENCH_LESSONS.length*100}%`;
+    $('home-course-progressbar').setAttribute('aria-valuenow',String(completed.length));
+    const pathNodes=document.querySelectorAll('.academy-milestones .milestone-node');
+    pathNodes[0]?.classList.toggle('active',completed.length===0);
+    pathNodes[1]?.classList.toggle('active',completed.length>0);
+    if(pathNodes[0])pathNodes[0].textContent=completed.includes('foundations')?'✓':'01';
     $('course-lessons').innerHTML=FRENCH_LESSONS.map((lesson,index)=>`<button data-lesson="${lesson.id}" aria-current="${lesson.id===session.lesson.id?'step':'false'}"><span class="lesson-number">${completed.includes(lesson.id)?'✓':String(index+1).padStart(2,'0')}</span><span><strong>${escape(lesson.title)}</strong><small>${escape(lesson.tag)}</small></span><span aria-hidden="true">↗</span></button>`).join('');
     const active=$('course-lessons').querySelector('[aria-current="step"]');
     if(active&&$('course-lessons').clientWidth&&$('course-lessons').scrollWidth>$('course-lessons').clientWidth)$('course-lessons').scrollLeft=active.offsetLeft-$('course-lessons').clientWidth/2+active.offsetWidth/2;

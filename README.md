@@ -10,6 +10,8 @@ The home page opens with a dedicated hero, Chess.com username search, a sample g
 
 All public routes have generated directory index files, so direct visits and refreshes work with static hosting. App, stylesheet, icon, license, and engine URLs are rooted at the site origin. Navigation uses the History API and browser Back/Forward; the mobile header keeps secondary destinations in its menu.
 
+The home page uses a reference-inspired forest-green, ivory, and lime academy design: cinematic generated chess photography, serif headings, light activity cards, and a mountain learning path. Its filters select actual opening, reviewed-mistake practice, or play activities. The French opening question provides immediate feedback without claiming engine rankings. The path progress reflects completed French exercises. Search remains available in the hero disclosure and analysis CTA. Layout and palette overrides are scoped to the home page. ImageGen asset paths and prompt briefs are documented in `src/assets/README.md`.
+
 ## Deploy from GitHub to Vercel
 
 Import this repository into Vercel using the **Other** framework preset, the repository root, **npm ci** as the install command, **npm run build** as the build command, and **dist** as the output directory. Use Node.js 22 or newer. The checked-in `vercel.json` supplies the build settings. No environment variables or secrets are required for the app. Once the repository is connected, pushes to the production branch can deploy automatically.

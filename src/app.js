@@ -22,6 +22,9 @@ import { createLearningUI } from './learning-ui.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
+  learn:'<path d="m2 9 10-6 10 6-10 6Zm4 3v6c4 3 8 3 12 0v-6m4-3v8"/>',
+  'chart-bars':'<path d="M4 20v-7m6 7V8m6 12V3m6 17V10"/>',
+  'analysis-gear':'<path d="m9 3 1 3h4l1-3 3 2-1 3 2 3 3 1-1 4-3 1-2 2v3h-4l-1-3-3-1-3 1-2-3 2-3V9L3 7l3-3Z"/><circle cx="12" cy="12" r="3"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   upload:'<path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/>',
   user:'<circle cx="12" cy="8" r="3.5"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/>',
@@ -613,6 +616,30 @@ $('home-search').addEventListener('submit',event=>{
   event.preventDefault();$('username').value=$('home-username').value;searchPlayer();
 });
 $('home-demo').onclick=()=>{setGame({pgn:DEMO_PGN},{demo:true,analyze:false});router.go('analysis');};
+function homeAnalyze(){if(state.games.length)router.go('games');else openConnect();}
+for(const id of ['home-analyze','home-path-review'])$(id).onclick=homeAnalyze;
+for(const id of ['home-play','home-play-art','home-path-play'])$(id).onclick=()=>$('play-open').click();
+for(const id of ['home-tactics','home-tactics-art'])$(id).onclick=()=>{
+  router.go('analysis');
+  if(!$('start-practice').disabled)$('start-practice').click();
+  else toast('Review your game first, then practice the mistakes found in Summary.');
+};
+document.querySelectorAll('[data-home-filter]').forEach(button=>button.onclick=()=>{
+  for(const option of document.querySelectorAll('[data-home-filter]'))option.setAttribute('aria-pressed',String(option===button));
+  for(const card of document.querySelectorAll('[data-home-category]'))card.hidden=button.dataset.homeFilter!=='all'&&card.dataset.homeCategory!==button.dataset.homeFilter;
+});
+document.querySelectorAll('[data-home-answer]').forEach(button=>{
+  button.setAttribute('aria-pressed','false');
+  button.onclick=()=>{
+    const correct=button.dataset.homeAnswer==='d5';
+    for(const option of document.querySelectorAll('[data-home-answer]')){
+      option.setAttribute('aria-pressed',String(option===button));
+      option.classList.toggle('is-correct',option===button&&correct);
+      option.classList.toggle('is-other',option===button&&!correct);
+    }
+    $('home-puzzle-feedback').textContent=correct?'Exactly. …d5 challenges White’s center.':'Legal, but try the central pawn break that defines the French.';
+  };
+});
 $('games-nav').onclick = () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); };
 $('library-nav').onclick = () => scrollToSection($('game-library'));
 for (const id of ['sidebar-import','hero-import','home-import']) $(id).onclick = openImport;
@@ -769,7 +796,8 @@ const learning=createLearningUI({storage:reviewStorage,onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
 const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);
-for(const id of ['hero-board','course-cover-board']){
+document.querySelectorAll('.milestone-piece').forEach((element,index)=>element.innerHTML=pieceSvg({type:['p','n','r','k'][index],color:'w'}));
+for(const id of ['course-cover-board']){
   let html='';
   for(let rank=8;rank>=1;rank--)for(const file of 'abcdefgh'){
     const square=file+rank,piece=preview.get(square);
@@ -788,7 +816,7 @@ router=createPageRouter(page=>{
   if(page==='analysis'){if(!state.running)startAnalysis();}
   else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
-  if(page==='learn')learning.refresh();
+  if(page==='learn'||page==='home')learning.refresh();
   if(page==='french')learning.open();
 });
 router.start();
