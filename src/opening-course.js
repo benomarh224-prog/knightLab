@@ -14,7 +14,7 @@ export class OpeningLesson {
   get note(){return this.cursor?this.lesson.notes[this.cursor-1]:this.lesson.subtitle;}
   jump(cursor){if(this.mode==='practice')return;this.cursor=Math.max(0,Math.min(this.lesson.moves.length,cursor));}
   watch(){this.mode='watch';this.cursor=0;this.completed=false;}
-  practice(){this.mode='practice';this.cursor=0;this.correct=0;this.hints=0;this.completed=false;this.skipOpponent();}
+  practice({startPly=0}={}){this.mode='practice';this.cursor=Math.max(0,Math.min(this.lesson.moves.length-1,Number.isFinite(startPly)?Math.floor(startPly):0));this.correct=0;this.hints=0;this.completed=false;this.skipOpponent();this.practiceStart=this.cursor;}
   skipOpponent(){while(this.expected&&this.expected.color!==this.lesson.practiceColor)this.cursor++;if(!this.expected)this.completed=true;}
   hint(){this.hints++;return this.expected;}
   attempt(from,to,promotion){

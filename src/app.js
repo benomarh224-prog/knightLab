@@ -22,6 +22,9 @@ import { createLearningUI } from './learning-ui.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
+  target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="m12 12 9-9m-5 0h5v5"/>',
+  bulb:'<path d="M8 17h8m-7 3h6M8 14a6 6 0 1 1 8 0l-1 3H9Z"/>',
+  notes:'<path d="M6 3h8l5 5v13H6Zm8 0v6h5M9 13h7m-7 4h7"/>',
   learn:'<path d="m2 9 10-6 10 6-10 6Zm4 3v6c4 3 8 3 12 0v-6m4-3v8"/>',
   'chart-bars':'<path d="M4 20v-7m6 7V8m6 12V3m6 17V10"/>',
   'analysis-gear':'<path d="m9 3 1 3h4l1-3 3 2-1 3 2 3 3 1-1 4-3 1-2 2v3h-4l-1-3-3-1-3 1-2-3 2-3V9L3 7l3-3Z"/><circle cx="12" cy="12" r="3"/>',
@@ -792,7 +795,7 @@ try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
   else setGame({pgn:DEMO_PGN},{demo:true,analyze:false});
 } catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false});}
-const learning=createLearningUI({storage:reviewStorage,onAnalyze:pgn=>{
+const learning=createLearningUI({storage:reviewStorage,onCourseComplete:()=>router.go('learn'),onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
 const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);

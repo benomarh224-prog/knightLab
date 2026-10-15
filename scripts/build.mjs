@@ -3,7 +3,7 @@ import { mkdir, copyFile, readdir, readFile, cp } from 'node:fs/promises';
 import { PAGE_PATHS } from '../src/routes.js';
 await mkdir('dist/engine', { recursive: true });
 await build({ entryPoints: ['src/app.js'], bundle: true, minify: true, sourcemap: true, outfile: 'dist/app.js', format: 'esm', target: ['es2022'] });
-await Promise.all(['index.html', 'style.css', 'pages.css', 'home.css', 'favicon.svg'].map(file => copyFile(`src/${file}`, `dist/${file}`)));
+await Promise.all(['index.html', 'style.css', 'pages.css', 'home.css', 'lesson.css', 'favicon.svg'].map(file => copyFile(`src/${file}`, `dist/${file}`)));
 await cp('src/assets','dist/assets',{recursive:true});
 for(const route of Object.values(PAGE_PATHS).filter(path=>path!=='/')){
   await mkdir(`dist${route}`,{recursive:true});
