@@ -67,13 +67,16 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
       $('lesson-promotion').hidden=!promotion;
       $('lesson-hint').hidden=player.challengeMode;
       $('lesson-hint').disabled=!practice||session.completed||hint?.level===3;
-      $('lesson-hint').textContent=hint?.level===1?'Show the piece':hint?.level===2?'Reveal the move':hint?.level===3?'Move revealed':'Get a hint';
+      $('lesson-hint').textContent=hint?.level===1?'Show piece':hint?.level===2?'Reveal move':hint?.level===3?'Revealed':'Hint';
+      $('lesson-hint').setAttribute('aria-label',hint?.level===1?'Show the piece':hint?.level===2?'Reveal the study move':hint?.level===3?'Study move revealed':'Get a hint');
+      $('lesson-controls').dataset.practice=String(session.mode==='practice');
       $('lesson-replay').hidden=activity.data.kind!=='practice'||player.challengeMode;$('lesson-replay').textContent=player.reviewing?'Resume practice':'Review line';$('lesson-replay').setAttribute('aria-pressed',String(player.reviewing));
       $('lesson-challenge').hidden=activity.data.kind!=='practice'||!activity.done&&!player.storedComplete&&!player.challengeMode;
       $('lesson-challenge').textContent=player.challengeMode?'Back to lesson':'Practice without hints';
       $('lesson-previous').disabled=practice||session.cursor===0;$('lesson-next').disabled=practice||session.cursor===session.lesson.moves.length;
       $('lesson-reset').setAttribute('aria-label',practice?'Restart this exercise':'Restart study line');
       $('lesson-feedback').textContent=message||hint?.text||(practice?(session.completed?`Well played.${session.hints?` ${session.hints} hint${session.hints===1?'':'s'} used.`:''}`:'Select a piece, then a highlighted destination.'):'Use the arrows or a move in the line to review.');
+      $('lesson-feedback').hidden=!message&&!hint&&!session.completed;
       $('lesson-current-note').hidden=practice;$('lesson-current-note').textContent=session.note;
       $('lesson-current-move').textContent=session.last?`${session.last.before.split(' ')[5]}${session.last.color==='w'?'.':'…'} ${session.last.san}`:'Start';
       $('lesson-activities').hidden=player.activities.length<2;
@@ -174,7 +177,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   $('lesson-previous').onclick=()=>{player.jump(player.session.cursor-1);clearTurn();render();};$('lesson-next').onclick=()=>{player.jump(player.session.cursor+1);clearTurn();render();};
   $('lesson-replay').onclick=()=>{player.reviewing=!player.reviewing;player.save();clearTurn();render();};
   $('lesson-flip').onclick=()=>{player.flipped=!player.flipped;player.save();render();};
-  $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();};
+  $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();if(hint)$('lesson-feedback').scrollIntoView({block:'nearest'});};
   $('lesson-challenge').onclick=()=>{
     if(player.challengeMode){player.endChallenge();history.replaceState({},'',`${course.path}?lesson=${encodeURIComponent(player.lesson.id)}`);}
     else player.startChallenge();
