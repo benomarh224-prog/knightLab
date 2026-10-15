@@ -26,8 +26,10 @@ export function renderLearningProgress({progress,activeLessons,course,player,mem
     for(const button of document.querySelectorAll('[data-course-level]'))button.setAttribute('aria-pressed',String(button.dataset.courseLevel===player.lesson.level));
     $('course-lessons').innerHTML=visible.map((lesson,index)=>{
       const active=lesson.id===player.lesson.id,done=completed.includes(lesson.id);
+      const title=(studyFor(lesson.id).title||lesson.title).replace(/\.$/,'');
+      const subtitle=lesson.unit||'';
       const unit=lesson.unit&&visible[index-1]?.unit!==lesson.unit?`<p class="lesson-unit-heading">${escape(lesson.unit)}</p>`:'';
-      return `${unit}<button data-lesson="${lesson.id}" aria-current="${active?'step':'false'}" class="${done?'is-practiced':''}" aria-label="${course.label} ${index+1}: ${escape((studyFor(lesson.id).title||lesson.title))}${done?'. Practiced':''}"><span class="lesson-status" aria-hidden="true">${done?'✓':active?'▶':'○'}</span><span class="lesson-number">${String(index+1).padStart(2,'0')}</span><span class="lesson-list-name"><strong>${escape((studyFor(lesson.id).title||lesson.title).replace(/\.$/,''))}</strong><small>${escape(lesson.unit||lesson.title)}</small></span></button>`;
+      return `${unit}<button data-lesson="${lesson.id}" aria-current="${active?'step':'false'}" class="${done?'is-practiced':''}" aria-label="${course.label} ${index+1}: ${escape((studyFor(lesson.id).title||lesson.title))}${done?'. Practiced':''}"><span class="lesson-status" aria-hidden="true">${done?'✓':active?'▶':'○'}</span><span class="lesson-number">${String(index+1).padStart(2,'0')}</span><span class="lesson-list-name"><strong>${escape(title)}</strong>${subtitle?`<small>${escape(subtitle)}</small>`:''}</span></button>`;
     }).join('');
     if(focusedLesson)$('course-lessons').querySelector(`[data-lesson="${focusedLesson}"]`)?.focus({preventScroll:true});
   }

@@ -30,7 +30,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   function clearTurn(){selected=null;hint=null;message='';promotion=null;}
   function focusStage(){
     $('lesson-stage-heading').focus({preventScroll:true});
-    document.querySelector('.lesson-page-heading').scrollIntoView({block:'start'});
+    document.querySelector('.lesson-topline').scrollIntoView({block:'start'});
   }
   function changeStage(stage){if(player.setStage(stage)){clearTurn();render();focusStage();}}
   function selectLesson(id,updateUrl=true){
@@ -94,13 +94,16 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
       else if(focusedAnswer&&passed)$('lesson-question').focus({preventScroll:true});
       $('lesson-question-previous').hidden=player.questionIndex===0;$('lesson-question-next').hidden=player.questionIndex===player.plan.questions.length-1;$('lesson-question-next').disabled=q.required&&!passed;
     }
-    const detailConcepts=player.plan.concepts.filter((_,i)=>stage!=='learn'||i!==player.conceptIndex),rules=lesson.guide?.rules||[],goals=study.goals||[];
+    const detailConcepts=player.plan.concepts.filter((_,i)=>stage!=='learn'||i!==player.conceptIndex),rules=lesson.guide?.rules||[];
+    const present=new Set([...player.plan.concepts.map(item=>item.text),...rules]);
+    const goals=(study.goals||[]).filter(goal=>{if(present.has(goal))return false;present.add(goal);return true;});
     $('lesson-more-content').innerHTML=detailConcepts.map(item=>`<p>${escape(item.text)}</p>`).join('')+
       (rules.length?`<h3>Keep in mind</h3><ul>${rules.map(rule=>`<li>${escape(rule)}</li>`).join('')}</ul>`:'')+
       (goals.length?`<h3>What you’ll learn</h3><ul>${goals.map(goal=>`<li>${escape(goal)}</li>`).join('')}</ul>`:'')+
       (session?`<p>${escape(practice&&!session.completed?session.lesson.notes[session.cursor]:session.note)}</p>`:'')+
       (course.method?`<h3>Calculation routine</h3><ol>${course.method.map(step=>`<li>${escape(step)}</li>`).join('')}</ol>`:'')+
-      `<p>${escape(lesson.takeaway||'')}</p><details><summary>Source &amp; study line</summary><p>${escape(lesson.source||'')} ${escape(course.reference||'')}</p>${activity?'<p>Practice follows one selected legal continuation. Other good moves exist; a different legal move is not automatically a mistake.</p>':''}</details>`;
+      (lesson.takeaway&&!present.has(lesson.takeaway)?`<p>${escape(lesson.takeaway)}</p>`:'')+
+      `<details><summary>Source &amp; study line</summary><p>${escape(lesson.source||'')} ${escape(course.reference||'')}</p>${activity?'<p>Practice follows one selected legal continuation. Other good moves exist; a different legal move is not automatically a mistake.</p>':''}</details>`;
     $('lesson-analyze').hidden=!session;$('lesson-analyze').disabled=!session||session.cursor===0;
     $('lesson-course-previous').disabled=globalIndex===0;$('lesson-course-next').disabled=!player.complete;
     $('lesson-course-next').textContent=globalIndex===lessons.length-1?'Back to course →':`Next ${course.label.toLowerCase()} →`;

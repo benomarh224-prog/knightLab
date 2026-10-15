@@ -30,14 +30,14 @@ body[data-layout="lesson"] .footer { display:none; }
 .lesson-player .is-practiced .lesson-status { color:#28633b; }
 .lesson-player .lesson-number { flex:none; color:#6a785e; font-size:14px; }
 .lesson-player .lesson-list-name { min-width:0; }
-.lesson-player .lesson-list-name strong { display:block; font-size:16px; line-height:1.4; }
+.lesson-player .course-lessons .lesson-list-name strong { display:block; color:#284730; font-size:16px; line-height:1.4; }
 .lesson-player .lesson-list-name small { display:block; margin-top:4px; color:#6b7865; font-size:14px; font-weight:400; }
 .lesson-player .lesson-unit-heading { font-size:14px; margin:16px 8px 6px; }
 .lesson-player .course-back { display:flex; align-items:center; min-height:44px; padding:12px 8px 0; font-size:16px; color:#31563c; }
 .lesson-player .course-levels { display:grid; gap:6px; margin:0 4px 12px; padding:0; background:none; }
 .lesson-player .course-levels button { font-size:14px; min-height:44px; }
 .lesson-player .lesson-workspace { min-width:0; }
-.lesson-player .lesson-topline { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; color:#65745b; font-size:14px; }
+.lesson-player .lesson-topline { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; color:#65745b; font-size:14px; scroll-margin-top:92px; }
 .lesson-player .lesson-stages { display:flex; gap:6px; flex-wrap:wrap; }
 .lesson-player .lesson-stages button { min-height:44px; padding:9px 12px; color:#617255; background:transparent; border-color:transparent; }
 .lesson-player .lesson-stages button[aria-pressed="true"] { color:#213d27; background:#e9f1d5; border-color:#bacb99; }
@@ -106,7 +106,7 @@ body[data-layout="lesson"] .course-drawer { color-scheme:light; width:min(460px,
   .lesson-player .lesson-mobile-toolbar>a { min-height:44px; display:flex; align-items:center; gap:8px; color:#36563d; min-width:0; font-size:16px; }
   .lesson-player .lesson-mobile-toolbar>a>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lesson-player #lesson-list-open { flex:none; min-height:44px; }
-  .lesson-player .lesson-topline { flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .lesson-player .lesson-topline { flex-wrap:wrap; gap:6px; margin-bottom:12px; scroll-margin-top:80px; }
   .lesson-player .lesson-stages { margin-left:auto; gap:2px; }
   .lesson-player .lesson-stages button { padding:9px 8px; font-size:16px; }
   .lesson-player .lesson-page-heading { margin:0 0 14px; scroll-margin-top:80px; }
