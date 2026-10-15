@@ -19,9 +19,13 @@ import { compactCoachText, compactMoveText } from './compact-review.js';
 import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceMoveVerdict } from './verdict.js';
 import { createPageRouter } from './routes.js';
 import { createLearningUI } from './learning-ui.js';
+import { createNavigation } from './navigation.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
+  home:'<path d="m3 10 9-7 9 7v10H3Zm6 10v-7h6v7"/>',
+  search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+  close:'<path d="m6 6 12 12M18 6 6 18"/>',
   target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="m12 12 9-9m-5 0h5v5"/>',
   bulb:'<path d="M8 17h8m-7 3h6M8 14a6 6 0 1 1 8 0l-1 3H9Z"/>',
   notes:'<path d="M6 3h8l5 5v13H6Zm8 0v6h5M9 13h7m-7 4h7"/>',
@@ -54,20 +58,11 @@ function escape(value) { return String(value ?? '').replace(/[&<>"']/g, characte
 const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'deep', tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
 let router;
-function closeWorkspaceMenu(restoreFocus=false){
-  $('workspace-menu-toggle').setAttribute('aria-expanded','false');
-  document.querySelector('.topbar').classList.remove('menu-open');
-  if(restoreFocus)$('workspace-menu-toggle').focus({preventScroll:true});
-}
-$('workspace-menu-toggle').onclick=()=>{
-  const open=$('workspace-menu-toggle').getAttribute('aria-expanded')!=='true';
-  $('workspace-menu-toggle').setAttribute('aria-expanded',String(open));
-  document.querySelector('.topbar').classList.toggle('menu-open',open);
-};
-document.querySelector('.main-nav').addEventListener('click',event=>{if(event.target.closest('button,a'))closeWorkspaceMenu();});
-document.addEventListener('click',event=>{if(!event.target.closest('.main-nav,#workspace-menu-toggle'))closeWorkspaceMenu();});
-document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('workspace-menu-toggle').getAttribute('aria-expanded')==='true'){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMenu(true);}},true);
-compactLayout.addEventListener('change',()=>closeWorkspaceMenu());
+const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:$('workspace-menu'),desktopSlot:$('desktop-navigation'),mobileSlot:$('mobile-navigation'),dialog:$('navigation-dialog'),toggle:$('workspace-menu-toggle'),closeButton:$('navigation-close')});
+function closeWorkspaceMenu(){navigation.close();}
+$('nav-find-games').onclick=()=>{closeWorkspaceMenu();$('open-connect').click();};
+$('nav-import').onclick=()=>{closeWorkspaceMenu();$('sidebar-import').click();};
+$('nav-guide').onclick=()=>{closeWorkspaceMenu();$('how-it-works').click();};
 let reviewStorage;
 try { reviewStorage=localStorage; } catch {}
 const reviewMemory=createReviewMemory(reviewStorage);

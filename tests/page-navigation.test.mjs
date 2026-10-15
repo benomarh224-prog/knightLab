@@ -48,6 +48,7 @@ test('page source covers every routed view and uses origin-rooted assets for dir
   assert.match(source,/src="\/app.js"/);
   assert.match(source,/href="\/pages.css"/);
   assert.match(source,/href="\/style.css"/);
+  assert.match(source,/href="\/navigation.css"/);
   const engine=await readFile('src/engine.js','utf8');
   assert.match(engine,/new Worker\('\/engine\//);
 });
