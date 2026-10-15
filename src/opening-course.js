@@ -1,10 +1,11 @@
 import { Chess } from 'chess.js';
 
 export function prepareLesson(lesson){
-  const chess=new Chess(),positions=[chess.fen()],moves=[];
+  const chess=new Chess(lesson.fen),positions=[chess.fen()],moves=[];
   for(const san of lesson.moves){moves.push(chess.move(san));positions.push(chess.fen());}
-  if(lesson.notes.length!==moves.length)throw new Error(`Every move needs an explanation: ${lesson.id}`);
-  return {...lesson,positions,verboseMoves:moves};
+  const notes=typeof lesson.notes==='function'?lesson.notes(moves):lesson.notes;
+  if(notes.length!==moves.length)throw new Error(`Every move needs an explanation: ${lesson.id}`);
+  return {...lesson,notes,positions,verboseMoves:moves};
 }
 export class OpeningLesson {
   constructor(lesson){this.lesson=prepareLesson(lesson);this.cursor=0;this.mode='watch';this.correct=0;this.hints=0;this.completed=false;}
@@ -26,10 +27,9 @@ export class OpeningLesson {
     this.cursor++;this.correct++;this.skipOpponent();
     return {status:'correct',move,completed:this.completed};
   }
-  pgn(){const chess=new Chess();for(const san of this.lesson.moves.slice(0,this.cursor))chess.move(san);chess.header('Event','Knightlab · French Defense lesson','White','Study position','Black','French Defense');return chess.pgn();}
+  pgn(){const chess=new Chess(this.lesson.fen);for(const san of this.lesson.moves.slice(0,this.cursor))chess.move(san);chess.header('Event',`Knightlab · ${this.lesson.course||'French Defense'} lesson`,'White','Study position','Black',this.lesson.course||'French Defense');return chess.pgn();}
 }
-export function createCourseProgress(storage,ids){
-  const key='knightlab-french-course-v1';
+export function createCourseProgress(storage,ids,key='knightlab-french-course-v1'){
   function read(){try {const data=JSON.parse(storage?.getItem(key)||'[]');return Array.isArray(data)?[...new Set(data.filter(id=>ids.includes(id)))]:[];}catch{return [];}}
   return {read,complete(id){if(!ids.includes(id))return;try{storage?.setItem(key,JSON.stringify([...new Set([...read(),id])]))}catch{}}};
 }

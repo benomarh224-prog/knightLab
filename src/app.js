@@ -623,9 +623,7 @@ function homeAnalyze(){if(state.games.length)router.go('games');else openConnect
 for(const id of ['home-analyze','home-path-review'])$(id).onclick=homeAnalyze;
 for(const id of ['home-play','home-play-art','home-path-play'])$(id).onclick=()=>$('play-open').click();
 for(const id of ['home-tactics','home-tactics-art'])$(id).onclick=()=>{
-  router.go('analysis');
-  if(!$('start-practice').disabled)$('start-practice').click();
-  else toast('Review your game first, then practice the mistakes found in Summary.');
+  router.go('tactics');
 };
 document.querySelectorAll('[data-home-filter]').forEach(button=>button.onclick=()=>{
   for(const option of document.querySelectorAll('[data-home-filter]'))option.setAttribute('aria-pressed',String(option===button));
@@ -820,6 +818,6 @@ router=createPageRouter(page=>{
   else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
   if(page==='learn'||page==='home')learning.refresh();
-  if(page==='french')learning.open();
+  if(page==='french'||page==='tactics')learning.open(page);
 });
 router.start();

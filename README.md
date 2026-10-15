@@ -16,6 +16,14 @@ The French lesson player follows a light academy workspace: course outline at le
 
 `src/academy.css` unifies the remaining interface with the lesson design: ivory surfaces, forest-green navigation, serif headings, lime actions, green chessboards, and readable secondary text. It covers the game library, course catalog, analysis and coach, summaries, search/import/help dialogs, Play, mistake practice, and Focus. Board sizing, compact coaching heights, mobile playback placement, legal exploration, and engine logic retain their existing behavior. Move badges preserve distinct semantic colors. The course catalog reuses the generated French cover image while its original local preview stays hidden.
 
+## Tactical Vision learning course
+
+`/learn/tactical-vision/` contains all 144 exercises from the user-provided *Improve Your Tactical Vision* workbook by Niclas Huschenbeth: 48 Beginner, 48 Intermediate, and 48 Advanced. The course catalog and homepage training card open this course. Difficulty tabs filter the sidebar, and each exercise has a shareable `?lesson=beginner-01`-style URL. Course progress is independent of French Defense and is stored as `knightlab-tactical-course-v1`.
+
+The diagram positions were transcribed into FENs and checked against every selected main solution with strict chess.js move validation. PDF page 29's resource order differs from its visual exercise order and was reconciled with the rendered labels. The source diagram/solution page references remain in the exercise data. Diagrams do not provide castling or en passant metadata; those rights are left unset. The original PDF and its board images are not published. Book prose is not copied: coaching consists of original training guidance and move-by-move descriptions grounded in the legal moves. Published lines can contain illustrative or weaker defensive replies; the UI presents them as selected study continuations, not uniquely forced engine solutions.
+
+The shared lesson player supports custom starting positions, either side to move, automatic opponent replies, hints, an explicit Queen/Rook/Bishop/Knight promotion picker, replay, and importing a played continuation into analysis. Source FEN and move number survive PGN export. A different legal answer preserves the exercise and is described as a different continuation. The course is static and requires no new service or API key.
+
 ## Deploy from GitHub to Vercel
 
 Import this repository into Vercel using the **Other** framework preset, the repository root, **npm ci** as the install command, **npm run build** as the build command, and **dist** as the output directory. Use Node.js 22 or newer. The checked-in `vercel.json` supplies the build settings. No environment variables or secrets are required for the app. Once the repository is connected, pushes to the production branch can deploy automatically.

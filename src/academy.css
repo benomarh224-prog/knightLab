@@ -33,6 +33,18 @@ body:not([data-page="home"]) .main-nav .nav-item.active { color:#f6ffe4; backgro
 .course-cover-copy>p,.course-cover-copy ul { color:#66785e; }
 .learn-page .course-progress-caption { color:#627b4f; }
 .learn-footnote { color:#69785f; }
+.tactics-cover { margin-top:24px; }
+body[data-page="tactics"] .lesson-idea-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.tactics-method { margin-bottom:12px; font-size:11px; line-height:1.8; color:#617b4e; }
+.tactics-method>summary { min-height:40px; padding:7px 0; font-weight:650; cursor:pointer; }
+.tactics-method ol { padding-left:18px; margin:0; }
+.tactics-method li { margin-bottom:6px; }
+.course-levels { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:3px; padding:6px 0 10px; }
+.course-levels button { min-height:40px; padding:6px 3px; border:1px solid #dce4ce; border-radius:6px; background:#f6f8ed; color:#71875a; font-size:9px; }
+.course-levels button[aria-pressed="true"] { background:#e2efc7; color:#37552c; border-color:#aac57f; }
+.lesson-promotion { display:flex; flex-wrap:wrap; align-items:center; gap:5px; padding:10px; margin-top:7px; border:1px solid #bfd496; border-radius:8px; color:#4b6836; background:#f1f6e4; }
+.lesson-promotion>span { width:100%; font-size:11px; }
+.lesson-promotion button { flex:1; min-height:44px; padding:6px; border:1px solid #cbdcb0; border-radius:6px; background:#fffef7; font-size:11px; }
 .games-page-heading h1 { font-size:clamp(37px,4vw,54px); }
 body[data-page="games"] .library-heading { border-color:#dce3d0; }
 .library-heading h2 { font-size:30px; }
