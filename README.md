@@ -1,5 +1,7 @@
 # Knightlab
 
+Learning now includes graduated hints, independent practice, a browser-local practice-review list, exact last-lesson resume, a collapsed course map and completion recaps across all courses. See [the shared player and learning companion documentation](docs/lesson-player.md).
+
 An English chess game review app. Enter a public Chess.com username, select recent completed standard games, and analyze positions with a locally bundled Stockfish 19 Lite WebAssembly worker. No password or API key is required.
 
 Features: recent game library, time-control filters, older archives, PGN import/export, interactive replay, board orientation, best-move arrows, evaluation chart, move classifications, player-specific summary, and pausable standard/deep reviews. Analysis stays on the device and is cached in memory during the visit. The last username is stored in browser localStorage.

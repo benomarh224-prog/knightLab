@@ -21,15 +21,16 @@ export function createPageRouter(onChange){
     }
     onChange?.(current);
   }
-  function go(page,{replace=false}={}){
-    const path=PAGE_PATHS[page]||PAGE_PATHS.home;
-    if(location.pathname!==path)history[replace?'replaceState':'pushState']({},'',path);
+  function go(page,{replace=false,search=''}={}){
+    const path=(PAGE_PATHS[page]||PAGE_PATHS.home)+search;
+    if(location.pathname+location.search!==path)history[replace?'replaceState':'pushState']({},'',path);
     paint();window.scrollTo({top:0,behavior:'instant'});
   }
   document.addEventListener('click',event=>{
     const link=event.target.closest('a[data-route]');
     if(!link||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey||event.button!==0)return;
-    event.preventDefault();go(link.dataset.route);
+    const search=(link.getAttribute?.('href')||'').match(/\?[^#]*/)?.[0]||'';
+    event.preventDefault();go(link.dataset.route,{search});
   });
   window.addEventListener('popstate',()=>{paint();window.scrollTo({top:0,behavior:'instant'});});
   return {go,start:paint,get page(){return current;}};

@@ -51,6 +51,18 @@ Mobile practice is title → short instruction → square board → board contro
 
 ## Verification, 15 October 2026
 
+### Learning companion additions
+
+The shared player now offers a three-step hint ladder: idea, originating piece, then full move. Each activity retains its hint level for the current position across reloads. A new move starts a fresh ladder. No destination square or SAN is highlighted before the final step.
+
+Practice retries, hint requests and incorrect quiz answers populate a local Review practice list under Learn. Legal alternatives remain described as different study continuations, not engine mistakes. A fresh clean independent solve clears its practice item; a correct answer in explicit question-review mode clears its question item. Earned completion is never revoked. The independent attempt has its own validated board state, hides hints and explanations, restores after reload and returns to the original practice cursor. A solved independent attempt also satisfies that board exercise’s requirement.
+
+The existing homepage Continue learning button and a compact catalog resume link return to the last visited course/lesson. The shared partial snapshot restores its stage, selected exercise and exact position. Internal navigation preserves lesson and review query parameters, including links between lessons in the same course. Opening the homepage alone does not overwrite the last lesson.
+
+The catalog’s collapsed course map derives units/levels and completed counts from the course records and existing progress arrays; every unit remains accessible. A compact completion recap reuses the lesson’s own takeaway. All catalog shortcuts use the established forest/ivory/lime styling and avoid adding controls above the practice board.
+
+New automated coverage checks all 190 hint ladders, persisted hint levels, independent replay/reset/reload, clean-review resolution, question review, completion compatibility, invalid/corrupt/unavailable memory and query-preserving navigation. The full suite now contains 145 passing tests.
+
 `npm test`: 136 passing tests. New model tests solve all 190 catalog lessons, enforce original completion requirements, restore partial and completed progress, preserve legacy completion keys, reject illegal/different moves, and exercise castling, explicit promotions and en passant. Structured fixtures cover multiple positions/questions, optional requirements, text-only reading, moving/static demonstrations, corruption and blocked storage.
 
 Browser testing used the deployed Vercel site through the supported browser tool:

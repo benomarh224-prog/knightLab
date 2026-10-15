@@ -74,6 +74,12 @@ body[data-layout="lesson"] .footer { display:none; }
 .lesson-player #lesson-current-note { margin-top:16px; color:#50684c; }
 .lesson-player #lesson-after-board,.lesson-player #lesson-demonstration-done { margin-top:16px; width:100%; }
 .lesson-player #lesson-feedback { font-size:16px; line-height:1.6; }
+.lesson-player #lesson-challenge { width:100%; margin-top:14px; }
+.lesson-player .lesson-recap { margin-top:20px; padding:20px; border:1px solid #ceddae; border-radius:12px; background:#f0f6e2; }
+.lesson-player .lesson-recap h2 { font-size:24px; }
+.lesson-player .lesson-recap>p:last-child { margin-bottom:0; }
+.lesson-player .lesson-recap summary { min-height:44px; padding:10px 0; cursor:pointer; }
+.lesson-player #lesson-recap-stats { font-size:16px; color:#54694b; }
 .lesson-player .lesson-activities { display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
 .lesson-player .lesson-activities button[aria-pressed="true"] { background:#eaf2d7; border-color:#a8be7c; }
 .lesson-player .lesson-answers { display:grid; gap:10px; margin:20px 0; }

@@ -44,6 +44,13 @@ test('page navigation supports direct course visits, separate game analysis, and
     assert.equal(links.find(link=>link.dataset.route==='learn').attributes['aria-current'],'page');
     router.go('french');assert.equal(document.body.dataset.layout,'lesson');
     router.go('analysis');assert.equal(document.body.dataset.layout,'analysis');
+    let requestedHref='/learn/french-defense/?lesson=advance&review=practice&exercise=0';
+    const resumeLink={dataset:{route:'french'},getAttribute:()=>requestedHref};
+    events.click({target:{closest:()=>resumeLink},button:0,preventDefault(){}});
+    assert.equal(location.pathname,'/learn/french-defense/');assert.equal(location.search,'?lesson=advance&review=practice&exercise=0');
+    requestedHref='/learn/french-defense/?lesson=exchange';
+    events.click({target:{closest:()=>resumeLink},button:0,preventDefault(){}});
+    assert.equal(location.search,'?lesson=exchange');
   } finally {for(const [key,value] of Object.entries(saved)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}
 });
 test('page source covers every routed view and uses origin-rooted assets for direct refresh',async()=>{

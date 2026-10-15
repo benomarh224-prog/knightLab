@@ -1,4 +1,5 @@
 import { OpeningLesson,createCourseProgress } from './opening-course.js';
+import { progressiveHint } from './lesson-hints.js';
 
 const bounded=(value,max)=>Number.isInteger(value)?Math.max(0,Math.min(max,value)):0;
 const list=value=>Array.isArray(value)?value:[];
@@ -28,8 +29,9 @@ export function lessonPlan(lesson,study={}){
 }
 
 export class LessonPlayer {
-  constructor({lesson,study,storage,progressKey,lessonIds}){
+  constructor({lesson,study,storage,progressKey,lessonIds,memory,courseId}){
     this.lesson=lesson;this.plan=lessonPlan(lesson,study);this.storage=storage;
+    this.memory=memory;this.courseId=courseId;this.challengeMode=false;this.questionReviewIndex=null;this.reviewSource=null;
     this.progress=createCourseProgress(storage,lessonIds||[lesson.id],progressKey);
     // Keep the existing v1 completion arrays unchanged. Partial work lives separately.
     this.storageKey=`${progressKey}:lesson-player-v1:${lesson.id}`;
@@ -37,12 +39,12 @@ export class LessonPlayer {
     this.activities=this.plan.activities.map(data=>{
       const session=new OpeningLesson(data),review=new OpeningLesson(data);
       if(data.kind==='practice')session.practice({startPly:data.startPly});
-      return {data,session,review,done:false};
+      return {data,session,review,challenge:null,challengeHelped:false,challengeMistakes:0,mistakes:0,hintCursor:-1,hintLevel:0,done:false};
     });
     this.restore();
   }
   get activity(){return this.activities[this.activityIndex]||null;}
-  get session(){const activity=this.activity;return activity?(this.reviewing?activity.review:activity.session):null;}
+  get session(){const activity=this.activity;return activity?(this.reviewing?activity.review:this.challengeMode&&activity.challenge?activity.challenge:activity.session):null;}
   get question(){return this.plan.questions[this.questionIndex]||null;}
   get boardComplete(){return this.activities.every(a=>!a.data.required||a.done);}
   get checkUnlocked(){return this.boardComplete||this.storedComplete;}
@@ -51,24 +53,50 @@ export class LessonPlayer {
   get learned(){return this.plan.concepts.every((_,index)=>this.seen.includes(index));}
   get complete(){return this.storedComplete||(this.boardComplete&&this.checksComplete&&(!this.plan.learnRequired||this.learned));}
   stageComplete(stage){return stage==='learn'?this.learned:stage==='try'?this.boardComplete:this.checksComplete;}
-  setStage(stage){if(!this.plan.stages.includes(stage)||stage==='check'&&!this.checkUnlocked)return false;this.stage=stage;this.save();return true;}
+  setStage(stage){if(!this.plan.stages.includes(stage)||stage==='check'&&!this.checkUnlocked)return false;if(this.challengeMode&&stage!=='try')this.activity.challengeHelped=true;this.stage=stage;this.save();return true;}
   learnNext(){
     if(!this.seen.includes(this.conceptIndex))this.seen.push(this.conceptIndex);
     if(this.conceptIndex<this.plan.concepts.length-1)this.conceptIndex++;
     else this.setStage(this.plan.stages.find(stage=>stage!=='learn')||'learn');
     this.save();
   }
-  selectActivity(index){this.activityIndex=bounded(index,this.activities.length-1);this.reviewing=false;this.save();}
+  selectActivity(index){this.activityIndex=bounded(index,this.activities.length-1);this.reviewing=false;this.challengeMode=false;this.save();}
+  reviewEntry(kind='practice',index=this.activityIndex){return {courseId:this.courseId,lessonId:this.lesson.id,kind,index};}
+  get currentHint(){const a=this.activity;return !this.challengeMode&&!this.reviewing&&a?.hintCursor===this.session?.cursor?progressiveHint(this.session.expected,a.hintLevel):null;}
+  requestHint(){
+    if(this.challengeMode||this.reviewing||this.activity?.data.kind!=='practice'||this.session.completed)return null;
+    const a=this.activity;if(a.hintCursor!==this.session.cursor){a.hintCursor=this.session.cursor;a.hintLevel=0;}
+    if(a.hintLevel<3){a.hintLevel++;this.session.hint();}
+    this.memory?.add({...this.reviewEntry(),reason:'hint'});this.save();return this.currentHint;
+  }
+  startChallenge(index=this.activityIndex){
+    this.selectActivity(index);const a=this.activity;if(a?.data.kind!=='practice')return false;
+    a.challenge=new OpeningLesson(a.data);a.challenge.practice({startPly:a.data.startPly});a.challengeHelped=false;a.challengeMistakes=0;
+    this.challengeMode=true;this.stage='try';this.save();return true;
+  }
+  endChallenge(){this.challengeMode=false;this.reviewSource=null;this.save();}
+  reviewQuestion(index){
+    if(!this.checkUnlocked||!this.plan.questions[index])return false;
+    this.challengeMode=false;this.questionIndex=index;this.questionReviewIndex=index;this.answers[index]=null;this.stage='check';this.save();return true;
+  }
   attempt(from,to,promotion){
     if(this.reviewing||this.activity?.data.kind!=='practice')return {status:'inactive'};
     const result=this.session.attempt(from,to,promotion);
-    if(result.completed)this.activity.done=true;
+    if(result.status==='illegal'||result.status==='different'){
+      if(this.challengeMode)this.activity.challengeMistakes++;else this.activity.mistakes++;
+      this.memory?.add({...this.reviewEntry(),reason:'retry'});
+    }
+    if(result.completed){
+      this.activity.done=true;
+      if(this.challengeMode){if(!this.activity.challengeHelped&&this.activity.challengeMistakes===0)this.memory?.resolve(this.reviewEntry());}
+    }
     this.save();return result;
   }
-  hint(){const move=this.session?.mode==='practice'&&!this.session.completed?this.session.hint():null;this.save();return move;}
+  hint(){const move=!this.challengeMode&&this.session?.mode==='practice'&&!this.session.completed?this.session.hint():null;this.save();return move;}
   reset(){
     const activity=this.activity;if(!activity)return;
-    if(this.reviewing){activity.review.watch();}else if(activity.data.kind==='practice')activity.session.practice({startPly:activity.data.startPly});else activity.session.watch();
+    if(this.challengeMode){this.startChallenge();return;}
+    if(this.reviewing){activity.review.watch();}else if(activity.data.kind==='practice'){activity.session.practice({startPly:activity.data.startPly});activity.mistakes=0;activity.hintLevel=0;activity.hintCursor=-1;}else activity.session.watch();
     // A retry does not revoke a solved exercise or a previously completed lesson.
     this.save();
   }
@@ -80,12 +108,15 @@ export class LessonPlayer {
   acknowledgeDemonstration(){if(this.activity?.data.kind==='demonstration'&&(!this.session.lesson.moves.length||this.activity.data.completion==='acknowledge')){this.activity.done=true;this.save();}}
   answer(index){
     const q=this.question;if(!this.checkUnlocked||!q||this.answers[this.questionIndex]===q.answer||!Number.isInteger(index)||index<0||index>=q.options.length)return false;
-    this.answers[this.questionIndex]=index;this.save();return index===q.answer;
+    this.answers[this.questionIndex]=index;
+    if(index!==q.answer)this.memory?.add({...this.reviewEntry('question',this.questionIndex),reason:'question'});
+    else if(this.questionReviewIndex===this.questionIndex){this.memory?.resolve(this.reviewEntry('question',this.questionIndex));this.questionReviewIndex=null;}
+    this.save();return index===q.answer;
   }
   save(){
     if(this.boardComplete&&this.checksComplete&&(!this.plan.learnRequired||this.learned))this.progress.complete(this.lesson.id);
-    try{this.storage?.setItem(this.storageKey,JSON.stringify({version:1,signature:this.plan.signature,stage:this.stage,conceptIndex:this.conceptIndex,activityIndex:this.activityIndex,questionIndex:this.questionIndex,seen:this.seen,answers:this.answers,flipped:this.flipped,reviewing:this.reviewing,
-      activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done}))}));}catch{/* Storage can be unavailable in private browsing. */}
+    try{this.storage?.setItem(this.storageKey,JSON.stringify({version:1,signature:this.plan.signature,stage:this.stage,conceptIndex:this.conceptIndex,activityIndex:this.activityIndex,questionIndex:this.questionIndex,seen:this.seen,answers:this.answers,flipped:this.flipped,reviewing:this.reviewing,challengeMode:this.challengeMode,questionReviewIndex:this.questionReviewIndex,reviewSource:this.reviewSource,
+      activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,hintCursor:a.hintCursor,hintLevel:a.hintLevel,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
   }
   restore(){
     try{
@@ -103,8 +134,16 @@ export class LessonPlayer {
           activity.done=activity.session.completed||saved.done===true;
         }else{activity.session.jump(bounded(saved.cursor,activity.data.moves.length));activity.done=saved.done===true;}
         activity.review.jump(bounded(saved.reviewCursor,activity.data.moves.length));
+        activity.mistakes=bounded(saved.mistakes,10000);activity.hintCursor=Number.isInteger(saved.hintCursor)?saved.hintCursor:-1;activity.hintLevel=bounded(saved.hintLevel,3);
+        if(saved.challenge&&activity.data.kind==='practice'){
+          activity.challenge=new OpeningLesson(activity.data);activity.challenge.practice({startPly:activity.data.startPly});
+          for(let i=0;i<bounded(saved.challenge.correct,activity.data.moves.length)&&activity.challenge.expected;i++){const move=activity.challenge.expected;activity.challenge.attempt(move.from,move.to,move.promotion);}
+          activity.challengeHelped=saved.challenge.helped===true;activity.challengeMistakes=bounded(saved.challenge.mistakes,10000);
+        }
       });
       this.flipped=data.flipped===true;this.reviewing=data.reviewing===true;
+      this.challengeMode=data.challengeMode===true&&Boolean(this.activity?.challenge);this.questionReviewIndex=Number.isInteger(data.questionReviewIndex)&&this.plan.questions[data.questionReviewIndex]?data.questionReviewIndex:null;
+      this.reviewSource=typeof data.reviewSource==='string'?data.reviewSource:null;
       if(this.plan.stages.includes(data.stage)&&(data.stage!=='check'||this.checkUnlocked))this.stage=data.stage;
     }catch{/* Corrupt or obsolete partial work must not damage legacy completion. */}
   }
