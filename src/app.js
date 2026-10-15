@@ -14,7 +14,7 @@ import { primaryMoveThreat, arrowPath } from './board-visuals.js';
 import { createBoardCoach } from './board-coach.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
 import { createReviewMemory } from './review-memory.js';
-import { moveTransitions, animatePieces } from './piece-motion.js';
+import { moveTransitions, animatePieces, fadePreviousHighlights } from './piece-motion.js';
 import { compactCoachText, compactMoveText } from './compact-review.js';
 import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceMoveVerdict } from './verdict.js';
 
@@ -233,6 +233,8 @@ function updatePlayers() {
 function renderBoard() {
   if(boardDragging)return;
   const view=boardView(), chess = new Chess(view.fen);
+  const fadingHighlights=paintedPosition?.fen!==view.fen&&paintedPosition?.game===state.parsed&&paintedPosition.flipped===state.flipped
+    ? [...$('board').querySelectorAll('.square.last')].map(tile=>({square:tile.dataset.square,color:getComputedStyle(tile).backgroundColor})) : [];
   if (threatFen!==view.fen) { threatFen=view.fen; const primary=primaryMoveThreat(view.fen,view.last); threats=primary?[primary]:[]; selectedThreat=null; }
   const threatened=new Map((showThreats?threats:[]).map(item=>[item.square,item]));
   const targets=inline.targets, selection=inline.selected;
@@ -261,6 +263,7 @@ function renderBoard() {
   $('board').innerHTML = squares;
   const nextPosition={fen:view.fen,last:view.last,flipped:state.flipped,game:state.parsed};
   animatePieces($('board'),moveTransitions(paintedPosition,nextPosition));
+  fadePreviousHighlights($('board'),fadingHighlights);
   paintedPosition=nextPosition;
   if (focusedSquare && !restoreBadgeFocus) $('board').querySelector(`[data-square="${focusedSquare}"]`)?.focus({preventScroll:true});
   if (restoreBadgeFocus) $('board').querySelector('.piece-rating')?.focus({preventScroll: true});
@@ -323,7 +326,7 @@ function render() {
   const announcement = `${verdict.move === '—' ? '' : verdict.move + ': '}${verdict.label}`;
   if ($('move-rating-announcement').textContent !== announcement) $('move-rating-announcement').textContent = announcement;
   $('insight-move').textContent = move ? `${Number(move.before.split(' ')[5])}${move.color === 'w' ? '.' : '...'} ${move.san}` : '';
-  $('move-quality').innerHTML = item ? qualityGlyph(item.label) : icon('spark');
+  $('move-quality').innerHTML = `<span class="coach-mascot" aria-hidden="true"><svg viewBox="0 0 64 64" fill="currentColor"><path d="M17 49h31l-3-8H29c-2-9 13-11 10-23l-8-7-2 7-10 8 1 10 9-5c-7 6-10 10-12 18Z"/><circle cx="31" cy="23" r="2" fill="#edf1fc"/></svg></span><span class="coach-verdict-mark" aria-hidden="true">${item?qualityGlyph(item.label):icon('spark')}</span>`;
   $('move-quality').style.color = item ? qualityColors[item.label] : 'var(--lime)';
   $('board-coach-card').dataset.verdict = item?.label || 'Waiting';
   $('board-coach-card').style.setProperty('--coach-accent',item ? qualityColors[item.label] : '#8ca494');
@@ -338,6 +341,8 @@ function render() {
   const total = state.parsed.fens.length;
   const percent = Math.round(analyzed / total * 100);
   $('analysis-percent').textContent = `${percent}%`;
+  document.querySelector('.progress-track').setAttribute('aria-valuenow',String(percent));
+  document.querySelector('.engine-progress').setAttribute('aria-busy',String(state.running));
   $('progress-fill').style.width = `${percent}%`;
   $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? `Reviewing position ${state.reviewIndex + 1} of ${total}${state.mode === 'precise' ? ' · depth 18' : ''}` : analyzed === total ? 'Review complete' : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
   document.querySelector('.engine-progress').classList.toggle('running', state.running);
@@ -356,8 +361,9 @@ function renderCoach(move, before, after) {
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
+  $('board-coach-card').dataset.reviewState=report.status;
   const brief=report.brief||report.summary;
-  $('coach-brief').textContent = compactCoachText(brief);
+  $('coach-brief').textContent = report.status==='pending'?'Reviewing this move…':report.status==='start'?'Choose a move to start your review.':compactCoachText(brief);
   $('coach-brief').title=brief;
   $('board-coach-card').classList.toggle('coach-ready',ready);
   const played=move ? move.from+move.to+(move.promotion||'') : null;
@@ -532,7 +538,7 @@ async function searchPlayer(event) {
   catch (error) { searchStatus(error.message, true); return; }
   state.request?.abort();
   const controller = new AbortController(); state.request = controller;
-  $('connect-button').disabled = true; $('connect-button').innerHTML = 'Finding your games…';
+  $('connect-button').disabled = true; $('connect-button').setAttribute('aria-busy','true'); $('connect-button').textContent = 'Finding games…';
   searchStatus('Finding your profile and recent games…');
   try {
     const {profile, archives} = await loadPlayer(username, controller.signal);
@@ -554,7 +560,7 @@ async function searchPlayer(event) {
     else setGame({ pgn: DEMO_PGN }, { demo: true });
     $('connect-dialog').close(); $('username').blur(); scrollToSection($('game-library')); $('game-library').focus({ preventScroll: true });
   } catch (error) { if (!controller.signal.aborted) searchStatus(error.message, true); }
-  finally { if (state.request === controller) { $('connect-button').disabled = false; $('connect-button').innerHTML = `Find my games ${icon('arrow')}`; } }
+  finally { if (state.request === controller) { $('connect-button').disabled = false; $('connect-button').setAttribute('aria-busy','false'); $('connect-button').innerHTML = `Find my games ${icon('arrow')}`; } }
 }
 
 async function loadOlder() {
@@ -609,7 +615,7 @@ $('import-submit').onclick = () => {
     const game = {pgn};
     state.request?.abort(); state.profile = null; state.username = ''; state.filter = 'all'; state.libraryPage = 0; state.archives = []; state.games = [game];
     $('profile').hidden = true; $('game-filters').hidden = true; $('load-more').hidden = true;
-    $('connect-button').disabled = false; $('connect-button').innerHTML = `Find my games ${icon('arrow')}`;
+    $('connect-button').disabled = false; $('connect-button').setAttribute('aria-busy','false'); $('connect-button').innerHTML = `Find my games ${icon('arrow')}`;
     searchStatus('PGN imported. Enter a username any time to switch back to your Chess.com games.');
     setGame(game); $('import-dialog').close(); scrollToSection(document.querySelector('.workspace')); toast('Game imported. Let’s find your turning points.');
   } catch (error) { $('import-error').hidden = false; $('import-error').textContent = error.message; }

@@ -25,3 +25,12 @@ export function animatePieces(board,transitions) {
     animation.finished.then(()=>destination.classList.remove('piece-in-motion')).catch(()=>{});
   }
 }
+
+export function fadePreviousHighlights(board,highlights) {
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  for(const {square,color} of highlights){
+    const tile=board.querySelector(`[data-square="${square}"]`);
+    if(!tile?.animate||tile.classList.contains('last'))continue;
+    tile.animate([{backgroundColor:color},{backgroundColor:getComputedStyle(tile).backgroundColor}],{duration:260,easing:'ease-out'});
+  }
+}
