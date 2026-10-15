@@ -101,6 +101,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   }
   function open(fromGame, fenOverride = null, practice = null) {
     coursePractice=practice;
+    $('play-origin').querySelector('option[value="current"]').textContent=practice?'Course practice position':'Current analysis position';
     const current = context(); savedGame = current.parsed; resumeReview = pause();
     originFen = fenOverride || current.parsed.fens[current.ply];
     $('play-origin').value = fromGame ? 'current' : 'new';

@@ -36,7 +36,10 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   player=getPlayer(lessons[0]);
   const layout=createLessonLayout({compact:matchMedia('(max-width:1020px)'),layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline')});
   const dock=createLessonDock({footer:document.querySelector('.lesson-course-footer'),root:document.documentElement});
-  const continuation=()=>lessonContinuation(player,{lastLesson:lessons.indexOf(player.lesson)===lessons.length-1,label:course.label});
+  const continuation=()=>{
+    const lastLesson=lessons.indexOf(player.lesson)===lessons.length-1,next=lessonContinuation(player,{lastLesson,label:course.label});
+    return lastLesson&&next.action==='next-lesson'&&coursePractice(course)?{...next,label:'Finish course →',help:'Optional practice or back to courses'}:next;
+  };
   function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor});renderLearningCompanion({memory,courses:COURSES,storage});}
   function clearTurn(){motion.cancel();selected=null;hint=null;message='';promotion=null;}
   function focusStage(){

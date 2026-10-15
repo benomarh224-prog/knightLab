@@ -62,5 +62,6 @@ test('all courses provide playable optional application positions; future course
     assert.equal(chess.isGameOver(),false);assert.equal(chess.turn(),practice.color);assert.ok(practice.goal);assert.equal(practice.moves,4);
   }
   const future={title:'Future course',lessons:[COURSES.beginners.lessons[0]]};assert.ok(coursePractice(future));
+  const structured={title:'Future structured course',lessons:[{id:'future',title:'Center',concepts:['Develop'],activities:[{moves:['e4','e5'],practiceColor:'w'}]}]};assert.ok(coursePractice(structured));
   assert.equal(coursePractice({title:'Reading',lessons:[{id:'text',concepts:['Read']}] }),null);
 });
