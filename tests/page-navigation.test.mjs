@@ -34,6 +34,10 @@ test('page navigation supports direct course visits, separate game analysis, and
     assert.equal(document.body.dataset.layout,'lesson');
     assert.deepEqual(views.filter(view=>!view.hidden).map(view=>view.dataset.pageView),['french']);
     assert.equal(links.find(link=>link.dataset.route==='learn').attributes['aria-current'],'page');
+    router.go('opengames');assert.equal(location.pathname,'/learn/open-games/');
+    assert.equal(document.body.dataset.layout,'lesson');
+    assert.deepEqual(views.filter(view=>!view.hidden).map(view=>view.dataset.pageView),['french']);
+    assert.equal(links.find(link=>link.dataset.route==='learn').attributes['aria-current'],'page');
     router.go('french');assert.equal(document.body.dataset.layout,'lesson');
     router.go('analysis');assert.equal(document.body.dataset.layout,'analysis');
   } finally {for(const [key,value] of Object.entries(saved)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}

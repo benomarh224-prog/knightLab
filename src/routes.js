@@ -1,5 +1,6 @@
-export const PAGE_PATHS={home:'/',games:'/games/',analysis:'/analysis/',learn:'/learn/',french:'/learn/french-defense/',tactics:'/learn/tactical-vision/'};
-export const PAGE_VIEWS={tactics:'french'};
+export const PAGE_PATHS={home:'/',games:'/games/',analysis:'/analysis/',learn:'/learn/',french:'/learn/french-defense/',tactics:'/learn/tactical-vision/',opengames:'/learn/open-games/'};
+export const PAGE_VIEWS={tactics:'french',opengames:'french'};
+const isLesson=page=>page==='french'||page in PAGE_VIEWS;
 export function pageFromPath(path){
   const normalized=('/'+String(path||'').split('?')[0].replace(/^\/+|\/+$/g,'' )+'/').replace(/^\/\/$/,'/');
   return Object.keys(PAGE_PATHS).find(page=>PAGE_PATHS[page]===normalized)||'home';
@@ -9,12 +10,12 @@ export function createPageRouter(onChange){
   function paint(){
     current=pageFromPath(location.pathname);
     document.body.dataset.page=current;
-    document.body.dataset.layout=['french','tactics'].includes(current)?'lesson':current;
+    document.body.dataset.layout=isLesson(current)?'lesson':current;
     for(const page of document.querySelectorAll('[data-page-view]'))page.hidden=page.dataset.pageView!==(PAGE_VIEWS[current]||current);
-    const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision'};
+    const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision',opengames:'First Steps: 1.e4 e5'};
     document.title=`${names[current]} · Knightlab`;
     for(const link of document.querySelectorAll('[data-route]')){
-      const active=link.dataset.route===current||['french','tactics'].includes(current)&&link.dataset.route==='learn';
+      const active=link.dataset.route===current||isLesson(current)&&link.dataset.route==='learn';
       link.classList.toggle('active',active);
       if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
     }

@@ -116,3 +116,9 @@ Search and engine activity use small busy indicators instead of changing the rev
 ## Mobile lesson workspace
 
 French Defense and Tactical Vision share a mobile layout with the compact coach and hint/explanation actions above the practice board. The turn instruction appears immediately before the full-width square board, and current-move controls remain below it. A native modal holds the existing course outline and difficulty filters below 1021px; the same outline returns to the desktop sidebar on resize. Learn/Try/Understand, the idea check and learning goals move into notes on compact screens. Previous/Next course navigation stays at the bottom with safe-area padding and reserved document space so it cannot cover the last content. Board width is independent of coach text length.
+
+## First Steps: 1.e4 e5
+
+`/learn/open-games/` adds 10 short lessons based on the supplied John Emms extract (printed pages 6–21). It covers Italian development, defending the early queen attack, gaining time against the queen, a bishop-and-knight mate, bishop-first move order, castling against Ng5, a sample king attack, pressure on a pin, the open g-file, and deflection. Each starts at a focused decision with the preceding opening preserved for replay and PGN export. The first exercise plays White; the rest play Black with automatic White replies. Progress is independent under `knightlab-open-games-course-v1`, and `?lesson=stop-scholar-mate` selects an individual lesson.
+
+Teaching text is original. Source move sequences are strictly checked with chess.js. We use only topics and worked continuations present in the supplied extract; the unfinished last exercise is excluded. Illustrative weak replies are identified as study examples, not forced engine lines. No original PDF, diagram images, or book paragraphs are published. The new course cover is an original SVG composed from Knightlab’s piece artwork in the legal Italian position after 3...Bc5.

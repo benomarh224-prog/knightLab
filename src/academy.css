@@ -33,8 +33,8 @@ body:not([data-page="home"]) .main-nav .nav-item.active { color:#f6ffe4; backgro
 .course-cover-copy>p,.course-cover-copy ul { color:#66785e; }
 .learn-page .course-progress-caption { color:#627b4f; }
 .learn-footnote { color:#69785f; }
-.tactics-cover { margin-top:24px; }
-body[data-page="tactics"] .lesson-idea-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.learn-page .course-cover+.course-cover { margin-top:24px; }
+body:is([data-page="tactics"],[data-page="opengames"]) .lesson-idea-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
 .tactics-method { margin-bottom:12px; font-size:11px; line-height:1.8; color:#617b4e; }
 .tactics-method>summary { min-height:40px; padding:7px 0; font-weight:650; cursor:pointer; }
 .tactics-method ol { padding-left:18px; margin:0; }

@@ -11,3 +11,5 @@ Final saved assets and prompt briefs:
 - `src/assets/learning-journey.png`: Very wide cinematic learning-path landscape. Four mossy rocky plateaus and small stone platforms above conifer forests and misty mountain ridges. Deep forest greens, a faint lime trail, dark upper and lower space for website content. No chess pieces, numbers, icons, or UI.
 
 The images are decorative editorial illustrations. They do not assert evaluated chess positions. The course cards link to the French Defense course, Tactical Vision course, and Play respectively. The French learning path and the Tactical Vision course each use their own stored practice progress.
+
+`open-games.svg` is an original code-generated vector cover, using Knightlab’s Staunton piece SVGs and the legal position after `1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5`. It is not an illustration copied from the supplied book.

@@ -25,6 +25,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     const frenchDone=memoryFor(COURSES.french).read(),tacticsDone=memoryFor(COURSES.tactics).read();
     $('learn-progress-label').textContent=frenchDone.length?`${frenchDone.length} of 8 lessons practiced`:'8 focused lessons · Interactive practice';
     $('tactics-progress-label').textContent=`${tacticsDone.length} of ${COURSES.tactics.lessons.length} exercises practiced`;
+    const openGamesDone=memoryFor(COURSES.opengames).read();
+    $('open-games-progress-label').textContent=`${openGamesDone.length} of ${COURSES.opengames.lessons.length} lessons practiced`;
     $('home-tactics-progress').textContent=`144 exercises · 3 levels${tacticsDone.length?' · '+tacticsDone.length+' practiced':''}`;
     $('home-course-progress').textContent=`French Defense · ${frenchDone.length} of 8 lessons practiced`;
     $('home-course-progress-fill').style.width=`${frenchDone.length/8*100}%`;
@@ -77,7 +79,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     $('lesson-explanation').hidden=!explanationOpen;
     $('lesson-explanation-text').textContent=practice&&!completed?lesson.notes[cursor]:cursor?session.note:lesson.takeaway;
     $('lesson-explain').textContent=explanationOpen?'Hide explanation':'Show explanation';$('lesson-explain').setAttribute('aria-expanded',String(explanationOpen));
-    for(const option of document.querySelectorAll('[data-lesson-idea]')){option.hidden=option.dataset.lessonIdea==='check'&&course.id!=='tactics';option.disabled=!practice||completed;option.setAttribute('aria-pressed',String(option.dataset.lessonIdea===idea));}
+    for(const option of document.querySelectorAll('[data-lesson-idea]')){option.hidden=option.dataset.lessonIdea==='check'&&course.id==='french';option.disabled=!practice||completed;option.setAttribute('aria-pressed',String(option.dataset.lessonIdea===idea));}
     $('lesson-idea-feedback').hidden=!idea;
     $('lesson-idea-feedback').textContent=idea===course.idea(expected)?'That matches this study line. Now try it on the board.':'Think about the coach’s prompt. This exercise follows a different idea.';
     const canContinue=completed||progress.read().includes(lesson.id);

@@ -818,6 +818,6 @@ router=createPageRouter(page=>{
   else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
   if(page==='learn'||page==='home')learning.refresh();
-  if(page==='french'||page==='tactics')learning.open(page);
+  if(['french','tactics','opengames'].includes(page))learning.open(page);
 });
 router.start();
