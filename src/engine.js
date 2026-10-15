@@ -5,7 +5,7 @@ export class Engine {
   init() {
     if (this.initializing) return this.initializing;
     this.initializing = new Promise((resolve, reject) => {
-      this.worker = new Worker('./engine/stockfish-19-lite-single.js');
+      this.worker = new Worker('/engine/stockfish-19-lite-single.js');
       const timeout = setTimeout(() => fail(new Error('The engine took too long to load. Try reviewing the game again.')), 30000);
       this.cancelInitialization = error => { clearTimeout(timeout); reject(error); };
       const fail = error => { clearTimeout(timeout); this.destroy(error); reject(error); };

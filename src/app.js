@@ -17,6 +17,8 @@ import { createReviewMemory } from './review-memory.js';
 import { moveTransitions, animatePieces, fadePreviousHighlights } from './piece-motion.js';
 import { compactCoachText, compactMoveText } from './compact-review.js';
 import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceMoveVerdict } from './verdict.js';
+import { createPageRouter } from './routes.js';
+import { createLearningUI } from './learning-ui.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -45,6 +47,7 @@ document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = 
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
 const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'deep', tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
+let router;
 function closeWorkspaceMenu(restoreFocus=false){
   $('workspace-menu-toggle').setAttribute('aria-expanded','false');
   document.querySelector('.topbar').classList.remove('menu-open');
@@ -55,7 +58,7 @@ $('workspace-menu-toggle').onclick=()=>{
   $('workspace-menu-toggle').setAttribute('aria-expanded',String(open));
   document.querySelector('.topbar').classList.toggle('menu-open',open);
 };
-document.querySelector('.main-nav').addEventListener('click',event=>{if(event.target.closest('button'))closeWorkspaceMenu();});
+document.querySelector('.main-nav').addEventListener('click',event=>{if(event.target.closest('button,a'))closeWorkspaceMenu();});
 document.addEventListener('click',event=>{if(!event.target.closest('.main-nav,#workspace-menu-toggle'))closeWorkspaceMenu();});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('workspace-menu-toggle').getAttribute('aria-expanded')==='true'){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMenu(true);}},true);
 compactLayout.addEventListener('change',()=>closeWorkspaceMenu());
@@ -155,13 +158,23 @@ $('focus-dialog').addEventListener('close', () => {
 });
 let toastTimer;
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 3500); }
-function searchStatus(message, error = false) { $('search-status').hidden = !message; $('search-status').textContent = message; $('search-status').classList.toggle('error', error); }
-function scrollToSection(element) {
-  if(element.id==='game-library')setLibraryOpen(true);
-  if (element.id === 'game-library' || element.matches('.workspace')) {
-    $('library-nav').classList.toggle('active', element.id === 'game-library');
-    $('games-nav').classList.toggle('active', element.id !== 'game-library');
+function searchStatus(message, error = false) {
+  for(const id of ['search-status','home-search-status','games-search-status']){
+    $(id).hidden=!message; $(id).textContent=message; $(id).classList.toggle('error',error);
   }
+}
+function searchBusy(busy){
+  for(const id of ['connect-button','home-search-button']){
+    $(id).disabled=busy; $(id).setAttribute('aria-busy',String(busy));
+    $(id).innerHTML=busy?'Finding games…':`Find ${id==='connect-button'?'my ':''}games ${icon('arrow')}`;
+  }
+}
+function scrollToSection(element) {
+  const page=element.id==='game-library'?'games':element.matches('.workspace')?'analysis':null;
+  if(page&&router?.page!==page){
+    router.go(page);return;
+  }
+  if(element.id==='game-library')setLibraryOpen(true);
   element.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
 }
 
@@ -174,7 +187,7 @@ $('library-toggle').onclick=()=>setLibraryOpen($('library-body').hidden);
 function setGame(game, { demo = false, analyze = true } = {}) {
   const parsed = parseGame(game.pgn);
   inline.reset(); selectedThreat=null; threatFen=null; boardCoach.close(false);
-  closeBoardActions(); setLibraryOpen(false);
+  closeBoardActions(); setLibraryOpen(router?.page==='games');
   training.reset();
   explorer.reset();
   if ($('focus-dialog').open) $('focus-dialog').close();
@@ -507,7 +520,7 @@ function renderGames() {
   state.libraryPage = page;
   $('game-count').textContent = state.games.length;
   $('library-title').textContent = state.profile ? 'Choose your next game' : 'Your imported game';
-  $('library-subtitle').textContent = 'Select a match to open its board and analysis above.';
+  $('library-subtitle').textContent = 'Open a match in its own analysis page.';
   $('game-filters').hidden = !state.profile;
   $('load-more').hidden = !state.profile || state.archiveIndex >= state.archives.length;
   $('library-note').hidden = !state.profile;
@@ -538,7 +551,7 @@ async function searchPlayer(event) {
   catch (error) { searchStatus(error.message, true); return; }
   state.request?.abort();
   const controller = new AbortController(); state.request = controller;
-  $('connect-button').disabled = true; $('connect-button').setAttribute('aria-busy','true'); $('connect-button').textContent = 'Finding games…';
+  searchBusy(true);
   searchStatus('Finding your profile and recent games…');
   try {
     const {profile, archives} = await loadPlayer(username, controller.signal);
@@ -548,19 +561,18 @@ async function searchPlayer(event) {
     }
     if (controller.signal.aborted) return;
     state.username = username; state.profile = profile; state.archives = archives; state.archiveIndex = archiveIndex;
+    $('home-username').value=username;
     state.games = games; state.filter = 'all'; state.libraryPage = 0;
     $('profile').hidden = false;
     const avatar = typeof profile.avatar === 'string' && profile.avatar.startsWith('https://') ? `<img src="${escape(profile.avatar)}" alt="" referrerpolicy="no-referrer"/>` : `<span class="profile-fallback">${escape(profile.username?.[0]?.toUpperCase() || '♙')}</span>`;
     $('profile').innerHTML = `${avatar}<div><strong>${escape(profile.username)}</strong><small>${state.games.length} recent games loaded</small></div>`;
     document.querySelectorAll('[data-filter]').forEach(button => { button.classList.toggle('selected', button.dataset.filter === 'all'); button.setAttribute('aria-pressed', String(button.dataset.filter === 'all')); });
     renderGames();
-    searchStatus(games.length ? `${state.games.length} games loaded below the analysis. Choose a match to review.` : 'This account has no completed standard chess games available yet.');
+    searchStatus(games.length ? `${state.games.length} games ready. Choose a match to review.` : 'This account has no completed standard chess games available yet.');
     try { localStorage.setItem('knightlab-username', username); } catch {}
-    if (games.length) setGame(state.games[0]);
-    else setGame({ pgn: DEMO_PGN }, { demo: true });
     $('connect-dialog').close(); $('username').blur(); scrollToSection($('game-library')); $('game-library').focus({ preventScroll: true });
   } catch (error) { if (!controller.signal.aborted) searchStatus(error.message, true); }
-  finally { if (state.request === controller) { $('connect-button').disabled = false; $('connect-button').setAttribute('aria-busy','false'); $('connect-button').innerHTML = `Find my games ${icon('arrow')}`; } }
+  finally { if (state.request === controller) searchBusy(false); }
 }
 
 async function loadOlder() {
@@ -590,15 +602,20 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
 <p>Threats highlights only the leading new attack from the current move. The old highlight clears on the next move. Red means check or no immediate legal recapture; amber means a defended attack or risky exchange. Tap the square to see why. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
 <p>The compact coach stays above the board and updates with each move. Details expands the full explanation in the page. It describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
-<p><a href="./STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="./THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
+<p><a href="/STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="/THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
 $('username-form').addEventListener('submit', searchPlayer);
 function openConnect() { $('connect-dialog').showModal(); $('username').focus({preventScroll:true}); }
 $('focus-username').onclick = openConnect;
 $('open-connect').onclick = openConnect;
+$('games-search').onclick=openConnect;
+$('home-search').addEventListener('submit',event=>{
+  event.preventDefault();$('username').value=$('home-username').value;searchPlayer();
+});
+$('home-demo').onclick=()=>{setGame({pgn:DEMO_PGN},{demo:true,analyze:false});router.go('analysis');};
 $('games-nav').onclick = () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); };
 $('library-nav').onclick = () => scrollToSection($('game-library'));
-for (const id of ['sidebar-import','hero-import']) $(id).onclick = openImport;
+for (const id of ['sidebar-import','hero-import','home-import']) $(id).onclick = openImport;
 $('how-it-works').onclick = () => showInfo('A better way to review', instructions);
 $('analysis-method').onclick = () => showInfo('How move ratings work', method);
 document.querySelectorAll('.close-dialog').forEach(button => button.onclick = () => button.closest('dialog').close());
@@ -615,7 +632,7 @@ $('import-submit').onclick = () => {
     const game = {pgn};
     state.request?.abort(); state.profile = null; state.username = ''; state.filter = 'all'; state.libraryPage = 0; state.archives = []; state.games = [game];
     $('profile').hidden = true; $('game-filters').hidden = true; $('load-more').hidden = true;
-    $('connect-button').disabled = false; $('connect-button').setAttribute('aria-busy','false'); $('connect-button').innerHTML = `Find my games ${icon('arrow')}`;
+    searchBusy(false);
     searchStatus('PGN imported. Enter a username any time to switch back to your Chess.com games.');
     setGame(game); $('import-dialog').close(); scrollToSection(document.querySelector('.workspace')); toast('Game imported. Let’s find your turning points.');
   } catch (error) { $('import-error').hidden = false; $('import-error').textContent = error.message; }
@@ -731,6 +748,7 @@ $('download-pgn').onclick = () => {
   const link = document.createElement('a'); link.href = url; link.download = 'knightlab-game.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000); toast('PGN downloaded.');
 };
 document.addEventListener('keydown', event => {
+  if(router?.page!=='analysis')return;
   if(inline.active && event.target.closest('#board'))return;
   if (event.target.closest('[role="tablist"]') || ['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName) || document.querySelector('dialog[open]:not(#focus-dialog)')) return;
   if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -741,9 +759,36 @@ document.addEventListener('keydown', event => {
   if (event.key.toLowerCase() === 'f') $('flip-board').onclick();
 });
 window.addEventListener('pagehide', () => { saveReviewPosition(); inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
-try { $('username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
+try { $('username').value = $('home-username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
 const lastReview=reviewMemory.last();
 try {
-  if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo});}
-  else setGame({pgn:DEMO_PGN},{demo:true});
-} catch {setGame({pgn:DEMO_PGN},{demo:true});}
+  if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
+  else setGame({pgn:DEMO_PGN},{demo:true,analyze:false});
+} catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false});}
+const learning=createLearningUI({storage:reviewStorage,onAnalyze:pgn=>{
+  setGame({pgn},{analyze:false});router.go('analysis');
+}});
+const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);
+for(const id of ['hero-board','course-cover-board']){
+  let html='';
+  for(let rank=8;rank>=1;rank--)for(const file of 'abcdefgh'){
+    const square=file+rank,piece=preview.get(square);
+    html+=`<div class="square${(file.charCodeAt(0)-97+rank)%2===1?' dark':''}${['d7','d5'].includes(square)?' last':''}">${piece?pieceSvg(piece):''}</div>`;
+  }
+  $(id).innerHTML=html;
+}
+router=createPageRouter(page=>{
+  for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
+  closeWorkspaceMenu();
+  $('library-nav').classList.toggle('active',page==='games');
+  $('games-nav').classList.toggle('active',page==='analysis');
+  for(const [id,active] of [['library-nav',page==='games'],['games-nav',page==='analysis']]){
+    if(active)$(id).setAttribute('aria-current','page');else $(id).removeAttribute('aria-current');
+  }
+  if(page==='analysis'){if(!state.running)startAnalysis();}
+  else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
+  if(page==='games')setLibraryOpen(true);
+  if(page==='learn')learning.refresh();
+  if(page==='french')learning.open();
+});
+router.start();
