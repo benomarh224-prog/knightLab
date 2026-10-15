@@ -1413,3 +1413,72 @@ body, .app-shell, .main-shell { background: var(--bg); }
   .workspace .move-controls .step-button { min-height: 50px; height: 50px; }
   .workspace[data-mobile-view="board"] #board { scroll-margin-bottom: calc(138px + env(safe-area-inset-bottom)); }
 }
+/* A single mobile review surface: no fixed bars covering the last ranks. */
+#workspace-menu-toggle { display: none; }
+.board-top>.board-players { grid-column: 1/-1; grid-row: 2; }
+@media(min-width:861px) { .board-top:has(.opening-card[open])>.board-players { grid-row: 3; } }
+.board-header-actions .board-actions { grid-column: auto; grid-row: auto; }
+.board-header-actions .board-actions-panel { top: calc(100% + 6px); bottom: auto; }
+.focus-dialog .board-header-actions { display: flex; }
+@media(max-width:860px) {
+  .topbar { height: 48px; min-height: 48px; padding: 0 10px; }
+  .brand { font-size: 19px; gap: 6px; }
+  .brand img { width: 25px; height: 25px; }
+  .topbar-actions { gap: 3px; }
+  .topbar .primary-button { min-height: 36px; padding: 6px 9px; font-size: 11px; }
+  .topbar .quiet-button { width: 32px; min-width: 32px; min-height: 36px; padding: 6px; }
+  #workspace-menu-toggle { display: inline-flex; align-items: center; justify-content: center; width: 36px; min-width: 36px; height: 36px; padding: 5px; border: 1px solid #3a5079; border-radius: 8px; background: #1d2a44; color: #dce6ff; font-size: 21px; }
+  .topbar .main-nav { position: absolute; inset: 46px 10px auto auto; width: 210px; height: auto; min-height: 0; margin: 0; padding: 6px; display: none; grid-template-columns: minmax(0,1fr); gap: 3px; border: 1px solid #4a638e; border-radius: 10px; background: #17243b; box-shadow: 0 8px 25px #050b1780; }
+  .topbar.menu-open .main-nav { display: grid; }
+  .topbar .main-nav .nav-item { display: flex; flex-direction: row; justify-content: flex-start; gap: 10px; min-height: 44px; height: 44px; padding: 8px 10px; font-size: 12px; }
+  .topbar .main-nav [data-icon] { display: inline-flex; }
+  .topbar .main-nav .nav-count { position: static; margin-left: auto; font-size: 10px; }
+  main { padding: 0 10px calc(20px + env(safe-area-inset-bottom)); }
+  .workspace { scroll-margin-top: 48px; }
+  .mobile-workspace-tabs { top: 48px; min-height: 32px; height: 32px; padding: 0; margin: 0 0 3px; }
+  .mobile-workspace-tabs button { min-height: 30px; height: 30px; padding: 3px; font-size: 10px; }
+  .workspace .board-card, .focus-dialog .board-card { gap: 4px; }
+  .board-card .board-top, .focus-dialog .board-top { grid-template-columns: minmax(0,1fr) auto auto; gap: 5px; min-height: 32px; align-items: center; scroll-margin-top: 84px; }
+  .board-top>.board-players { grid-column: 1; grid-row: 1; padding: 0; gap: 28px; min-height: 24px; }
+  .board-players .player-row { min-height: 24px; max-width: calc(50% - 14px); gap: 0; }
+  .board-players .player-avatar { display: none; }
+  .board-players .player-identity strong { font-size: 9px; }
+  .board-players .result-pill { font-size: 8px; padding: 1px 3px; }
+  .board-top>.opening-card, .board-top>.line-toolbar { grid-column: 2; grid-row: 1; }
+  .board-header-actions { grid-column: 3; grid-row: 1; gap: 4px; }
+  .board-header-actions #focus-mode { min-height: 32px; height: 32px; width: 32px; padding: 7px; font-size: 0; gap: 0; }
+  .board-header-actions #focus-mode>span { display: flex; }
+  .board-header-actions #focus-mode svg { width: 17px; height: 17px; }
+  .board-card .opening-summary { min-height: 30px; height: 30px; gap: 3px; padding: 3px 5px; border-radius: 7px; }
+  .board-card .opening-card:not([open]) h3 { display: none; }
+  .board-card .opening-eco { padding: 1px 3px; font-size: 8px; }
+  .board-card .opening-toggle { min-width: 0; }
+  .board-card .opening-toggle svg { width: 12px; height: 12px; }
+  .board-card .opening-card[open] { grid-column: 1/-1; grid-row: 2; }
+  .board-card .opening-card[open] h3 { display: block; }
+  .board-top>.line-toolbar { min-height: 30px; padding: 1px 3px; }
+  .line-toolbar>span { display: none; }
+  .line-toolbar button { min-height: 28px; padding: 3px; font-size: 9px; white-space: nowrap; }
+  #board-actions-toggle { min-width: 30px; width: 30px; min-height: 32px; height: 32px; font-size: 22px; }
+  .board-coach-card:not(.is-expanded) { height: 74px; min-height: 74px; max-height: 74px; }
+  .board-coach-card:not(.is-expanded) .move-insight { grid-template-rows: 28px 28px; padding: 6px 8px; gap: 2px 6px; }
+  .board-coach-card:not(.is-expanded) .insight-heading { min-height: 28px; height: 28px; }
+  .board-coach-card #board-coach-close { min-height: 28px; padding: 3px 6px; }
+  .board-coach-card:not(.is-expanded) .coach-brief { height: 28px; min-height: 28px; max-height: 28px; font-size: 11px; line-height: 14px; }
+  .board-coach-card:not(.is-expanded) #recommended-move { min-height: 28px; font-size: 10px; }
+  .workspace .board-area { width: min(100%,max(180px,calc(100vh - 278px - env(safe-area-inset-bottom)))); align-self: center; grid-template-rows: 12px auto; gap: 4px; }
+  .board-area .evaluation-bar { height: 12px; }
+  .workspace[data-mobile-view="board"] .board-controls { display: grid; grid-template-columns: 52px minmax(0,1fr) 52px; grid-template-rows: 52px; height: 52px; min-height: 52px; gap: 6px; padding: 0; }
+  .workspace[data-mobile-view="board"] .board-controls::after { display: none; }
+  .workspace[data-mobile-view="board"] .move-controls { display: contents; position: static; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+  .workspace .move-controls .step-button { width: 52px; min-height: 52px; height: 52px; padding: 10px; }
+  .workspace .move-controls .step-button>span:not([data-icon]) { display: none; }
+  .workspace #previous-move { grid-column: 1; grid-row: 1; }
+  .workspace #next-move { grid-column: 3; grid-row: 1; }
+  .workspace .move-strip { grid-column: 2; grid-row: 1; align-self: center; height: 44px; border: 0; }
+  .workspace .move-strip button { min-height: 36px; padding: 4px 6px; }
+  .workspace[data-mobile-view="board"] #board { scroll-margin-bottom: 12px; }
+  .focus-dialog .board-top { scroll-margin-top: 12px; }
+  .focus-dialog .board-area { grid-template-rows: 12px auto; gap: 4px; }
+}
+@supports(height:100svh) { @media(max-width:860px) { .workspace .board-area { width: min(100%,max(180px,calc(100svh - 278px - env(safe-area-inset-bottom)))); } } }

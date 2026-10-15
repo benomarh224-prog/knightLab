@@ -45,6 +45,20 @@ document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = 
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
 const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'deep', tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
+function closeWorkspaceMenu(restoreFocus=false){
+  $('workspace-menu-toggle').setAttribute('aria-expanded','false');
+  document.querySelector('.topbar').classList.remove('menu-open');
+  if(restoreFocus)$('workspace-menu-toggle').focus({preventScroll:true});
+}
+$('workspace-menu-toggle').onclick=()=>{
+  const open=$('workspace-menu-toggle').getAttribute('aria-expanded')!=='true';
+  $('workspace-menu-toggle').setAttribute('aria-expanded',String(open));
+  document.querySelector('.topbar').classList.toggle('menu-open',open);
+};
+document.querySelector('.main-nav').addEventListener('click',event=>{if(event.target.closest('button'))closeWorkspaceMenu();});
+document.addEventListener('click',event=>{if(!event.target.closest('.main-nav,#workspace-menu-toggle'))closeWorkspaceMenu();});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('workspace-menu-toggle').getAttribute('aria-expanded')==='true'){event.preventDefault();event.stopImmediatePropagation();closeWorkspaceMenu(true);}},true);
+compactLayout.addEventListener('change',()=>closeWorkspaceMenu());
 let reviewStorage;
 try { reviewStorage=localStorage; } catch {}
 const reviewMemory=createReviewMemory(reviewStorage);

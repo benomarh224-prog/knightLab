@@ -8,7 +8,9 @@ export function createBoardCoach({showBoard,navigate}) {
   $('board-top').append($('line-toolbar'));
   document.querySelector('.board-area').after(board.querySelector('.board-controls'));
   players.className='board-players';
-  document.querySelector('.board-area').before(players,card);
+  $('board-top').append(players);
+  board.querySelector('.board-header-actions').append(board.querySelector('.board-actions'));
+  document.querySelector('.board-area').before(card);
   players.append(...board.querySelectorAll(':scope > .player-row'));
   card.insertBefore(panel,$('coach-playback'));
   panel.querySelector('.insight-heading').append($('board-coach-close'));
