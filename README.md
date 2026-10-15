@@ -112,3 +112,7 @@ Previous/Next are large 52-pixel arrow buttons in the same row as the move ribbo
 Visual polish keeps the mobile layout dimensions unchanged: the board has a fine rim and soft shadow, the coach uses a small knight mascot with its existing verdict glyph, controls share consistent edges and press feedback, and the selected move chip has a clear inset marker. Move notation and numerical scores use system monospace/tabular figures. Previous move-square highlights fade out briefly after navigation without adding extra threat highlights.
 
 Search and engine activity use small busy indicators instead of changing the review layout. Search exposes aria-busy, and the review progress track exposes progressbar values. Reduced-motion preferences disable the new fades, pulses, spinners and button transitions. All full coach explanations and existing controls remain available.
+
+## Mobile lesson workspace
+
+French Defense and Tactical Vision share a board-first mobile layout: course link and lesson picker, lesson progress and title, side to move, full-width square board, current-move controls, coach, then collapsible notes. A native modal holds the existing course outline and difficulty filters below 1021px; the same outline returns to the desktop sidebar on resize. Learn/Try/Understand, the idea check and learning goals move into notes on compact screens. Previous/Next course navigation stays at the bottom with safe-area padding and reserved document space so it cannot cover the last content. Board width is independent of coach text length.

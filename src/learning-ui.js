@@ -2,6 +2,7 @@ import { Chess } from 'chess.js';
 import { pieceSvg } from './pieces.js';
 import { COURSES,courseLessons } from './courses.js';
 import { OpeningLesson,createCourseProgress } from './opening-course.js';
+import { createLessonLayout } from './lesson-layout.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -15,8 +16,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   let session=new OpeningLesson(lessons[0]),selected=null,hint=null,flipped=false,message='',explanationOpen=false,idea=null,promotion=null;
   session.practice({startPly:studyFor(session.lesson.id).start});
   const compact=matchMedia('(max-width:1020px)');
-  function arrange(){ $('course-outline').open=!compact.matches;$('lesson-thinking').open=!compact.matches; }
-  arrange();compact.addEventListener('change',arrange);
+  const lessonLayout=createLessonLayout({compact,layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline'),thinking:$('lesson-thinking'),mode:document.querySelector('.lesson-mode'),footer:document.querySelector('.lesson-course-footer'),next:document.querySelector('.lesson-next-course'),goals:document.querySelector('.lesson-goals'),teaching:document.querySelector('.lesson-teaching'),notes:$('lesson-notes'),extras:$('lesson-extra-content'),coach:document.querySelector('.lesson-note-card'),actions:document.querySelector('.lesson-coach-actions')});
   function updateProgress(){
     const completed=progress.read(),visible=activeLessons(),inLevel=visible.filter(lesson=>completed.includes(lesson.id)).length;
     const focusedLesson=document.activeElement?.closest('#course-lessons [data-lesson]')?.dataset.lesson;
@@ -44,11 +44,15 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     const {lesson,mode,cursor,completed}=session,chess=new Chess(session.fen),practice=mode==='practice',study=studyFor(lesson.id);
     const visible=activeLessons(),index=visible.findIndex(item=>item.id===lesson.id),globalIndex=lessons.findIndex(item=>item.id===lesson.id),expected=session.expected,side=lesson.practiceColor==='w'?'White':'Black';
     $('french-title').textContent=course.title;
+    $('lesson-mobile-course').textContent=course.title;
+    $('course-drawer-title').textContent=course.id==='tactics'?'Your exercises':'Your lessons';
+    $('lesson-list-open-label').textContent=course.id==='tactics'?'Exercises':'Lessons';
+    $('course-lessons').setAttribute('aria-label',`${course.title} ${course.label.toLowerCase()}s`);
     $('tactics-method').hidden=course.id!=='tactics';
     $('course-breadcrumb').textContent=course.title;$('course-breadcrumb').href=course.path;$('course-breadcrumb').dataset.route=course.id;
     $('lesson-page-progressbar').setAttribute('aria-valuemax',String(visible.length));
     $('lesson-promotion').hidden=!promotion;
-    $('lesson-course-previous-label').textContent=`Previous ${course.label.toLowerCase()}`;
+    $('lesson-course-previous-label').textContent='Previous';
     $('lesson-title').textContent=study.title;$('lesson-category').textContent=lesson.tag;$('lesson-objective').textContent=lesson.subtitle;
     $('lesson-breadcrumb').textContent=`${course.label} ${String(index+1).padStart(2,'0')}`;
     $('lesson-page-position').textContent=`${course.label} ${index+1} of ${visible.length}`;
@@ -59,6 +63,9 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     const total=lesson.verboseMoves.slice(session.practiceStart||0).filter(move=>move.color===lesson.practiceColor).length;
     $('lesson-counter').textContent=practice?(completed?'Complete':session.correct?`${session.correct}/${total} solved`:`${side} to play`):`${cursor}/${lesson.moves.length}`;
     $('lesson-turn').textContent=completed?'Exercise complete':`${chess.turn()==='w'?'White':'Black'} to move`;
+    $('lesson-mobile-turn').textContent=$('lesson-turn').textContent;
+    $('lesson-mobile-piece').textContent=chess.turn()==='w'?'♙':'♟';
+    $('lesson-current-move').textContent=session.last?`${session.last.before.split(' ')[5]}${session.last.color==='w'?'.':'…'} ${session.last.san}`:'Start';
     $('lesson-view').textContent=`${practice?'Practice':'Study'} board${flipped?' · Black view':''}`;
     $('lesson-turn-instruction').textContent=practice?(completed?'Well played. Take this idea into your next game.':`Your turn: ${study.title.charAt(0).toLowerCase()+study.title.slice(1)}`):'Learn the line, then try the idea yourself.';
     $('lesson-watch').setAttribute('aria-pressed',String(!practice&&!explanationOpen));$('lesson-practice').setAttribute('aria-pressed',String(practice&&!explanationOpen));$('lesson-understand').setAttribute('aria-pressed',String(explanationOpen));
@@ -97,7 +104,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     session=new OpeningLesson(lesson);flipped=course.orientToSolver&&lesson.practiceColor==='b';resetPractice();$('lesson-notes').open=false;
     if(updateUrl)history.replaceState({},'',`${course.path}?lesson=${lesson.id}`);render();
   }
-  $('course-lessons').onclick=event=>{const button=event.target.closest('[data-lesson]');if(button){selectLesson(button.dataset.lesson);if(compact.matches)$('course-outline').open=false;}};
+  $('course-lessons').onclick=event=>{const button=event.target.closest('[data-lesson]');if(button){selectLesson(button.dataset.lesson);lessonLayout.close();}};
   $('lesson-watch').onclick=()=>{session.watch();clearTurn();render();};$('lesson-practice').onclick=()=>{resetPractice();render();};
   $('lesson-reset').onclick=()=>{if(session.mode==='practice')resetPractice();else{session.watch();clearTurn();}render();};
   $('lesson-previous').onclick=()=>{session.jump(session.cursor-1);clearTurn();render();};$('lesson-next').onclick=()=>{session.jump(session.cursor+1);clearTurn();render();};
