@@ -123,7 +123,7 @@ body[data-layout="lesson"] .course-drawer { color-scheme:light; width:min(460px,
   .lesson-player #lesson-list-open { flex:none; min-height:44px; }
   .lesson-player .lesson-topline { flex-wrap:wrap; gap:6px; margin-bottom:12px; scroll-margin-top:80px; }
   .lesson-player .lesson-stages { margin-left:auto; gap:2px; }
-  .lesson-player .lesson-topline:has(#lesson-focus:not([hidden])) #lesson-page-position { display:none; }
+  body[data-lesson-focus="false"] .lesson-player .lesson-topline:has(#lesson-focus:not([hidden])) #lesson-page-position { display:none; }
   .lesson-player .lesson-topline:has(#lesson-focus:not([hidden])) .lesson-stages { margin-left:0; }
   .lesson-player .lesson-stages button { padding:9px 8px; font-size:16px; }
   .lesson-player .lesson-page-heading { margin:0 0 14px; scroll-margin-top:80px; }
