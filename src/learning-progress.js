@@ -14,6 +14,7 @@ export function renderLearningProgress({progress,activeLessons,course,player,mem
     $('open-games-progress-label').textContent=`${openGamesDone.length} of ${COURSES.opengames.lessons.length} lessons practiced`;
     const beginnerDone=memoryFor(COURSES.beginners).read(),beginnerTotal=COURSES.beginners.lessons.length;
     $('beginner-progress-label').textContent=`${beginnerDone.length} of ${beginnerTotal} lessons completed`;
+    $('home-beginner-progress').textContent=beginnerDone.length?`${beginnerDone.length} of ${beginnerTotal} lessons completed`:`${beginnerTotal} lessons · Guided board exercises`;
     $('home-tactics-progress').textContent=`144 exercises · 3 levels${tacticsDone.length?' · '+tacticsDone.length+' practiced':''}`;
     $('home-course-progress').textContent=`Chess for Beginners · ${beginnerDone.length} of ${beginnerTotal} lessons completed`;
     $('home-course-progress-fill').style.width=`${beginnerDone.length/beginnerTotal*100}%`;
