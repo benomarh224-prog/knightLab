@@ -5,6 +5,8 @@ export function createBoardCoach({showBoard,navigate}) {
   const board=document.querySelector('.board-card');
   const triggers=['board-coach-toggle','board-coach','coach-tab','mobile-coach-tab'].map($);
   const players=document.createElement('div');
+  $('board-top').append($('line-toolbar'));
+  document.querySelector('.board-area').after(board.querySelector('.board-controls'));
   players.className='board-players';
   document.querySelector('.board-area').before(players,card);
   players.append(...board.querySelectorAll(':scope > .player-row'));

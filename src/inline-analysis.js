@@ -7,7 +7,7 @@ const coord=move=>move.from+move.to+(move.promotion||'');
 export function createInlineAnalysis({context,pause,resume,onChange,playSound}) {
   let line=null, selected=null, promotion=null, engine=null, run=0, busy=false, restore=false, savedGame=null, message='';
   function cancel() { run++; engine?.destroy(); engine=null; busy=false; }
-  function reset() { cancel(); line=null; selected=null; promotion=null; restore=false; }
+  function reset() { cancel(); line=null; selected=null; promotion=null; restore=false; $('line-controls').open=false; }
   function exit(shouldResume=true) {
     const restart=restore && savedGame===context().parsed;
     reset(); onChange(); if (restart && shouldResume) resume(); return restart;
@@ -41,7 +41,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound}) 
     if (!line) return;
     const outcome=line.play(from,to,piece);
     if (outcome.status==='promotion') { promotion={from,to}; onChange(); return; }
-    if (outcome.status!=='played') { message='That move is not legal. Choose a highlighted square.'; onChange(); return; }
+    if (outcome.status!=='played') { message='That move is not legal. Choose a highlighted square.'; $('line-controls').open=true; onChange(); return; }
     selected=null; promotion=null; message=`Exploring ${outcome.move.san}. The original game is unchanged.`;
     playSound(outcome.move); evaluate();
   }
@@ -74,6 +74,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound}) 
     $('try-move').setAttribute('aria-pressed',String(Boolean(line)));
     $('try-move').classList.toggle('toggled',Boolean(line));
     if (!line) return;
+    if(promotion||!busy&&!line.score)$('line-controls').open=true;
     $('line-message').textContent=busy?'Stockfish is checking this continuation…':message;
     $('line-score').textContent=line.score?formatEvaluation(line.score):'…';
     $('line-reply').disabled=busy||!line.score?.best||line.chess.isGameOver()||Boolean(promotion);

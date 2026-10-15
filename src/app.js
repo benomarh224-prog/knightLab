@@ -47,7 +47,7 @@ const compactLayout = matchMedia('(max-width: 860px)');
 let reviewStorage;
 try { reviewStorage=localStorage; } catch {}
 const reviewMemory=createReviewMemory(reviewStorage);
-let paintedPosition=null, stripPosition=null;
+let paintedPosition=null, stripPosition=null, stripSource=null, stripSignature='';
 function saveReviewPosition() {
   if(state.selected)reviewMemory.save(state.selected,{ply:state.ply,flipped:state.flipped,demo:state.demo});
 }
@@ -337,7 +337,7 @@ function render() {
 let coachContext = null, coachReport = null;
 function renderCoach(move, before, after) {
   if (!coachContext || coachContext[0] !== move || coachContext[1] !== before || coachContext[2] !== after) {
-    if (coachContext?.[0] !== move) { $('coach-lines').open = false; $('coach-panel').scrollTop=0; }
+    if (coachContext?.[0] !== move) { boardCoach.close(); $('coach-lines').open = false; $('coach-panel').scrollTop=0; }
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
@@ -382,8 +382,7 @@ function renderChart() {
 }
 
 function renderMoveList() {
-  $('move-strip').innerHTML='<button data-strip-ply="0" aria-label="Starting position">Start</button>'+state.parsed.moves.map((move,index)=>`<button data-strip-ply="${index+1}" aria-label="Go to ${escape(moveLabelForStrip(move))}"><span>${escape(moveLabelForStrip(move))}</span><i class="strip-dot" hidden></i></button>`).join('');
-  stripPosition=null;
+  stripSource=null;stripPosition=null;
   const rows = new Map();
   state.parsed.moves.forEach((move, index) => {
     const number = move.before.split(' ')[5];
@@ -395,24 +394,30 @@ function renderMoveList() {
 }
 function moveLabelForStrip(move){return `${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${move.san}`;}
 function renderMoveStrip(){
-  const strip=$('move-strip');strip.hidden=inline.active;
-  if(inline.active)return;
+  const strip=$('move-strip'),moves=inline.active?inline.line.entries:state.parsed.moves;
+  const cursor=inline.active?inline.line.cursor:state.ply,scores=inline.active?inline.line.scores:state.evaluations;
+  const signature=moves.map(move=>move.from+move.to+(move.promotion||'')).join(' ');
+  if(stripSource!==moves||stripSignature!==signature){
+    strip.innerHTML='<button data-strip-ply="0" aria-label="'+(inline.active?'Variation start':'Starting position')+'">Start</button>'+moves.map((move,index)=>`<button data-strip-ply="${index+1}" aria-label="Go to ${escape(moveLabelForStrip(move))}"><span>${escape(moveLabelForStrip(move))}</span><i class="strip-dot" hidden></i></button>`).join('');
+    stripSource=moves;stripSignature=signature;stripPosition=null;
+  }
+  strip.setAttribute('aria-label',inline.active?'Explored continuation':'Game moves');
   for(const button of strip.querySelectorAll('[data-strip-ply]')){
-    const ply=Number(button.dataset.stripPly),current=ply===state.ply;
+    const ply=Number(button.dataset.stripPly),current=ply===cursor;
     button.setAttribute('aria-current',current?'step':'false');
-    const move=state.parsed.moves[ply-1],rating=move?classifyMove(move,state.evaluations[ply-1],state.evaluations[ply]):null;
+    const move=moves[ply-1],rating=move?classifyMove(move,scores[ply-1],scores[ply]):null;
     const dot=button.querySelector('.strip-dot');
     if(dot){dot.hidden=!rating;if(rating)dot.style.background=qualityColors[rating.label];}
     button.title=move?`${moveLabelForStrip(move)}${rating?' · '+qualityLabels[rating.label]:''}`:'Starting position';
   }
-  if(stripPosition!==state.ply||strip.clientWidth&&strip.dataset.needsCenter==='true'){
+  if(stripPosition!==cursor||strip.clientWidth&&strip.dataset.needsCenter==='true'){
     const active=strip.querySelector('[aria-current="step"]');
     if(active&&strip.clientWidth){strip.scrollLeft=active.offsetLeft-strip.clientWidth/2+active.offsetWidth/2;strip.dataset.needsCenter='false';}
     else strip.dataset.needsCenter='true';
-    stripPosition=state.ply;
+    stripPosition=cursor;
   }
 }
-$('move-strip').onclick=event=>{const button=event.target.closest('[data-strip-ply]');if(button)goTo(Number(button.dataset.stripPly));};
+$('move-strip').onclick=event=>{const button=event.target.closest('[data-strip-ply]');if(button){const ply=Number(button.dataset.stripPly);if(inline.active){inline.jump(ply);boardCoach.reveal();}else goTo(ply);}};
 function updateMoveRatings(items) {
   document.querySelectorAll('.move-cell').forEach(button => {
     const ply = Number(button.dataset.ply);
@@ -431,7 +436,8 @@ function goTo(ply) {
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
   moveSounds.play(navigationSoundMove(state.parsed.moves, previous, state.ply)); render();
   saveReviewPosition();
-  if (state.tab === 'moves') document.querySelector(`.move-cell[data-ply="${state.ply}"]`)?.scrollIntoView({ block:'nearest', behavior:'instant' });
+  const selectedCell=document.querySelector(`.move-cell[data-ply="${state.ply}"]`);
+  if (state.tab === 'moves'&&selectedCell?.getClientRects().length) selectedCell.scrollIntoView({ block:'nearest', behavior:'instant' });
   boardCoach.reveal();
   if(restart) startAnalysis();
 }
@@ -599,7 +605,7 @@ $('games-list').onclick = event => {
 document.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { state.filter = button.dataset.filter; state.libraryPage = 0; document.querySelectorAll('[data-filter]').forEach(element => { element.classList.toggle('selected', element === button); element.setAttribute('aria-pressed', String(element === button)); }); renderGames(); });
 for (const [id, change] of [['library-prev', -1], ['library-next', 1]]) $(id).onclick = () => { state.libraryPage += change; renderGames(); scrollToSection($('game-library')); };
 $('load-more').onclick = loadOlder;
-function stepMove(delta) { if(inline.active) inline.jump(inline.line.cursor+delta); else goTo(state.ply+delta); }
+function stepMove(delta) { if(inline.active){boardCoach.close();inline.jump(inline.line.cursor+delta);boardCoach.reveal();}else goTo(state.ply+delta); }
 $('first-move').onclick = () => inline.active?inline.jump(0):goTo(0);
 $('previous-move').onclick = () => stepMove(-1);
 $('next-move').onclick = () => stepMove(1);
