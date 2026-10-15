@@ -1,5 +1,5 @@
-export const PAGE_PATHS={home:'/',games:'/games/',analysis:'/analysis/',learn:'/learn/',french:'/learn/french-defense/',tactics:'/learn/tactical-vision/',opengames:'/learn/open-games/'};
-export const PAGE_VIEWS={tactics:'french',opengames:'french'};
+export const PAGE_PATHS={home:'/',games:'/games/',analysis:'/analysis/',learn:'/learn/',french:'/learn/french-defense/',tactics:'/learn/tactical-vision/',opengames:'/learn/open-games/',beginners:'/learn/chess-for-beginners/'};
+export const PAGE_VIEWS={tactics:'french',opengames:'french',beginners:'french'};
 const isLesson=page=>page==='french'||page in PAGE_VIEWS;
 export function pageFromPath(path){
   const normalized=('/'+String(path||'').split('?')[0].replace(/^\/+|\/+$/g,'' )+'/').replace(/^\/\/$/,'/');
@@ -12,7 +12,7 @@ export function createPageRouter(onChange){
     document.body.dataset.page=current;
     document.body.dataset.layout=isLesson(current)?'lesson':current;
     for(const page of document.querySelectorAll('[data-page-view]'))page.hidden=page.dataset.pageView!==(PAGE_VIEWS[current]||current);
-    const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision',opengames:'Italian Game'};
+    const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision',opengames:'Italian Game',beginners:'Chess for Beginners'};
     document.title=`${names[current]} · Knightlab`;
     for(const link of document.querySelectorAll('[data-route]')){
       const active=link.dataset.route===current||isLesson(current)&&link.dataset.route==='learn';

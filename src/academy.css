@@ -241,3 +241,34 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   .page-heading h1 { font-size:40px; }.course-cover h2 { font-size:34px; }
   .username-input input,dialog textarea { font-size:16px; }
 }
+
+/* Beginner explanations reveal detail without narrowing the practice board. */
+.lesson-unit-heading { margin:15px 7px 5px; color:#73834f; font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+.lesson-guide { margin:12px 0; border:1px solid #dce6cc; border-radius:9px; overflow:hidden; }
+.lesson-guide>details>summary { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; padding:10px 12px; color:#35572b; background:#f0f5e3; cursor:pointer; list-style:none; font-size:12px; font-weight:650; }
+.lesson-guide>details>summary::-webkit-details-marker { display:none; }
+#lesson-check-status { color:#6d8254; font-size:9px; font-weight:500; text-align:right; }
+.lesson-guide-content { padding:12px; background:#fffef9; }
+.lesson-guide #lesson-guide-intro p { margin:0 0 11px; color:#3b5137; font-size:13px; line-height:1.7; }
+#lesson-guide-rules { display:grid; gap:7px; margin:12px 0 15px; padding-left:18px; color:#49663b; font-size:12px; line-height:1.6; }
+.lesson-quiz { padding:12px; border:1px solid #e0e8d2; border-radius:8px; background:#f5f8ec; }
+.lesson-guide .lesson-quiz-label { margin:0 0 7px; color:#7b934e; font-size:8px; font-weight:700; letter-spacing:1.5px; }
+.lesson-quiz h3 { margin:0 0 10px; color:#28462a; font-size:13px; line-height:1.5; }
+.lesson-answer-options { display:grid; gap:7px; }
+.lesson-answer-options button { width:100%; min-height:44px; padding:10px; border:1px solid #d3dfc1; border-radius:7px; color:#466039; background:#fffef9; font-size:12px; line-height:1.5; text-align:left; }
+.lesson-answer-options button:hover:enabled { background:#edf4dd; border-color:#9dbd71; }
+.lesson-answer-options button[data-state="correct"] { color:#245034; background:#e4f2d5; border-color:#89b26e; }
+.lesson-answer-options button[data-state="retry"] { color:#8a4c30; background:#fff2df; border-color:#d5b484; }
+.lesson-answer-options button:disabled { opacity:1; cursor:default; }
+.lesson-guide #lesson-quiz-feedback { margin:10px 0 0; color:#8c6344; font-size:12px; line-height:1.6; }
+.lesson-guide #lesson-quiz-feedback:empty { display:none; }
+.lesson-guide #lesson-quiz-feedback[data-state="correct"] { color:#356c37; }
+#lesson-guide-practice { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; min-height:44px; margin-top:12px; padding:10px; border:1px solid #b6d07c; border-radius:8px; color:#2d4e28; background:#e2f0bd; font-size:12px; font-weight:650; }
+body[data-page="beginners"] .lesson-idea-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+body[data-page="beginners"] .lesson-board-pane { scroll-margin-top:82px; }
+@media(max-width:1020px) {
+  .lesson-guide #lesson-guide-intro p { font-size:14px; line-height:1.65; }
+  .lesson-guide-content { padding:11px; }
+  #lesson-guide-rules { font-size:13px; }
+  .lesson-quiz h3 { font-size:14px; }
+}

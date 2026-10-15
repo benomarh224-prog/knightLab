@@ -630,7 +630,10 @@ function selectLearningCategory(category){
   for(const section of document.querySelectorAll('[data-learn-category]'))section.hidden=section.dataset.learnCategory!==category;
 }
 document.querySelectorAll('[data-learn-filter]').forEach(button=>button.onclick=()=>selectLearningCategory(button.dataset.learnFilter));
-document.querySelectorAll('[data-learn-category-link]').forEach(link=>link.onclick=()=>selectLearningCategory(link.dataset.learnCategoryLink));
+document.addEventListener('click',event=>{
+  const link=event.target.closest('[data-learn-category-link]');
+  if(link&&event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey)selectLearningCategory(link.dataset.learnCategoryLink);
+});
 document.querySelectorAll('[data-home-answer]').forEach(button=>{
   button.setAttribute('aria-pressed','false');
   button.onclick=()=>{
@@ -795,7 +798,7 @@ try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
   else setGame({pgn:DEMO_PGN},{demo:true,analyze:false});
 } catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false});}
-const learning=createLearningUI({storage:reviewStorage,onCourseComplete:()=>router.go('learn'),onAnalyze:pgn=>{
+const learning=createLearningUI({storage:reviewStorage,onCourseComplete:course=>{selectLearningCategory(course==='beginners'?'beginners':course==='tactics'?'tactics':'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
 const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);
@@ -820,6 +823,6 @@ router=createPageRouter(page=>{
   else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
   if(page==='learn'||page==='home')learning.refresh();
-  if(['french','tactics','opengames'].includes(page))learning.open(page);
+  if(['french','tactics','opengames','beginners'].includes(page))learning.open(page);
 });
 router.start();

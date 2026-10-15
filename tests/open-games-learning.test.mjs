@@ -59,11 +59,11 @@ test('the published bishop-knight finish is mate and the final pin exercise real
   assert.ok(chess.attackers('d1','b').includes('f3'));
 });
 
-test('a legal alternative preserves the focused exercise and all three courses keep independent progress',()=>{
+test('a legal alternative preserves the focused exercise and all courses keep independent progress',()=>{
   const session=new OpeningLesson(OPEN_GAMES_LESSONS[0]);session.practice({startPly:2});const before=session.fen;
   assert.equal(session.attempt('b1','c3').status,'different');assert.equal(session.fen,before);
   const values=new Map(),storage={getItem:key=>values.get(key),setItem:(key,value)=>values.set(key,value)};
   for(const course of Object.values(COURSES))createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key).complete(course.lessons[0].id);
-  assert.equal(values.size,3);
+  assert.equal(values.size,Object.keys(COURSES).length);
   for(const course of Object.values(COURSES))assert.deepEqual(createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key).read(),[course.lessons[0].id]);
 });

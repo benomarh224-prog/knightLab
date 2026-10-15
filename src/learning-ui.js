@@ -3,6 +3,7 @@ import { pieceSvg } from './pieces.js';
 import { COURSES,courseLessons } from './courses.js';
 import { OpeningLesson,createCourseProgress } from './opening-course.js';
 import { createLessonLayout } from './lesson-layout.js';
+import { createLessonCheck } from './lesson-check.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -14,6 +15,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   const activeLessons=()=>courseLessons(course,session.lesson.level);
   const studyFor=id=>course.study(id);
   let session=new OpeningLesson(lessons[0]),selected=null,hint=null,flipped=false,message='',explanationOpen=false,idea=null,promotion=null;
+  let lessonCheck=createLessonCheck(session.lesson.quiz);
+  function recordCompletion(){if(session.completed&&lessonCheck.passed)progress.complete(session.lesson.id);}
   session.practice({startPly:studyFor(session.lesson.id).start});
   const compact=matchMedia('(max-width:1020px)');
   const lessonLayout=createLessonLayout({compact,layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline'),thinking:$('lesson-thinking'),mode:document.querySelector('.lesson-mode'),footer:document.querySelector('.lesson-course-footer'),next:document.querySelector('.lesson-next-course'),goals:document.querySelector('.lesson-goals'),teaching:document.querySelector('.lesson-teaching'),notes:$('lesson-notes'),extras:$('lesson-extra-content'),coach:document.querySelector('.lesson-note-card'),actions:document.querySelector('.lesson-coach-actions')});
@@ -27,18 +30,22 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     $('tactics-progress-label').textContent=`${tacticsDone.length} of ${COURSES.tactics.lessons.length} exercises practiced`;
     const openGamesDone=memoryFor(COURSES.opengames).read();
     $('open-games-progress-label').textContent=`${openGamesDone.length} of ${COURSES.opengames.lessons.length} lessons practiced`;
+    const beginnerDone=memoryFor(COURSES.beginners).read(),beginnerTotal=COURSES.beginners.lessons.length;
+    $('beginner-progress-label').textContent=`${beginnerDone.length} of ${beginnerTotal} lessons completed`;
     $('home-tactics-progress').textContent=`144 exercises · 3 levels${tacticsDone.length?' · '+tacticsDone.length+' practiced':''}`;
-    $('home-course-progress').textContent=`French Defense · ${frenchDone.length} of 8 lessons practiced`;
-    $('home-course-progress-fill').style.width=`${frenchDone.length/8*100}%`;
-    $('home-course-progressbar').setAttribute('aria-valuenow',String(frenchDone.length));
+    $('home-course-progress').textContent=`Chess for Beginners · ${beginnerDone.length} of ${beginnerTotal} lessons completed`;
+    $('home-course-progress-fill').style.width=`${beginnerDone.length/beginnerTotal*100}%`;
+    $('home-course-progressbar').setAttribute('aria-valuenow',String(beginnerDone.length));
+    $('home-course-progressbar').setAttribute('aria-valuemax',String(beginnerTotal));
     const pathNodes=document.querySelectorAll('.academy-milestones .milestone-node');
-    pathNodes[0]?.classList.toggle('active',frenchDone.length===0);pathNodes[1]?.classList.toggle('active',frenchDone.length>0);
-    if(pathNodes[0])pathNodes[0].textContent=frenchDone.includes('foundations')?'✓':'01';
+    pathNodes[0]?.classList.toggle('active',beginnerDone.length<beginnerTotal);pathNodes[1]?.classList.toggle('active',beginnerDone.length===beginnerTotal);
+    if(pathNodes[0])pathNodes[0].textContent=beginnerDone.length===beginnerTotal?'✓':'01';
     $('course-levels').hidden=course.id!=='tactics';
     for(const button of document.querySelectorAll('[data-course-level]'))button.setAttribute('aria-pressed',String(button.dataset.courseLevel===session.lesson.level));
     $('course-lessons').innerHTML=visible.map((lesson,index)=>{
       const active=lesson.id===session.lesson.id,done=completed.includes(lesson.id);
-      return `<button data-lesson="${lesson.id}" aria-current="${active?'step':'false'}" class="${done?'is-practiced':''}" aria-label="${course.label} ${index+1}: ${escape(studyFor(lesson.id).title)}${done?'. Practiced':''}"><span class="lesson-status" aria-hidden="true">${done?'✓':active?'▶':'○'}</span><span class="lesson-number">${String(index+1).padStart(2,'0')}</span><span class="lesson-list-name"><strong>${escape(studyFor(lesson.id).title.replace(/\.$/,''))}</strong><small>${escape(lesson.title)}</small></span></button>`;
+      const unit=lesson.unit&&visible[index-1]?.unit!==lesson.unit?`<p class="lesson-unit-heading">${escape(lesson.unit)}</p>`:'';
+      return `${unit}<button data-lesson="${lesson.id}" aria-current="${active?'step':'false'}" class="${done?'is-practiced':''}" aria-label="${course.label} ${index+1}: ${escape(studyFor(lesson.id).title)}${done?'. Practiced':''}"><span class="lesson-status" aria-hidden="true">${done?'✓':active?'▶':'○'}</span><span class="lesson-number">${String(index+1).padStart(2,'0')}</span><span class="lesson-list-name"><strong>${escape(studyFor(lesson.id).title.replace(/\.$/,''))}</strong><small>${escape(lesson.unit||lesson.title)}</small></span></button>`;
     }).join('');
     if(focusedLesson)$('course-lessons').querySelector(`[data-lesson="${focusedLesson}"]`)?.focus({preventScroll:true});
   }
@@ -52,6 +59,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     $('course-lessons').setAttribute('aria-label',`${course.title} ${course.label.toLowerCase()}s`);
     $('tactics-method').hidden=course.id!=='tactics';
     $('course-breadcrumb').textContent=course.title;$('course-breadcrumb').href=course.path;$('course-breadcrumb').dataset.route=course.id;
+    for(const link of document.querySelectorAll('.french-page a[data-route="learn"]'))link.dataset.learnCategoryLink=course.id==='beginners'?'beginners':course.id==='tactics'?'tactics':'openings';
     $('lesson-page-progressbar').setAttribute('aria-valuemax',String(visible.length));
     $('lesson-promotion').hidden=!promotion;
     $('lesson-course-previous-label').textContent='Previous';
@@ -62,6 +70,20 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     $('lesson-page-progressbar').setAttribute('aria-valuenow',String(index+1));
     $('lesson-note').textContent=practice?(completed?lesson.takeaway:cursor===study.start?study.prompt:`${session.note} Find ${side}’s next move in this study line.`):(cursor?session.note:lesson.subtitle);
     $('lesson-note-title').textContent=practice?(completed?'Well played.':cursor===study.start?study.coach:course.idea(expected)==='check'?'Find the forcing check.':course.idea(expected)==='capture'?'Find the capture.':course.idea(expected)==='pawn'?'Find the pawn idea.':'Find the piece move.'):(cursor?`${session.last.color==='w'?'White':'Black'} played ${session.last.san}.`:'Learn the idea.');
+    $('lesson-guide').hidden=!lesson.guide;
+    if(lesson.guide){
+      $('lesson-guide-intro').innerHTML=lesson.guide.intro.map(paragraph=>`<p>${escape(paragraph)}</p>`).join('');
+      $('lesson-guide-rules').innerHTML=lesson.guide.rules.map(rule=>`<li>${escape(rule)}</li>`).join('');
+      $('lesson-quiz-question').textContent=lesson.quiz.question;
+      for(let index=0;index<3;index++){
+        const button=$('lesson-answer-'+index);button.textContent=`${String.fromCharCode(65+index)}. ${lesson.quiz.options[index]}`;
+        button.disabled=lessonCheck.passed;button.setAttribute('aria-pressed',String(lessonCheck.selected===index));
+        button.dataset.state=lessonCheck.selected===index?(lessonCheck.passed?'correct':'retry'):'';
+      }
+      $('lesson-quiz-feedback').textContent=lessonCheck.feedback;
+      $('lesson-quiz-feedback').dataset.state=lessonCheck.passed?'correct':'';
+      $('lesson-check-status').textContent=lessonCheck.passed?'✓ Understood':'Learn · Quick check · Try';
+    }
     const total=lesson.verboseMoves.slice(session.practiceStart||0).filter(move=>move.color===lesson.practiceColor).length;
     $('lesson-counter').textContent=practice?(completed?'Complete':session.correct?`${session.correct}/${total} solved`:`${side} to play`):`${cursor}/${lesson.moves.length}`;
     $('lesson-turn').textContent=completed?'Exercise complete':`${chess.turn()==='w'?'White':'Black'} to move`;
@@ -82,9 +104,9 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     for(const option of document.querySelectorAll('[data-lesson-idea]')){option.hidden=option.dataset.lessonIdea==='check'&&course.id==='french';option.disabled=!practice||completed;option.setAttribute('aria-pressed',String(option.dataset.lessonIdea===idea));}
     $('lesson-idea-feedback').hidden=!idea;
     $('lesson-idea-feedback').textContent=idea===course.idea(expected)?'That matches this study line. Now try it on the board.':'Think about the coach’s prompt. This exercise follows a different idea.';
-    const canContinue=completed||progress.read().includes(lesson.id);
+    const canContinue=lessonCheck.canContinue(completed,progress.read().includes(lesson.id));
     $('lesson-course-next').disabled=!canContinue;$('lesson-next-lock').hidden=canContinue;
-    $('lesson-course-next-label').textContent=globalIndex===lessons.length-1?'Back to course':`Next ${course.label.toLowerCase()}`;$('lesson-next-help').textContent=canContinue?'Ready when you are':'Complete the exercise to continue';$('lesson-course-previous').disabled=globalIndex===0;
+    $('lesson-course-next-label').textContent=globalIndex===lessons.length-1?'Back to course':`Next ${course.label.toLowerCase()}`;$('lesson-next-help').textContent=canContinue?'Ready when you are':lessonCheck.required&&!lessonCheck.passed?(completed?'Answer the quick check to continue':'Complete the exercise and quick check'):'Complete the exercise to continue';$('lesson-course-previous').disabled=globalIndex===0;
     const files=flipped?'hgfedcba':'abcdefgh',ranks=flipped?[1,2,3,4,5,6,7,8]:[8,7,6,5,4,3,2,1];
     const targets=new Set(selected?chess.moves({square:selected,verbose:true}).map(move=>move.to):[]),focusSquare=document.activeElement?.closest('#lesson-board [data-square]')?.dataset.square;
     let html='';
@@ -103,7 +125,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   function resetPractice(){session.practice({startPly:studyFor(session.lesson.id).start});clearTurn();}
   function selectLesson(id,updateUrl=true){
     const lesson=lessons.find(item=>item.id===id);if(!lesson)return;
-    session=new OpeningLesson(lesson);flipped=course.orientToSolver&&lesson.practiceColor==='b';resetPractice();$('lesson-notes').open=false;
+    session=new OpeningLesson(lesson);lessonCheck=createLessonCheck(session.lesson.quiz);flipped=course.orientToSolver&&lesson.practiceColor==='b';resetPractice();$('lesson-notes').open=false;$('lesson-guide-toggle').open=Boolean(lesson.guide);
     if(updateUrl)history.replaceState({},'',`${course.path}?lesson=${lesson.id}`);render();
   }
   $('course-lessons').onclick=event=>{const button=event.target.closest('[data-lesson]');if(button){selectLesson(button.dataset.lesson);lessonLayout.close();}};
@@ -113,13 +135,15 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   $('lesson-flip').onclick=()=>{flipped=!flipped;render();};$('lesson-hint').onclick=()=>{hint=session.hint();message=hint?`Study move: ${hint.san}. Move from ${hint.from} to ${hint.to}.`:'';render();};
   $('lesson-explain').onclick=()=>{explanationOpen=!explanationOpen;render();};$('lesson-understand').onclick=()=>{explanationOpen=true;render();};
   $('lesson-course-previous').onclick=()=>{const i=lessons.findIndex(lesson=>lesson.id===session.lesson.id);if(i>0)selectLesson(lessons[i-1].id);};
-  $('lesson-course-next').onclick=()=>{if(!session.completed&&!progress.read().includes(session.lesson.id))return;const i=lessons.findIndex(lesson=>lesson.id===session.lesson.id);if(i===lessons.length-1)onCourseComplete?.();else selectLesson(lessons[i+1].id);};
+  $('lesson-course-next').onclick=()=>{if(!lessonCheck.canContinue(session.completed,progress.read().includes(session.lesson.id)))return;const i=lessons.findIndex(lesson=>lesson.id===session.lesson.id);if(i===lessons.length-1)onCourseComplete?.(course.id);else selectLesson(lessons[i+1].id);};
+  for(let index=0;index<3;index++)$('lesson-answer-'+index).onclick=()=>{lessonCheck.answer(index);recordCompletion();render();};
+  $('lesson-guide-practice').onclick=()=>{$('lesson-guide-toggle').open=false;document.querySelector('.lesson-board-pane').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});};
   document.querySelectorAll('[data-lesson-idea]').forEach(button=>button.onclick=()=>{idea=button.dataset.lessonIdea;render();});
   $('lesson-moves').onclick=event=>{const button=event.target.closest('[data-lesson-ply]');if(button){session.jump(Number(button.dataset.lessonPly));clearTurn();render();}};
   $('lesson-analyze').onclick=()=>onAnalyze(session.pgn());
   function attemptMove(from,to,promote){
     const result=session.attempt(from,to,promote);
-    if(result.status==='correct'){clearTurn();message=`${result.move.san} fits this study line.${result.completed?' Exercise complete.':''}`;if(result.completed)progress.complete(session.lesson.id);}
+    if(result.status==='correct'){clearTurn();message=`${result.move.san} fits this study line.${result.completed?(lessonCheck.passed?' Exercise complete.':' Board exercise complete. Answer the quick check to finish the lesson.'):''}`;recordCompletion();}
     else message=result.status==='different'?`${result.san} is legal, but this exercise practices another continuation. Try again or get a hint.`:'That move is not legal here. Choose a highlighted destination.';
     render();
   }
