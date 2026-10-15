@@ -26,15 +26,17 @@ function fixture(mobile){
   return {ui,current,controller};
 }
 
-test('responsive lesson layout preserves live course controls while moving them into the compact picker and notes',()=>{
+test('responsive lesson layout moves only the outline and leaves stage controls and teaching in place',()=>{
   const {ui}=fixture(false);
   const savedProgress={exercise:'advanced-17',solved:3};ui.sidebar.progress=savedProgress;
   let stageClicks=0;ui.mode.onclick=()=>stageClicks++;
   for(let i=0;i<3;i++){
     ui.compact.matches=true;ui.compact.change();
     assert.equal(ui.sidebar.parent,ui.drawerBody);
-    assert.deepEqual(ui.extras.children,[ui.mode,ui.thinking,ui.goals]);
-    assert.equal(ui.outline.open,true);assert.equal(ui.thinking.open,false);
+    assert.deepEqual(ui.extras.children,[]);
+    assert.deepEqual(ui.footer.children,[ui.mode,ui.next]);
+    assert.deepEqual(ui.teaching.children,[ui.coach,ui.goals,ui.notes]);
+    assert.equal(ui.outline.open,true);
     ui.mode.onclick();
     ui.compact.matches=false;ui.compact.change();
     assert.equal(ui.layout.children[0],ui.sidebar);
