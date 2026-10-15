@@ -28,11 +28,12 @@ export function createBoardCoach({showBoard,navigate}) {
     showBoard(); close();
     reveal();
   }
-  function reveal() {
+  function reveal({playback=false}={}) {
     if(!matchMedia('(max-width:860px)').matches)return;
     const area=board.querySelector('#board').getBoundingClientRect();
     if(!area.height)return;
     const focus=Boolean(board.closest('dialog[open]'));
+    if(playback&&!focus)return;
     if(card.getBoundingClientRect().top<(focus?12:96)||area.bottom>innerHeight-(focus?12:64)){
       $('board-top').scrollIntoView({block:'start',behavior:'instant'});
     }

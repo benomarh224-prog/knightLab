@@ -1395,3 +1395,21 @@ body, .app-shell, .main-shell { background: var(--bg); }
 .footer, .analysis-note, .library-heading p { color: #9fb2d2; }
 .summary-footer { border-color: #364d73; }
 @media(max-width:860px) { .workspace .board-card, .focus-dialog .board-card { max-width: 100%; } }
+/* Playback must not move when the note or engine recommendation changes. */
+.board-coach-card:not(.is-expanded) { height: 94px; min-height: 94px; max-height: 94px; }
+.board-coach-card:not(.is-expanded) #coach-panel { height: 100%; overflow: hidden; }
+.board-coach-card:not(.is-expanded) .move-insight { height: 100%; display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: 32px 36px; align-content: start; gap: 4px 7px; padding: 8px 10px; }
+.board-coach-card:not(.is-expanded) .insight-heading { grid-column: 1/-1; grid-row: 1; height: 32px; min-height: 32px; margin: 0; }
+.board-coach-card:not(.is-expanded) .coach-brief { grid-column: 1; grid-row: 2; height: 36px; min-height: 36px; max-height: 36px; margin: 0; -webkit-line-clamp: 2; }
+.board-coach-card:not(.is-expanded) .best-line { grid-column: 2; grid-row: 2; align-self: center; align-items: center; margin: 0; padding: 0; border: 0; gap: 0; }
+.board-coach-card:not(.is-expanded) .best-line>span { display: none; }
+.board-coach-card:not(.is-expanded) #recommended-move { min-height: 32px; white-space: nowrap; }
+.move-strip button { padding: 4px 7px; gap: 4px; }
+@media(max-width:860px) {
+  main { padding-bottom: calc(154px + env(safe-area-inset-bottom)); }
+  .workspace[data-mobile-view="board"] .board-controls { min-height: 100px; }
+  .workspace[data-mobile-view="board"] .board-controls::after { content: ''; grid-column: 1/-1; grid-row: 2; height: 58px; }
+  .workspace[data-mobile-view="board"] .move-controls { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom)); z-index: 10; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin: 0; padding: 8px 10px 10px; border-top: 1px solid #3b5076; background: #111b2ef5; box-shadow: 0 -5px 20px #070e1b45; }
+  .workspace .move-controls .step-button { min-height: 50px; height: 50px; }
+  .workspace[data-mobile-view="board"] #board { scroll-margin-bottom: calc(138px + env(safe-area-inset-bottom)); }
+}
