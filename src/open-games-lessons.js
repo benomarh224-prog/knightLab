@@ -26,7 +26,7 @@ function describe(move){
   return `${side} ${action}.${move.san.includes('#')?' This is checkmate.':move.san.includes('+')?' The move gives check.':''}`;
 }
 function lesson({id,title,tag,pages,moves,start,coach,prompt,goals,takeaway,focus={},color='b'}){
-  return {id,title,tag,moves,course:'First Steps: 1.e4 e5',practiceColor:color,
+  return {id,title,tag,moves,course:'Italian Game',practiceColor:color,
     subtitle:prompt,source:`John Emms, First Steps: 1 e4 e5; printed ${pages}`,
     notes:verbose=>verbose.map((move,index)=>focus[index+1]||((index<8&&common[move.san])?common[move.san]:describe(move))),
     takeaway,study:{title,start,coach,prompt,goals}};

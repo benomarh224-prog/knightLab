@@ -12,7 +12,7 @@ export function createPageRouter(onChange){
     document.body.dataset.page=current;
     document.body.dataset.layout=isLesson(current)?'lesson':current;
     for(const page of document.querySelectorAll('[data-page-view]'))page.hidden=page.dataset.pageView!==(PAGE_VIEWS[current]||current);
-    const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision',opengames:'First Steps: 1.e4 e5'};
+    const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision',opengames:'Italian Game'};
     document.title=`${names[current]} · Knightlab`;
     for(const link of document.querySelectorAll('[data-route]')){
       const active=link.dataset.route===current||isLesson(current)&&link.dataset.route==='learn';

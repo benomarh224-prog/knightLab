@@ -36,7 +36,7 @@ test('focused Open Games lessons finish with automatic replies and export the fu
     assert.equal(session.correct,solved);assert.ok(solved>0);
     const replay=new Chess();replay.loadPgn(session.pgn());
     assert.equal(replay.fen(),session.fen);
-    assert.match(replay.getHeaders().Event,/First Steps: 1\.e4 e5/);
+    assert.match(replay.getHeaders().Event,/Italian Game/);
     assert.equal(parseGame(session.pgn()).fens.at(-1),session.fen);
     session.practice({startPly:lesson.study.start});assert.equal(session.fen,startingFen);
     assert.equal(session.correct,0);assert.equal(session.completed,false);

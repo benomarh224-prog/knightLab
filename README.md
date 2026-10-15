@@ -117,7 +117,7 @@ Search and engine activity use small busy indicators instead of changing the rev
 
 French Defense and Tactical Vision share a mobile layout with the compact coach and hint/explanation actions above the practice board. The turn instruction appears immediately before the full-width square board, and current-move controls remain below it. A native modal holds the existing course outline and difficulty filters below 1021px; the same outline returns to the desktop sidebar on resize. Learn/Try/Understand, the idea check and learning goals move into notes on compact screens. Previous/Next course navigation stays at the bottom with safe-area padding and reserved document space so it cannot cover the last content. Board width is independent of coach text length.
 
-## First Steps: 1.e4 e5
+## Italian Game
 
 `/learn/open-games/` adds 10 short lessons based on the supplied John Emms extract (printed pages 6–21). It covers Italian development, defending the early queen attack, gaining time against the queen, a bishop-and-knight mate, bishop-first move order, castling against Ng5, a sample king attack, pressure on a pin, the open g-file, and deflection. Each starts at a focused decision with the preceding opening preserved for replay and PGN export. The first exercise plays White; the rest play Black with automatic White replies. Progress is independent under `knightlab-open-games-course-v1`, and `?lesson=stop-scholar-mate` selects an individual lesson.
 
@@ -125,4 +125,4 @@ Teaching text is original. Source move sequences are strictly checked with chess
 
 ## Learning categories
 
-The Learn catalog defaults to Openings, grouping French Defense and First Steps: 1.e4 e5 together. Tactical Vision is under Tactics. The homepage Openings activity opens this category, while existing direct course routes and saved progress remain available.
+The Learn catalog defaults to Openings, grouping French Defense and Italian Game together. Tactical Vision is under Tactics. The homepage Openings activity opens this category, while existing direct course routes and saved progress remain available.
