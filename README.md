@@ -130,3 +130,5 @@ The Learn catalog defaults to Openings, grouping French Defense and Italian Game
 ## Responsive navigation
 
 A shared forest-green header now serves every route. Desktop navigation groups Home, Learn, My games, Analyze and Play in a pill with a highlighted current page, plus Find games and import/guide tools. Below 1021px the same navigation nodes move into a native modal bottom sheet, preserving handlers and game count. The sheet includes descriptions, Find games, Import PGN and Quick guide actions, supports native Escape/backdrop dismissal and returns the same controls to the header on resize. It closes before destination handlers run, allowing search, play and import dialogs to take focus normally. Header controls remain at least 44px on phones, and reduced motion is respected.
+
+Mobile navigation rows explicitly use horizontal flex direction and a shared 68px height, overriding the legacy bottom-navigation column style. Hamburger lines have equal width. Opening-course cards now use the supplied Italian Game and French Defense artwork unchanged, fitted without cropping the embedded headings.

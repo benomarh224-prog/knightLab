@@ -11,7 +11,7 @@ body[data-page] .brand .academy-mark { display:block; width:38px; height:38px; f
 .brand-accent { color:#d5f080; }
 .desktop-navigation { min-width:0; justify-self:center; }
 body[data-page] .main-nav { position:static; inset:auto; display:flex; flex-wrap:nowrap; align-items:center; gap:3px; width:auto; height:auto; min-height:0; margin:0; padding:4px; border:1px solid #c5d9b71a; border-radius:99px; background:#041a123d; box-shadow:inset 0 1px #ffffff04; }
-body[data-page] .main-nav .nav-item { position:relative; display:flex; flex:none; align-items:center; justify-content:center; gap:7px; width:auto; min-width:0; height:40px; min-height:40px; padding:8px 12px; border:0; border-radius:99px; color:#dce6d4; background:transparent; box-shadow:none; font:600 12px/1.3 'DM Sans',sans-serif; text-align:left; text-decoration:none; transition:background-color 160ms ease,color 160ms ease; }
+body[data-page] .main-nav .nav-item { position:relative; display:flex; flex:none; flex-direction:row; align-items:center; justify-content:center; gap:7px; width:auto; min-width:0; height:40px; min-height:40px; padding:8px 12px; border:0; border-radius:99px; color:#dce6d4; background:transparent; box-shadow:none; font:600 12px/1.3 'DM Sans',sans-serif; text-align:left; text-decoration:none; transition:background-color 160ms ease,color 160ms ease; }
 body[data-page] #library-nav { display:flex; }
 body[data-page] .main-nav .nav-item:hover { background:#d4ebbc12; color:#fffef2; }
 body[data-page] .main-nav .nav-item.active { color:#163623; background:#d6ef9b; box-shadow:0 1px 4px #07180b20,inset 0 1px #efffc9; }
@@ -63,16 +63,16 @@ body[data-page]:has(#navigation-dialog[open]) { overflow:hidden; }
   body[data-page] .topbar #sidebar-import,body[data-page] .topbar #how-it-works { display:none; }
   body[data-page] #open-connect { gap:6px; padding:10px 12px; min-height:44px; font-size:12px; border-radius:10px; }
   body[data-page] #workspace-menu-toggle { order:2; display:grid; place-items:center; width:44px; min-width:44px; height:44px; padding:11px; border:1px solid #b9d49d40; border-radius:11px; color:#f6f8e9; background:#e0ecc00b; box-shadow:inset 0 1px #d5e6be0a; }
-  .menu-bars { display:grid; align-content:center; gap:6px; width:20px; height:20px; }
+  .menu-bars { display:grid; align-content:center; gap:4px; width:20px; height:20px; }
   .menu-bars i { display:block; width:20px; height:1.5px; border-radius:2px; background:currentColor; }
-  .menu-bars i:last-child { width:14px; justify-self:end; }
+  .menu-bars i:last-child { width:20px; justify-self:center; }
   body[data-page] .navigation-dialog .main-nav { position:static; inset:auto; display:grid; grid-template-columns:minmax(0,1fr); width:100%; height:auto; gap:7px; padding:0; margin:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
-  body[data-page] .navigation-dialog .main-nav .nav-item { display:flex; justify-content:flex-start; gap:13px; width:100%; min-width:0; min-height:64px; height:auto; padding:10px 12px; border:1px solid #e0e6d6; border-radius:12px; color:#243f2c; background:#fffef8; box-shadow:none; }
+  body[data-page] .navigation-dialog .main-nav .nav-item { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:12px; width:100%; min-width:0; min-height:68px; height:68px; padding:10px 12px; border:1px solid #e0e6d6; border-radius:12px; color:#243f2c; background:#fffef8; box-shadow:none; white-space:normal; }
   body[data-page] .navigation-dialog .main-nav .nav-item:hover { background:#f2f6e7; color:#163a26; }
   body[data-page] .navigation-dialog .main-nav .nav-item.active { color:#163a26; background:#eef7d9; border-color:#b9ce8e; box-shadow:inset 3px 0 #8fac51; }
   body[data-page] .navigation-dialog .main-nav .nav-symbol { display:grid; place-items:center; width:38px; height:38px; padding:9px; border:1px solid #dfe7d5; border-radius:11px; color:#577347; background:#f0f4e7; }
   body[data-page] .navigation-dialog .main-nav .active .nav-symbol { color:#f4f7dc; background:#244a32; border-color:#244a32; }
-  .navigation-dialog .nav-copy { flex:1; }
+  .navigation-dialog .nav-copy { flex:1; text-align:left; }
   .navigation-dialog .nav-copy>strong { font-size:14px; font-weight:650; }
   .navigation-dialog .nav-copy>small { display:block; margin-top:4px; color:#73826a; font-size:10px; font-weight:400; line-height:1.3; }
   body[data-page] .navigation-dialog .main-nav .nav-chevron { display:inline-flex; width:16px; height:16px; margin-left:auto; color:#8e9d7a; }

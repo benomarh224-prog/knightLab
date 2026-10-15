@@ -28,6 +28,12 @@ body:not([data-page="home"]) .main-nav .nav-item.active { color:#f6ffe4; backgro
 .learn-page .course-cover { border-color:#dfe4d4; background:#fffdf8; box-shadow:0 6px 25px #28391507; }
 .learn-page .course-cover-art { position:relative; background:#203c29; }
 .course-cover-art>.course-cover-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.learn-page .opening-cover .course-cover-art { padding:0; min-height:300px; background:#061e16; }
+.learn-page .opening-cover .course-cover-photo { object-fit:contain; }
+.learn-page .opening-cover .course-cover-eco { display:none; }
+@media(max-width:600px) {
+  .learn-page .opening-cover .course-cover-art { height:auto; min-height:0; aspect-ratio:1280/853; }
+}
 .course-cover-eco { color:#f6f8e9; background:#102f22ed; border-color:#b2c38d80; }
 .course-cover h2 { font-size:39px; }
 .course-cover-copy>p,.course-cover-copy ul { color:#66785e; }

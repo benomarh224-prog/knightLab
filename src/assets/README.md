@@ -13,3 +13,5 @@ Final saved assets and prompt briefs:
 The images are decorative editorial illustrations. They do not assert evaluated chess positions. The course cards link to the French Defense course, Tactical Vision course, and Play respectively. The French learning path and the Tactical Vision course each use their own stored practice progress.
 
 `open-games.svg` is an original code-generated vector cover, using Knightlab’s Staunton piece SVGs and the legal position after `1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5`. It is not an illustration copied from the supplied book.
+
+The current opening-course covers are the user-supplied `italian-game-cover.jpg` and `french-defense-cover.jpg`, copied unchanged from their attached images. They replace the earlier cover references in the catalog; the French cover also illustrates the homepage Openings category. Their embedded headings are preserved using `object-fit: contain`, with a full 3:2 image area on phones.
