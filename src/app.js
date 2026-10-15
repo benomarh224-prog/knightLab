@@ -13,6 +13,8 @@ import { createInlineAnalysis } from './inline-analysis.js';
 import { primaryMoveThreat, arrowPath } from './board-visuals.js';
 import { createBoardCoach } from './board-coach.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
+import { createReviewMemory } from './review-memory.js';
+import { moveTransitions, animatePieces } from './piece-motion.js';
 import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceMoveVerdict } from './verdict.js';
 
 const $ = id => document.getElementById(id);
@@ -42,6 +44,13 @@ document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = 
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
 const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'deep', tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
+let reviewStorage;
+try { reviewStorage=localStorage; } catch {}
+const reviewMemory=createReviewMemory(reviewStorage);
+let paintedPosition=null, stripPosition=null;
+function saveReviewPosition() {
+  if(state.selected)reviewMemory.save(state.selected,{ply:state.ply,flipped:state.flipped,demo:state.demo});
+}
 let boardDragging=false, inline, showThreats=true, selectedThreat=null, threatFen=null, threats=[];
 function pauseWorkspace() {
   const running=state.running, restoring=inline?.active ? inline.exit(false) : false;
@@ -159,6 +168,9 @@ function setGame(game, { demo = false, analyze = true } = {}) {
   selectWorkspaceView('board');
   state.ply = demo ? 19 : 0;
   state.flipped = Boolean(state.username && game.black?.username?.toLowerCase() === state.username);
+  const remembered=reviewMemory.position(game.pgn,parsed.moves.length);
+  if(remembered){state.ply=remembered.ply;state.flipped=remembered.flipped;}
+  paintedPosition=null;
   state.evaluations = state.cache.get(game.pgn + state.mode) || [];
   $('analysis-error').hidden = true;
   $('demo-badge').hidden = !demo;
@@ -168,6 +180,7 @@ function setGame(game, { demo = false, analyze = true } = {}) {
   $('game-result').textContent = (headers.Result || '*').replaceAll('-', '–');
   renderOpening();
   updatePlayers(); renderMoveList(); render(); renderGames();
+  saveReviewPosition();
   if (analyze) startAnalysis();
 }
 
@@ -231,6 +244,9 @@ function renderBoard() {
     squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}${threat?' threatened threat-'+threat.kind:''}${selection===square?' piece-selected':''}${targets.has(square)?' legal-target':''}" data-square="${square}" ${inline.active||threat?`role="button" tabindex="${!inline.active||focusedSquare===square||!focusedSquare&&(selection===square||!selection&&f===0&&r===7)?0:-1}" aria-label="${escape(label)}"`:''} ${inline.active&&piece?.color===chess.turn()?'draggable="true"':''} title="${escape(label)}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${threat?'<span class="threat-dot" aria-hidden="true">!</span>':''}${badge}</div>`;
   }
   $('board').innerHTML = squares;
+  const nextPosition={fen:view.fen,last:view.last,flipped:state.flipped,game:state.parsed};
+  animatePieces($('board'),moveTransitions(paintedPosition,nextPosition));
+  paintedPosition=nextPosition;
   if (focusedSquare && !restoreBadgeFocus) $('board').querySelector(`[data-square="${focusedSquare}"]`)?.focus({preventScroll:true});
   if (restoreBadgeFocus) $('board').querySelector('.piece-rating')?.focus({preventScroll: true});
   $('board').setAttribute('aria-label', `${inline.active?'Explored continuation':'Chess position after '+state.ply+' half-moves'}. ${chess.turn() === 'w' ? 'White' : 'Black'} to move.${rating ? ' ' + rating.move + ': ' + rating.label + '.' : ''} ${chess.fen()}`);
@@ -260,6 +276,7 @@ function renderBoard() {
   $('threat-arrow').toggleAttribute('hidden',!detail);
   if(detail){$('threat-title').textContent=detail.label; $('threat-text').textContent=detail.explanation; $('threat-arrow').setAttribute('d',arrowPath(detail.attackers[0].from,detail.attackers[0].to,state.flipped));}
   inline.paint();
+  renderMoveStrip();
   const percent = evaluation ? 50 + 45 * Math.tanh(evaluation.cp / 450) : 50;
   $('eval-fill').style.width = `${percent}%`;
   $('eval-fill').style.height = '100%';
@@ -324,10 +341,7 @@ function renderCoach(move, before, after) {
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
-  const positive=ready && ['Best','Great'].includes(report.rating);
-  const brief=(ready ? positive ? report.better : report.why || report.summary : report.summary)
-    .replace(/^Engine[’']s first choice\.\s*/,'').replace(/^In Stockfish[’']s continuation,\s*/,'Engine line: ');
-  $('coach-brief').textContent = brief.split(/(?<=[.!?])\s+/)[0];
+  $('coach-brief').textContent = report.brief || report.summary;
   $('board-coach-card').classList.toggle('coach-ready',ready);
   const played=move ? move.from+move.to+(move.promotion||'') : null;
   $('board-coach-card').classList.toggle('has-alternative',Boolean(ready&&report.bestMove&&report.bestMove!==played));
@@ -344,7 +358,11 @@ function renderCoach(move, before, after) {
   $('coach-reply-row').hidden = !report.replyLine;
   $('coach-lines').hidden = !report.bestLine && !report.replyLine;
   $('coach-try-idea').disabled = !report.bestMove;
-  $('coach-try-idea').onclick = () => { if (report.bestMove && move) { boardCoach.close(); inline.tryBest(report.bestMove); selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); } };
+  const tryRecommendation=()=>{if(report.bestMove&&move){boardCoach.close();inline.tryBest(report.bestMove);selectWorkspaceView('board');scrollToSection(document.querySelector('.workspace'));boardCoach.reveal();}};
+  $('coach-try-idea').onclick=tryRecommendation;
+  $('recommended-move').disabled=!report.bestMove;
+  $('recommended-move').setAttribute('aria-label',report.bestMove?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
+  $('recommended-move').onclick=tryRecommendation;
   $('coach-note').textContent = ready ? `Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${before.depth}` : ''}. Deeper review can change the recommendation.` : 'The coach updates as each move is reviewed.';
 }
 
@@ -364,6 +382,8 @@ function renderChart() {
 }
 
 function renderMoveList() {
+  $('move-strip').innerHTML='<button data-strip-ply="0" aria-label="Starting position">Start</button>'+state.parsed.moves.map((move,index)=>`<button data-strip-ply="${index+1}" aria-label="Go to ${escape(moveLabelForStrip(move))}"><span>${escape(moveLabelForStrip(move))}</span><i class="strip-dot" hidden></i></button>`).join('');
+  stripPosition=null;
   const rows = new Map();
   state.parsed.moves.forEach((move, index) => {
     const number = move.before.split(' ')[5];
@@ -373,6 +393,26 @@ function renderMoveList() {
   const cell = entry => entry ? `<button class="move-cell" data-ply="${entry.ply}" title="Go to ${escape(entry.move.san)}"><span>${escape(entry.move.san)}</span><i class="stat-dot" hidden></i></button>` : '<span></span>';
   $('move-list').innerHTML = [...rows.values()].map(row => `<div class="move-row"><span class="move-number">${row.number}.</span>${cell(row.w)}${cell(row.b)}</div>`).join('');
 }
+function moveLabelForStrip(move){return `${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${move.san}`;}
+function renderMoveStrip(){
+  const strip=$('move-strip');strip.hidden=inline.active;
+  if(inline.active)return;
+  for(const button of strip.querySelectorAll('[data-strip-ply]')){
+    const ply=Number(button.dataset.stripPly),current=ply===state.ply;
+    button.setAttribute('aria-current',current?'step':'false');
+    const move=state.parsed.moves[ply-1],rating=move?classifyMove(move,state.evaluations[ply-1],state.evaluations[ply]):null;
+    const dot=button.querySelector('.strip-dot');
+    if(dot){dot.hidden=!rating;if(rating)dot.style.background=qualityColors[rating.label];}
+    button.title=move?`${moveLabelForStrip(move)}${rating?' · '+qualityLabels[rating.label]:''}`:'Starting position';
+  }
+  if(stripPosition!==state.ply||strip.clientWidth&&strip.dataset.needsCenter==='true'){
+    const active=strip.querySelector('[aria-current="step"]');
+    if(active&&strip.clientWidth){strip.scrollLeft=active.offsetLeft-strip.clientWidth/2+active.offsetWidth/2;strip.dataset.needsCenter='false';}
+    else strip.dataset.needsCenter='true';
+    stripPosition=state.ply;
+  }
+}
+$('move-strip').onclick=event=>{const button=event.target.closest('[data-strip-ply]');if(button)goTo(Number(button.dataset.stripPly));};
 function updateMoveRatings(items) {
   document.querySelectorAll('.move-cell').forEach(button => {
     const ply = Number(button.dataset.ply);
@@ -390,6 +430,7 @@ function goTo(ply) {
   const previous = state.ply;
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
   moveSounds.play(navigationSoundMove(state.parsed.moves, previous, state.ply)); render();
+  saveReviewPosition();
   if (state.tab === 'moves') document.querySelector(`.move-cell[data-ply="${state.ply}"]`)?.scrollIntoView({ block:'nearest', behavior:'instant' });
   boardCoach.reveal();
   if(restart) startAnalysis();
@@ -599,7 +640,7 @@ $('board').addEventListener('keydown',event=>{
   const file=square.charCodeAt(0)+dx*sign,rank=Number(square[1])-dy*sign;
   if(file>=97&&file<=104&&rank>=1&&rank<=8)$('board').querySelector(`[data-square="${String.fromCharCode(file)+rank}"]`)?.focus();
 });
-$('flip-board').onclick = () => { state.flipped = !state.flipped; renderBoard(); boardCoach.reveal(); };
+$('flip-board').onclick = () => { state.flipped = !state.flipped; renderBoard(); saveReviewPosition(); boardCoach.reveal(); };
 $('toggle-arrow').onclick = () => { state.showArrow = !state.showArrow; $('toggle-arrow').classList.toggle('toggled', state.showArrow); $('toggle-arrow').setAttribute('aria-pressed', String(state.showArrow)); renderBoard(); };
 function renderSoundControl() {
   const enabled = moveSounds.enabled;
@@ -622,6 +663,7 @@ function selectWorkspaceView(view) {
   if(view==='coach'){boardCoach.open();return;}
   state.mobileView = view;
   document.querySelector('.workspace').dataset.mobileView = view;
+  if(view==='board'&&state.parsed)renderMoveStrip();
   if (view !== 'board') state.tab = view;
   for (const name of ['moves','overview']) {
     $(name+'-panel').hidden = name !== state.tab;
@@ -669,6 +711,10 @@ document.addEventListener('keydown', event => {
   if (event.key === 'End') { event.preventDefault(); $('last-move').onclick(); }
   if (event.key.toLowerCase() === 'f') $('flip-board').onclick();
 });
-window.addEventListener('pagehide', () => { inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
+window.addEventListener('pagehide', () => { saveReviewPosition(); inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
 try { $('username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
-setGame({ pgn: DEMO_PGN }, { demo:true });
+const lastReview=reviewMemory.last();
+try {
+  if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo});}
+  else setGame({pgn:DEMO_PGN},{demo:true});
+} catch {setGame({pgn:DEMO_PGN},{demo:true});}

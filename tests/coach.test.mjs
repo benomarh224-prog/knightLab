@@ -71,3 +71,18 @@ test('a fork explanation names only valuable pieces actually attacked from the d
   assert.match(report.better,/king on e8/); assert.match(report.better,/rook on a8/);
   assert.doesNotMatch(report.better,/wins|traps/);
 });
+
+test('compact coach names the actual capture without claiming an unsupported forced loss',()=>{
+  const move=parseGame(DEMO_PGN).moves[18];
+  const bad=coachMove(move,score(20,'a2a3'),score(-330,'c6b5',['c6b5']));
+  assert.equal(bad.brief,'Black can play cxb5, taking your knight on b5.');
+  const sacrifice=coachMove(move,score(300,'c3b5'),score(310,'c6b5',['c6b5']));
+  assert.doesNotMatch(sacrifice.brief,/taking your|undefended|loses/);
+});
+test('compact coach keeps mate changes separate from pawn loss',()=>{
+  const move=parseGame('1. f3 e5 2. g4 Qh4# 0-1').moves[2];
+  assert.equal(coachMove(move,score(0,'g1h3'),score(-10000,'d8h4',['d8h4'],-1)).brief,'Black has Qh4#: checkmate.');
+  const missed=coachMove(parseGame('1. e4 *').moves[0],score(10000,'d2d4',[],3),score(0,'e7e5'));
+  assert.doesNotMatch(missed.brief,/100.0|pawns/);
+  assert.match(missed.brief,/no longer finds your forced mate/);
+});
