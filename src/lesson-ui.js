@@ -7,6 +7,7 @@ import { renderLearningProgress } from './learning-progress.js';
 import { createLessonLayout } from './lesson-layout.js';
 import { createLearningMemory } from './learning-memory.js';
 import { renderLearningCompanion } from './learning-companion.js';
+import { createLessonDock,lessonContinuation } from './lesson-navigation.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -28,6 +29,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   }
   player=getPlayer(lessons[0]);
   const layout=createLessonLayout({compact:matchMedia('(max-width:1020px)'),layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline')});
+  const dock=createLessonDock({footer:document.querySelector('.lesson-course-footer'),root:document.documentElement});
+  const continuation=()=>lessonContinuation(player,{lastLesson:lessons.indexOf(player.lesson)===lessons.length-1,label:course.label});
   function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor});renderLearningCompanion({memory,courses:COURSES,storage});}
   function clearTurn(){selected=null;hint=null;message='';promotion=null;}
   function focusStage(){
@@ -78,9 +81,6 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
       $('lesson-activities').innerHTML=player.activities.map((item,i)=>`<button data-lesson-activity="${i}" aria-pressed="${i===player.activityIndex}">${item.done?'✓ ':''}Exercise ${i+1}</button>`).join('');
       if(focusedActivity)$('lesson-activities').querySelector(`[data-lesson-activity="${focusedActivity}"]`)?.focus({preventScroll:true});
       $('lesson-demonstration-done').hidden=activity.data.kind!=='demonstration'||activity.done||Boolean(session.lesson.moves.length&&activity.data.completion!=='acknowledge');
-      const pending=player.activities.findIndex(item=>item.data.required&&!item.done);
-      $('lesson-after-board').hidden=player.challengeMode||!activity.done||pending<0&&!player.plan.questions.length;
-      $('lesson-after-board').textContent=pending>=0?'Next exercise →':player.checksComplete?'Review check →':'Continue to Check →';
       if(stage==='try')renderBoard();
     }
     const currentConcept=player.plan.concepts[player.conceptIndex];
@@ -119,9 +119,12 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     const practiceActivities=player.activities.filter(item=>item.data.kind==='practice'),movesPlayed=practiceActivities.reduce((sum,item)=>sum+item.session.correct,0),hintsUsed=practiceActivities.reduce((sum,item)=>sum+item.session.hints,0),retries=practiceActivities.reduce((sum,item)=>sum+item.mistakes,0);
     $('lesson-recap-stats').parentElement.hidden=!practiceActivities.length;
     $('lesson-recap-stats').textContent=`This visit’s practice: ${movesPlayed} correct move${movesPlayed===1?'':'s'}, ${hintsUsed} hint step${hintsUsed===1?'':'s'}, ${retries} other attempt${retries===1?'':'s'}. Your earned lesson completion is saved.`;
-    $('lesson-course-previous').disabled=globalIndex===0;$('lesson-course-next').disabled=!player.complete;
-    $('lesson-course-next').textContent=globalIndex===lessons.length-1?'Back to course →':`Next ${course.label.toLowerCase()} →`;
-    $('lesson-next-help').textContent=player.complete?'Lesson complete':!player.boardComplete?'Complete the board exercise':!player.checksComplete?'Answer the knowledge check':'Complete the reading';
+    const next=continuation();
+    $('lesson-course-previous').disabled=globalIndex===0;$('lesson-course-next').disabled=!next.enabled;
+    $('lesson-course-next').textContent=next.label;$('lesson-next-help').textContent=next.help;
+    $('lesson-after-board').hidden=stage!=='try'||!next.enabled||!['next-lesson','question','activity','stage'].includes(next.action);
+    $('lesson-after-board').textContent=next.label;
+    dock.measure();
     updateProgress();
   }
   function renderBoard(){
@@ -145,7 +148,24 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
   $('lesson-learn-next').onclick=()=>{player.learnNext();clearTurn();render();focusStage();};
   $('lesson-concept-previous').onclick=()=>{player.conceptIndex=Math.max(0,player.conceptIndex-1);player.save();render();focusStage();};
   $('lesson-activities').onclick=event=>{const item=event.target.closest('[data-lesson-activity]');if(item){player.selectActivity(Number(item.dataset.lessonActivity));clearTurn();render();focusStage();}};
-  $('lesson-after-board').onclick=()=>{const pending=player.activities.findIndex(item=>item.data.required&&!item.done);if(pending>=0){player.selectActivity(pending);clearTurn();render();focusStage();}else changeStage('check');};
+  function continueLesson(){
+    const next=continuation();if(!next.enabled)return;
+    if(next.action==='next-lesson'){
+      if(!player.complete)return;const i=lessons.indexOf(player.lesson);
+      if(i===lessons.length-1){onCourseComplete?.(course.id);return;}
+      selectLesson(lessons[i+1].id);focusStage();return;
+    }
+    if(next.action==='learn-next')player.learnNext();
+    else if(next.action==='stage')player.setStage(next.stage);
+    else if(next.action==='question'){player.questionIndex=next.index;player.setStage('check');}
+    else if(next.action==='activity'){player.selectActivity(next.index);player.setStage('try');}
+    else if(next.action==='resume-practice'){player.reviewing=false;player.save();}
+    else if(next.action==='demonstration-done')player.acknowledgeDemonstration();
+    else if(next.action==='next-study-move'){player.jump(player.session.cursor+1);clearTurn();render();return;}
+    else if(next.action==='end-challenge'){player.endChallenge();history.replaceState({},'',`${course.path}?lesson=${encodeURIComponent(player.lesson.id)}`);}
+    clearTurn();render();focusStage();
+  }
+  $('lesson-after-board').onclick=continueLesson;
   $('lesson-demonstration-done').onclick=()=>{player.acknowledgeDemonstration();render();};
   $('lesson-answers').onclick=event=>{const item=event.target.closest('[data-lesson-answer]');if(item){player.answer(Number(item.dataset.lessonAnswer));render();}};
   for(const [id,delta] of [['lesson-question-previous',-1],['lesson-question-next',1]])$(id).onclick=()=>{player.questionIndex=Math.max(0,Math.min(player.plan.questions.length-1,player.questionIndex+delta));player.save();render();focusStage();};
@@ -161,7 +181,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete}){
     clearTurn();$('lesson-more').open=false;render();focusStage();
   };
   $('lesson-course-previous').onclick=()=>{const i=lessons.indexOf(player.lesson);if(i>0){selectLesson(lessons[i-1].id);focusStage();}};
-  $('lesson-course-next').onclick=()=>{if(!player.complete)return;const i=lessons.indexOf(player.lesson);if(i===lessons.length-1)onCourseComplete?.(course.id);else{selectLesson(lessons[i+1].id);focusStage();}};
+  $('lesson-course-next').onclick=continueLesson;
   $('lesson-moves').onclick=event=>{const item=event.target.closest('[data-lesson-ply]');if(item){player.jump(Number(item.dataset.lessonPly));clearTurn();render();}};
   $('lesson-analyze').onclick=()=>{if(player.session?.cursor)onAnalyze(player.session.pgn());};
   function attemptMove(from,to,promote){

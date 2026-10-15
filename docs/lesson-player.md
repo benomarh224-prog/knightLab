@@ -47,7 +47,7 @@ Stage/concept/question changes focus the named stage heading and bring the stage
 
 ## Responsive layout
 
-Mobile practice is title → short instruction → square board → board controls → optional practice tools. Detailed content follows under Learn more. The board depends only on available width. There is no viewport-height cap, CSS zoom, page scale, browser-zoom restriction, fixed lesson footer or height-based board shrinking. Short screens scroll normally. Bottom navigation stays in normal document flow and has iPhone safe-area padding. Desktop uses a separate course-navigation column with a prominent board and adjacent practice panel.
+Mobile practice is title → short instruction → square board → board controls → optional practice tools. Detailed content follows under Learn more. The board depends only on available width. There is no viewport-height cap, CSS zoom, page scale, browser-zoom restriction or height-based board shrinking. Short screens scroll normally. On mobile, a compact fixed continuation dock stays accessible above the device safe area. ResizeObserver measures its actual height, including wrapped text and safe-area padding; the document reserves that height plus breathing room, with matching scroll-padding and focus margins so the final content remains reachable. Desktop uses a separate course-navigation column with a prominent board and adjacent practice panel.
 
 ## Verification, 15 October 2026
 
@@ -76,3 +76,11 @@ Browser testing used the deployed Vercel site through the supported browser tool
 - Build, DOM ID bindings, authored CSS parsing and deployment checks passed. No browser console errors were observed in the tested lessons.
 
 No text-only or demonstration-only lessons exist in the current catalog, so these were tested with model fixtures, not as published course pages. Safe-area CSS is present; a physical iPhone/Safari run was not available. Browser viewport checks emulate dimensions and do not claim physical-device testing.
+
+## Persistent continuation dock, 16 October 2026
+
+Mobile lessons now keep one context-sensitive primary action at the bottom of the viewport. The shared navigation policy reads the current player state: next idea, board practice, next required exercise, knowledge check, demonstration step, return from independent practice, or next lesson/back to course. An unfinished required exercise or question keeps Continue disabled. Existing completion records remain valid. Desktop uses the same policy and offers the continuation beside a completed board exercise, ahead of the optional recap.
+
+The dock has 48px controls, safe-area padding, a measured document reservation and focus/scroll offsets. Its size never controls board dimensions. Mobile hides duplicated inline forward buttons; completed stages, previous ideas/questions, reset, hints and replay remain available. Long recaps and expanded explanations do not move the primary action off screen.
+
+Seven new tests verify the continuation rules across all 190 existing lessons and synthetic text-only, multi-position, multi-question and demonstration lessons; independent practice; required reading; and dock measurement changes, hidden states and cleanup. The full suite has 152 passing tests.

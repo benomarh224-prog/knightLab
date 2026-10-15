@@ -117,7 +117,7 @@ Search and engine activity use small busy indicators instead of changing the rev
 
 ## Mobile lesson workspace
 
-Every lesson uses the same responsive player: a single column with title, short instruction, then board on mobile; a course sidebar, prominent board and adjacent practice panel on desktop. Lessons opens a native mobile drawer. Navigation remains in document flow with safe-area spacing, so it cannot cover lesson content. See [lesson player documentation and verification](docs/lesson-player.md).
+Every lesson uses the same responsive player: a single column with title, short instruction, then board on mobile; a course sidebar, prominent board and adjacent practice panel on desktop. Lessons opens a native mobile drawer. Mobile navigation uses a compact fixed continuation dock with a dynamically measured document reservation, safe-area padding and matching focus offsets. The primary action follows the lesson’s actual stage and completion requirements. Desktop offers the same continuation beside the board. See [lesson player documentation and verification](docs/lesson-player.md).
 
 ## Italian Game
 
