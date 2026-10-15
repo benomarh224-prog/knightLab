@@ -13,6 +13,10 @@ COURSES.beginners.category='beginners';
 COURSES.french.category=COURSES.opengames.category='openings';
 COURSES.tactics.category='tactics';
 COURSES.tactics.levels=['beginner','intermediate','advanced'];
+COURSES.beginners.practice={lessonId:'support-your-pawn',startPly:0,goal:'Bring your king closer, support your passed pawn, and watch the opposing king.'};
+COURSES.french.practice={lessonId:FRENCH_LESSONS[0].id,startPly:4,goal:'Challenge White’s center. Develop your pieces and look for the …c5 pawn break.'};
+COURSES.opengames.practice={lessonId:'italian-development',startPly:2,goal:'Develop toward the center, protect your king, and compare the opponent’s replies.'};
+COURSES.tactics.practice={lessonId:TACTICAL_LESSONS[0].id,startPly:0,goal:'Compare checks, captures, and direct threats. Calculate the opponent’s reply before moving.'};
 COURSES.tactics.method=[
   'Count the material and identify the opponent’s immediate threats.',
   'List forcing checks, captures, and direct attacks.',

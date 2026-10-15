@@ -798,7 +798,7 @@ try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
   else setGame({pgn:DEMO_PGN},{demo:true,analyze:false});
 } catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false});}
-const learning=createLearningUI({storage:reviewStorage,onCourseComplete:course=>{selectLearningCategory(course==='beginners'?'beginners':course==='tactics'?'tactics':'openings');router.go('learn');},onAnalyze:pgn=>{
+const learning=createLearningUI({storage:reviewStorage,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(course==='beginners'?'beginners':course==='tactics'?'tactics':'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
 const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);

@@ -18,6 +18,13 @@ export class OpeningLesson {
   practice({startPly=0}={}){this.mode='practice';this.cursor=Math.max(0,Math.min(this.lesson.moves.length-1,Number.isFinite(startPly)?Math.floor(startPly):0));this.correct=0;this.hints=0;this.completed=false;this.skipOpponent();this.practiceStart=this.cursor;}
   skipOpponent(){while(this.expected&&this.expected.color!==this.lesson.practiceColor)this.cursor++;if(!this.expected)this.completed=true;}
   hint(){this.hints++;return this.expected;}
+  get canUndo(){return this.mode==='practice'&&this.correct>0;}
+  undo(){
+    if(!this.canUndo)return false;
+    let cursor=this.cursor-1;
+    while(cursor>this.practiceStart&&this.lesson.verboseMoves[cursor].color!==this.lesson.practiceColor)cursor--;
+    this.cursor=cursor;this.correct--;this.completed=false;return true;
+  }
   attempt(from,to,promotion){
     if(this.mode!=='practice'||!this.expected)return {status:'inactive'};
     const chess=new Chess(this.fen);let move;

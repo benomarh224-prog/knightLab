@@ -10,7 +10,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   const dialog = $('explore-dialog');
   let variation, selected = null, promotion = null, flipped = false, engine = null;
   let result = null, busy = false, run = 0, savedGame = null, resumeReview = false;
-  let originFen = null;
+  let originFen = null, coursePractice = null;
   function cancel() { run++; engine?.destroy(); engine = null; busy = false; }
   function reset() { resumeReview = false; cancel(); if (dialog.open) dialog.close(); variation = null; }
   function render(focusSquare) {
@@ -27,6 +27,13 @@ export function createExploreUI({ context, pause, resume, playSound }) {
       html += `<button class="square practice-square${(files.charCodeAt(f)-97+ranks[r])%2 === 1 ? ' dark' : ''}${selected === square ? ' piece-selected' : ''}${targets.has(square) ? ' legal-target' : ''}${last && [last.from,last.to].includes(square) ? ' last' : ''}" data-square="${square}" tabindex="${square === tabSquare ? 0 : -1}" aria-label="${label}" aria-pressed="${selected === square}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}</button>`;
     }
     $('explore-board').innerHTML = html;
+    const practicing=coursePractice&&$('play-origin').value==='current';
+    $('explore-course-practice').hidden=!practicing;
+    if(practicing){
+      const count=variation.moves.filter(move=>move.color===coursePractice.color).length;
+      $('explore-course-goal').textContent=coursePractice.goal;
+      $('explore-course-progress').textContent=variation.ending?'Position finished. Review your decisions or return to the lesson.':count>=coursePractice.moves?'Practice target reached. Keep playing or return to the lesson.':`${count} / ${coursePractice.moves} of your moves · Apply the idea and compare replies.`;
+    }
     $('explore-turn').textContent = variation.ending ? `${variation.ending}${chess.isCheckmate() ? ` · ${chess.turn() === 'w' ? 'Black' : 'White'} wins` : ''}` : `${chess.turn() === 'w' ? 'White' : 'Black'} to move${variation.engineTurn ? ' · Stockfish' : variation.mode === 'engine' ? ' · Your turn' : ''}${chess.isCheck() ? ' · Check' : ''}`;
     $('explore-evaluation').textContent = result ? formatEvaluation(result) : busy ? 'Thinking…' : '—';
     $('explore-best').textContent = variation.ending ? 'This position has ended.' : result ? `Best move: ${uciToSan(variation.fen, result.best)} · Depth ${result.depth}` : 'Evaluating this position';
@@ -88,20 +95,22 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     variation = new PlaySession(fen, { mode: $('play-mode').value, color: $('play-color').value });
     flipped = variation.mode === 'engine' ? variation.color === 'b' : context().flipped;
     selected = null; promotion = null; result = null;
-    $('explore-origin').textContent = $('play-origin').value === 'current' ? 'From your selected analysis position · Original game preserved' : 'New game · No clock · Play at your own pace';
+    $('explore-origin').textContent = $('play-origin').value === 'current' ? coursePractice?.title||'From your selected analysis position · Original game preserved' : 'New game · No clock · Play at your own pace';
     $('explore-feedback').textContent = variation.engineTurn ? 'Stockfish is preparing the first move.' : 'Tap a piece, then a highlighted square to play.';
     evaluate();
   }
-  function open(fromGame, fenOverride = null) {
+  function open(fromGame, fenOverride = null, practice = null) {
+    coursePractice=practice;
     const current = context(); savedGame = current.parsed; resumeReview = pause();
     originFen = fenOverride || current.parsed.fens[current.ply];
     $('play-origin').value = fromGame ? 'current' : 'new';
-    $('play-mode').value = fromGame ? 'free' : 'engine';
-    $('play-color').value = fromGame ? new Chess(originFen).turn() : 'w';
+    $('play-mode').value = practice?'engine':fromGame ? 'free' : 'engine';
+    $('play-color').value = practice?.color||(fromGame ? new Chess(originFen).turn() : 'w');
     $('play-settings').open = false; dialog.showModal(); startPosition();
   }
   $('try-move').onclick = () => open(true);
   $('play-open').onclick = () => open(false);
+  $('explore-course-return').onclick=()=>dialog.close();
   $('explore-board').onclick = event => {
     const button = event.target.closest('[data-square]'); if (!button || !variation || promotion || variation.ending) return;
     if (variation.engineTurn) { $('explore-feedback').textContent = busy ? 'Wait for Stockfish’s move, or switch to Free play.' : 'Retry the engine reply or switch to Free play.'; return; }
@@ -144,7 +153,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     const link = document.createElement('a'); link.href = url; link.download = 'knightlab-play.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
   };
   dialog.addEventListener('close', () => { cancel(); variation = null; if (resumeReview && savedGame === context().parsed) resume(); resumeReview = false; });
-  return { reset, tryMove: (fen, uci) => {
+  return { reset, practice: value=>open(true,value.fen,value), tryMove: (fen, uci) => {
     if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci || '')) return;
     open(true, fen); $('explore-origin').textContent = 'Trying the coach’s idea · From before the selected move';
     attempt(uci.slice(0,2), uci.slice(2,4), uci[4]);

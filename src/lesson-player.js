@@ -93,6 +93,12 @@ export class LessonPlayer {
     this.save();return result;
   }
   hint(){const move=!this.challengeMode&&this.session?.mode==='practice'&&!this.session.completed?this.session.hint():null;this.save();return move;}
+  undo(){
+    if(this.reviewing||!this.session?.undo())return false;
+    if(this.challengeMode)this.activity.challengeHelped=true;
+    this.activity.hintCursor=-1;this.activity.hintLevel=0;
+    this.save();return true;
+  }
   reset(){
     const activity=this.activity;if(!activity)return;
     if(this.challengeMode){this.startChallenge();return;}
