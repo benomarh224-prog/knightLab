@@ -525,7 +525,7 @@ function renderGames() {
   const { entries, total, pages, page, start } = pageGames(state.games, state.filter, state.libraryPage);
   state.libraryPage = page;
   $('game-count').textContent = state.games.length;
-  $('library-title').textContent = state.profile ? 'Choose your next game' : 'Your imported game';
+  $('library-title').textContent = state.profile ? 'Recent games' : 'Your imported game';
   $('library-subtitle').textContent = 'Open a match in its own analysis page.';
   $('game-filters').hidden = !state.profile;
   $('load-more').hidden = !state.profile || state.archiveIndex >= state.archives.length;
