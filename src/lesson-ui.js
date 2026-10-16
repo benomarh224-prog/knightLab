@@ -13,6 +13,7 @@ import { createLessonMotion,lessonFrames } from './lesson-motion.js';
 import { illegalMoveReason } from './lesson-move-help.js';
 import { coursePractice } from './course-practice.js';
 import { renderAttackingCatalog } from './attacking-catalog.js';
+import { lessonCheckmate,exploreBeforeCheckmate,createLessonCheckmateDialog } from './lesson-checkmate.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -41,6 +42,22 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     const lastLesson=lessons.indexOf(player.lesson)===lessons.length-1,next=lessonContinuation(player,{lastLesson,label:course.label});
     return lastLesson&&next.action==='next-lesson'&&coursePractice(course)?{...next,label:'Finish course →',help:'Optional practice or back to courses'}:next;
   };
+  const focusBoard=()=>{
+    ($('lesson-board').querySelector('[tabindex="0"]')||$('lesson-counter')).focus({preventScroll:true});
+    $('lesson-board').scrollIntoView({block:'nearest'});
+  };
+  const checkmateDialog=createLessonCheckmateDialog({dialog:$('lesson-checkmate-dialog'),title:$('lesson-checkmate-title'),description:$('lesson-checkmate-description'),continueButton:$('lesson-checkmate-continue'),exploreButton:$('lesson-checkmate-explore'),closeButton:$('lesson-checkmate-close'),
+    read:()=>{
+      if(document.body.dataset.layout!=='lesson')return null;
+      if(motion.active)return {busy:true};
+      const result=lessonCheckmate(player);if(!result)return null;
+      const next=continuation();
+      return {...result,key:`${course.id}:${player.lesson.id}:${player.activityIndex}:${player.exploring?'explore':player.reviewing?'review':'study'}:${result.fen}`,continueLabel:next.enabled?next.label:'Return to lesson'};
+    },
+    otherDialogOpen:()=>Boolean(document.querySelector('dialog[open]:not(#lesson-checkmate-dialog)')),
+    beforeOpen:()=>{for(const menu of document.querySelectorAll('.compact-options[open]'))menu.open=false;},
+    onContinue:()=>{if(player.exploring)player.stopExploring();clearTurn();if(continuation().enabled)continueLesson();else{render();focusStage();}},
+    onExplore:()=>{exploreBeforeCheckmate(player);clearTurn();render();focusBoard();},focusBoard});
   function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor});renderLearningCompanion({memory,courses:COURSES,storage});}
   function clearTurn(){motion.cancel();selected=null;hint=null;message='';promotion=null;}
   function focusStage(){
@@ -153,6 +170,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-course-practice').hidden=!player.complete||globalIndex!==lessons.length-1||!coursePractice(course);
     dock.measure();
     updateProgress();
+    checkmateDialog.sync();
   }
   function renderBoard(){
     const session=player.exploration||motion.frame||player.session,chess=new Chess(session.fen),practice=session.mode==='practice'&&!session.completed,interactive=player.exploring||session.mode==='practice';
