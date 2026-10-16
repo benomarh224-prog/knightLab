@@ -284,3 +284,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
  .learn-page .tal-course-art { min-height:250px; }
  .tal-art-piece { height:78%; bottom:22px; }
 }
+
+.learn-page .supplied-cover .course-cover-art { padding:0; min-height:300px; background:#041c13; }
+.learn-page .supplied-cover .course-cover-photo { object-fit:contain; }
+.learn-page .supplied-cover .course-cover-eco { display:none; }
+.attacking-collection-intro { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); align-items:center; gap:28px; margin-bottom:28px; }
+.attacking-collection-intro .learn-category-heading { margin:0; }
+.attacking-collection-intro .learn-category-heading p { font-size:16px; line-height:1.65; }
+.attacking-collection-cover { margin:0; overflow:hidden; border-radius:14px; background:#041c13; }
+.attacking-collection-cover img { display:block; width:100%; height:auto; }
+@media(max-width:680px){
+ .learn-page .supplied-cover .course-cover-art { min-height:0; height:auto; aspect-ratio:1280 / 853; }
+ .attacking-collection-intro { grid-template-columns:minmax(0,1fr); gap:20px; }
+}

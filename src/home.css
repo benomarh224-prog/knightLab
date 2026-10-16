@@ -223,3 +223,8 @@ body[data-page="home"] button:focus-visible, body[data-page="home"] a:focus-visi
   body[data-page="home"] .footer { flex-direction: column; align-items: flex-start; gap: 8px; padding: 22px; font-size: 9px; }
 }
 @media(prefers-reduced-motion:reduce) { .academy-primary,.academy-outline,.academy-course,.academy-course-image img { transition: none; } .academy-course:hover,.academy-primary:hover { transform: none; } }
+
+/* Text-bearing course artwork stays uncropped at every card width. */
+.academy-course-image.supplied-course-image { aspect-ratio:1280 / 853; }
+.supplied-course-image img { object-fit:contain; }
+.academy-course:hover .supplied-course-image img { transform:none; }
