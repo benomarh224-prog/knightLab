@@ -11,7 +11,7 @@
 #board .piece { pointer-events:none; user-select:none; -webkit-user-select:none; }
 .board-card .line-toolbar button { min-height:44px; font-size:13px; }
 @media(min-width:861px) {
-  .workspace .analysis-layout { --board-size:clamp(400px,calc(100dvh - 300px),820px); display:grid; grid-template-columns:minmax(0,var(--board-size)) minmax(310px,440px); justify-content:center; align-items:start; gap:clamp(20px,2.5vw,40px); }
+  .workspace .analysis-layout { --board-size:clamp(400px,calc(100svh - 300px),820px); display:grid; grid-template-columns:minmax(0,var(--board-size)) minmax(310px,440px); justify-content:center; align-items:start; gap:clamp(20px,2.5vw,40px); }
   .workspace .board-card { position:sticky; top:100px; max-width:none; gap:8px; }
   .workspace .board-area { width:100%; align-self:stretch; }
   .workspace .review-panel { position:sticky; top:100px; max-height:calc(100dvh - 120px); padding:16px; overflow-y:auto; }

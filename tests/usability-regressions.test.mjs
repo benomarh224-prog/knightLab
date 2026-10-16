@@ -66,11 +66,14 @@ test('the revised pawn lesson migrates earlier reading and solved credit without
  assert.ok(storage.getItem(p.storageKey+':legacy:g5vcbp'));migrated.answer(migrated.question.answer);assert.equal(migrated.complete,true);
 });
 
-test('lesson sizing reserves controls and navigation on mobile and short laptop screens',()=>{
- for(const [height,chrome,controls,navigation] of [[740,260,52,100],[760,240,52,100],[768,160,52,100],[900,170,52,100]]){
-  const edge=lessonBoardLimit({height,chrome,controls,navigation});assert.ok(edge+chrome+controls+navigation<=height);assert.ok(edge>=220);
+test('lesson sizing depends on the screen and focus layout, never changing instruction or footer content',()=>{
+ for(const [height,compact,reserve] of [[740,true,400],[760,true,400],[600,false,300],[650,false,300]]){
+  const edge=lessonBoardLimit({height,compact});assert.equal(edge+reserve,height);assert.ok(edge>=220);
+  for(const chrome of [100,240,400])for(const navigation of [80,120,180])assert.equal(lessonBoardLimit({height,compact,chrome,navigation}),edge);
  }
- assert.equal(lessonBoardLimit({height:320,chrome:200,controls:52,navigation:100}),220); // normal page scroll instead of tiny scaling
+ assert.equal(lessonBoardLimit({height:320,compact:true}),220); // normal page scroll instead of tiny scaling
+ assert.equal(lessonBoardLimit({height:1200}),680);
+ assert.ok(lessonBoardLimit({height:760,compact:true,focus:true})>lessonBoardLimit({height:760,compact:true}));
 });
 
 test('play levels use distinct real skill and search settings with no claimed rating equivalents',()=>{
