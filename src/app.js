@@ -151,12 +151,12 @@ $('focus-mode').onclick = () => {
   closeBoardActions();
   boardCoach.close();
   $('focus-body').append(boardCard); document.body.classList.add('focus-active');
-  $('focus-dialog').showModal(); positionOpeningCard();
+  $('focus-dialog').showModal(); boardCoach.position(); positionOpeningCard();
 };
 $('exit-focus').onclick = () => $('focus-dialog').close();
 $('focus-dialog').addEventListener('close', () => {
   boardHome.after(boardCard); document.body.classList.remove('focus-active');
-  positionOpeningCard(); $('focus-mode').focus({ preventScroll: true });
+  boardCoach.position(); positionOpeningCard(); $('focus-mode').focus({ preventScroll: true });
 });
 let toastTimer;
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 3500); }
@@ -273,7 +273,7 @@ function renderBoard() {
     const threat=threatened.get(square);
     const badge = rated ? `<button class="piece-rating ${rating.tone}${r === 0 ? ' edge-top' : ''}${f === 7 ? ' edge-right' : ''}${r < 2 ? ' tooltip-below' : ''}${f < 2 ? ' tooltip-left' : ''}" data-ply="${state.ply}" aria-label="${escape(rating.move + ': ' + rating.label)}" aria-pressed="${Boolean(showRating)}" title="${escape(rating.label)}"><span class="piece-rating-symbol" aria-hidden="true">${qualityGlyph(classification.label)}</span><span class="piece-rating-label" aria-hidden="true">${escape(rating.label)}</span></button>` : '';
     const label=`${square}${piece ? ': ' + (piece.color === 'w' ? 'White ' : 'Black ') + names[piece.type] : ': empty'}${threat ? '. '+threat.explanation : ''}${targets.has(square)?'. Legal destination':''}`;
-    squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}${threat?' threatened threat-'+threat.kind:''}${selection===square?' piece-selected':''}${targets.has(square)?' legal-target':''}" data-square="${square}" ${inline.active||threat?`role="button" tabindex="${!inline.active||focusedSquare===square||!focusedSquare&&(selection===square||!selection&&f===0&&r===7)?0:-1}" aria-label="${escape(label)}"`:''} ${inline.active&&piece?.color===chess.turn()?'draggable="true"':''} title="${escape(label)}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${threat?'<span class="threat-dot" aria-hidden="true">!</span>':''}${badge}</div>`;
+    squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}${threat?' threatened threat-'+threat.kind:''}${selection===square?' piece-selected':''}${targets.has(square)?' legal-target':''}" data-square="${square}" role="button" tabindex="${focusedSquare===square||!focusedSquare&&(selection===square||!selection&&f===0&&r===7)?0:-1}" aria-label="${escape(label)}" ${piece?.color===chess.turn()?'draggable="true"':''} title="${escape(label)}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${threat?'<span class="threat-dot" aria-hidden="true">!</span>':''}${badge}</div>`;
   }
   $('board').innerHTML = squares;
   const nextPosition={fen:view.fen,last:view.last,flipped:state.flipped,game:state.parsed};
@@ -346,7 +346,7 @@ function render() {
   $('board-coach-card').dataset.verdict = item?.label || 'Waiting';
   $('board-coach-card').style.setProperty('--coach-accent',item ? qualityColors[item.label] : '#8ca494');
   $('insight-title').textContent = item ? qualityLabels[item.label] : state.ply === 0 ? 'Every move starts here' : 'A closer look at this move';
-  const previous = view.before || score;
+  const previous = move ? view.before : score;
   $('recommended-move').textContent = move ? uciToSan(move.before, previous?.best) : uciToSan(view.fen, score?.best);
   $('engine-depth').textContent = previous?.depth ? `Depth ${previous.depth}` : 'Stockfish 19';
   renderCoach(move, move ? view.before : null, score);
@@ -395,11 +395,12 @@ function renderCoach(move, before, after) {
   $('coach-best-row').hidden = !report.bestLine;
   $('coach-reply-row').hidden = !report.replyLine;
   $('coach-lines').hidden = !report.bestLine && !report.replyLine;
-  $('coach-try-idea').disabled = !report.bestMove;
-  const tryRecommendation=()=>{if(report.bestMove&&move){boardCoach.close();inline.tryBest(report.bestMove);selectWorkspaceView('board');scrollToSection(document.querySelector('.workspace'));boardCoach.reveal();}};
+  const recommendation=move?report.bestMove:after?.best;
+  $('coach-try-idea').disabled = !recommendation;
+  const tryRecommendation=()=>{if(recommendation){boardCoach.close();inline.tryBest(recommendation,{replaceLast:Boolean(move)});selectWorkspaceView('board');boardCoach.reveal();}};
   $('coach-try-idea').onclick=tryRecommendation;
-  $('recommended-move').disabled=!report.bestMove;
-  $('recommended-move').setAttribute('aria-label',report.bestMove?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
+  $('recommended-move').disabled=!recommendation;
+  $('recommended-move').setAttribute('aria-label',recommendation?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
   $('recommended-move').onclick=tryRecommendation;
   $('coach-note').textContent = ready ? `Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${before.depth}` : ''}. Deeper review can change the recommendation.` : 'The coach updates as each move is reviewed.';
 }
@@ -695,16 +696,17 @@ $('board').onclick = event => {
   if (badge) { badge.setAttribute('aria-pressed', String(badge.getAttribute('aria-pressed') !== 'true'));return; }
   const square=event.target.closest('[data-square]')?.dataset.square;
   if(!square) return;
-  if(inline.active) inline.click(square);
+  inline.click(square);
   if(showThreats && threats.some(item=>item.square===square)) {selectedThreat=square;renderBoard();}
 };
 $('board').addEventListener('dragstart',event=>{
   const square=event.target.closest('[data-square]')?.dataset.square;
-  if(!inline.active||!square){event.preventDefault();return;}
+  if(!square||event.target.closest('.piece-rating')){event.preventDefault();return;}
   boardDragging=true; inline.select(square,false); event.dataTransfer.setData('text/plain',square);event.dataTransfer.effectAllowed='move';
+  if(inline.selected!==square){boardDragging=false;event.preventDefault();return;}
   for(const tile of $('board').querySelectorAll('[data-square]')) {tile.classList.toggle('piece-selected',tile.dataset.square===inline.selected);tile.classList.toggle('legal-target',inline.targets.has(tile.dataset.square));}
 });
-$('board').addEventListener('dragend',()=>{boardDragging=false;renderBoard();});
+$('board').addEventListener('dragend',()=>{boardDragging=false;inline.refresh();});
 $('board').addEventListener('dragover',event=>{if(inline.active)event.preventDefault();});
 $('board').addEventListener('drop',event=>{
   if(!inline.active)return;event.preventDefault();boardDragging=false;
@@ -715,7 +717,7 @@ $('board').addEventListener('keydown',event=>{
   const square=event.target.closest('[data-square]')?.dataset.square;if(!square||event.target.closest('.piece-rating'))return;
   if(event.key==='Enter'||event.key===' '){event.preventDefault();event.target.click();return;}
   const offsets={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
-  if(!inline.active||!offsets[event.key])return;
+  if(!offsets[event.key])return;
   event.preventDefault();const [dx,dy]=offsets[event.key],sign=state.flipped?-1:1;
   const file=square.charCodeAt(0)+dx*sign,rank=Number(square[1])-dy*sign;
   if(file>=97&&file<=104&&rank>=1&&rank<=8)$('board').querySelector(`[data-square="${String.fromCharCode(file)+rank}"]`)?.focus();
@@ -783,7 +785,7 @@ $('download-pgn').onclick = () => {
 };
 document.addEventListener('keydown', event => {
   if(router?.page!=='analysis')return;
-  if(inline.active && event.target.closest('#board'))return;
+  if(event.target.closest('#board'))return;
   if (event.target.closest('[role="tablist"]') || ['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName) || document.querySelector('dialog[open]:not(#focus-dialog)')) return;
   if (event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.key === 'ArrowLeft') { event.preventDefault(); stepMove(-1); }

@@ -56,7 +56,19 @@ test('castling and inherited threefold repetition survive inline history reconst
  const prefix=parsed.moves.map(m=>m.from+m.to);
  const line=new AnalysisLine(parsed.fens.at(-1),null,{startFen:parsed.fens[0],moves:prefix});
  line.play('f6','g8'); assert.equal(line.chess.isThreefoldRepetition(),true);
- assert.equal(line.play('g1','f3').status,'illegal');
+ assert.equal(line.play('g1','f3').status,'played');
+});
+
+test('draw conditions allow legal exploration, while mate and stalemate have no moves',()=>{
+ const material=new AnalysisLine('7k/8/8/8/8/8/8/K7 w - - 0 1');
+ assert.equal(material.chess.isInsufficientMaterial(),true);
+ assert.equal(material.play('a1','b1').status,'played');
+ const fifty=new AnalysisLine('7k/8/8/8/8/8/R7/K7 w - - 100 51');
+ assert.equal(fifty.chess.isDrawByFiftyMoves(),true);
+ assert.equal(fifty.play('a2','b2').status,'played');
+ for(const fen of ['7k/6Q1/5K2/8/8/8/8/8 b - - 0 1','7k/5Q2/6K1/8/8/8/8/8 b - - 0 1']){
+  const line=new AnalysisLine(fen);assert.equal(line.legal().length,0);assert.equal(line.play('h8','h7').status,'illegal');
+ }
 });
 test('attack maps distinguish unprotected pieces, defended attacks and poor exchanges',()=>{
  const loose=positionThreats('7k/8/8/8/4q3/8/4R3/K7 w - - 0 1').find(t=>t.square==='e2');

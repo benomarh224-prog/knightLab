@@ -17,7 +17,8 @@ export class AnalysisLine {
   get fen() { return this.chess.fen(); }
   get last() { return this.entries[this.cursor-1] || null; }
   get score() { return this.scores[this.cursor] || null; }
-  legal(square) { return this.chess.isGameOver() ? [] : this.chess.moves({square,verbose:true}); }
+  // Draw claims end a game, but do not remove legal moves from an analysis board.
+  legal(square) { return this.chess.moves({square,verbose:true}); }
   play(from,to,promotion) {
     const choices = this.legal(from).filter(move=>move.to===to);
     if (!choices.length) return {status:'illegal'};
