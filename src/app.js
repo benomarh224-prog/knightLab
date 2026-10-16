@@ -641,18 +641,6 @@ document.addEventListener('click',event=>{
   const link=event.target.closest('[data-learn-category-link]');
   if(link&&event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey)selectLearningCategory(link.dataset.learnCategoryLink);
 });
-document.querySelectorAll('[data-home-answer]').forEach(button=>{
-  button.setAttribute('aria-pressed','false');
-  button.onclick=()=>{
-    const correct=button.dataset.homeAnswer==='d5';
-    for(const option of document.querySelectorAll('[data-home-answer]')){
-      option.setAttribute('aria-pressed',String(option===button));
-      option.classList.toggle('is-correct',option===button&&correct);
-      option.classList.toggle('is-other',option===button&&!correct);
-    }
-    $('home-puzzle-feedback').textContent=correct?'Exactly. …d5 challenges White’s center.':'Legal, but try the central pawn break that defines the French.';
-  };
-});
 $('games-nav').onclick = () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); };
 $('library-nav').onclick = () => scrollToSection($('game-library'));
 for (const id of ['sidebar-import','hero-import','home-import']) $(id).onclick = openImport;
