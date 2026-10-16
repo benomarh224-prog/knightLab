@@ -272,7 +272,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
 /* Attacking courses reuse the existing course cards and shared LessonPlayer. */
 .learn-page .tal-course-art { position:relative; min-height:320px; padding:28px; overflow:hidden; background:radial-gradient(ellipse at 72% 40%,#52774b88,transparent 65%),repeating-linear-gradient(135deg,transparent 0 55px,#d5edb509 56px 57px),#123b2c; }
-.tal-art-edition { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; color:#e3efd8; font-size:12px; letter-spacing:2.2px; }
+.tal-art-edition { position:absolute; top:22px; left:28px; right:28px; z-index:1; display:flex; justify-content:space-between; align-items:center; color:#e3efd8; font-size:12px; letter-spacing:2.2px; }
 .tal-art-edition b { display:grid; place-items:center; width:40px; height:40px; border:1px solid #d3f36a88; border-radius:50%; color:#dcf783; font-size:16px; letter-spacing:0; }
 .tal-art-piece { position:absolute; width:52%; height:74%; bottom:30px; }
 .tal-art-piece .piece { display:block; width:100%; height:100%; object-fit:contain; }
