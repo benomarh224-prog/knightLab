@@ -9,8 +9,8 @@ function explain(move){
   const capture=move.captured?` and captures the ${names[move.captured]}`:'';
   return `${side} moves the ${names[move.piece]} from ${move.from} to ${move.to}${capture}.${move.promotion?` The pawn becomes a ${names[move.promotion]}.`:''}${move.san.includes('#')?' This is checkmate.':move.san.includes('+')?' The king is in check.':''}`;
 }
-function lesson({id,title,unit,fen,moves,coach,prompt,intro,rules,question,options,answer,reason,takeaway,pages,notes={},start=0}){
-  return {id,title,unit,tag:unit,fen,moves,practiceColor:'w',course:'Chess for Beginners',subtitle:prompt,takeaway,
+function lesson({id,title,unit,fen,moves,coach,prompt,intro,rules,question,options,answer,reason,takeaway,pages,notes={},start=0,squarePractice}){
+  return {id,title,unit,tag:unit,fen,moves,practiceColor:'w',course:'Chess for Beginners',subtitle:prompt,takeaway,...(squarePractice?{squarePractice}:{}),
     source:`Knightlab practice inspired by the supplied book, ${pages}`,
     notes:verbose=>verbose.map((move,index)=>notes[index+1]||explain(move)),
     guide:{intro,rules},quiz:{question,options,answer,explanation:reason},
@@ -20,6 +20,7 @@ const pieces='1 · Board & pieces',rulesUnit='2 · Rules & king safety',tactics=
 const rookLine=['Ra7','Kg8','Kg2','Kf8','Kf3','Ke8','Ke4','Kd8','Kd5','Kc8','Kd6','Kb8','Rf7','Ka8','Kc6','Kb8','Kb6','Ka8','Rf8#'];
 export const BEGINNER_LESSONS=[
   lesson({id:'board-and-first-move',title:'Meet the chessboard.',unit:pieces,moves:['e4'],pages:'Setup, printed pp. 3–5',
+    squarePractice:{guided:4,targets:['e4','d5','a1','h8','c3','f6','b7','g2',{square:'e4',orientation:'b'},{square:'d5',orientation:'b'},{square:'a8',orientation:'b'},{square:'h1',orientation:'b'}]},
     coach:'Find e2, then e4.',prompt:'You play White. Select the pawn on e2, then tap e4. It is a legal two-square first move.',
     intro:['A chessboard has 64 squares. Files are the letters a–h; ranks are the numbers 1–8. Say the file first: e4 means file e, rank 4.','White moves first. Each side starts with a king, queen, two rooks, two bishops, two knights and eight pawns. On this board, White starts at the bottom.'],
     rules:['Keep a light square at your near-right corner','The queens start on d1 and d8, on their own color','Select a piece, then select a highlighted destination'],

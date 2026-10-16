@@ -15,6 +15,7 @@ import { coursePractice } from './course-practice.js';
 import { renderAttackingCatalog } from './attacking-catalog.js';
 import { lessonCheckmate,exploreBeforeCheckmate,createLessonCheckmateDialog } from './lesson-checkmate.js';
 import { lessonEntry,lessonGuidance } from './lesson-guidance.js';
+import { createSquarePracticeUI } from './square-practice.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -23,6 +24,7 @@ const names={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'},stageNa
 export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePractice}){
   renderAttackingCatalog(COURSES);
   const memoryFor=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key),players=new Map(),memory=createLearningMemory(storage,COURSES);
+  const squarePractice=createSquarePracticeUI({storage});
   let course=COURSES.french,lessons=course.lessons,progress=memoryFor(course),player;
   let selected=null,hint=null,message='',promotion=null;
   let focus=false,painted=null;
@@ -90,6 +92,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-stages').innerHTML=player.plan.stages.map((value,i)=>`<button type="button" data-lesson-stage="${value}" aria-pressed="${value===stage}" aria-controls="lesson-stage-panel" ${value==='check'&&!player.checkUnlocked?'disabled':''}><span aria-hidden="true">${player.stageComplete(value)?'✓':i+1}</span> ${stageNames[value]}</button>`).join('');
     if(activeStage)$('lesson-stages').querySelector(`[data-lesson-stage="${activeStage}"]`)?.focus({preventScroll:true});
     for(const value of ['learn','try','check'])$('lesson-'+value).hidden=value!==stage;
+    squarePractice.update({lesson,progressKey:course.key,stage,conceptIndex:player.conceptIndex});
     $('lesson-instruction').hidden=stage!=='try';
     $('lesson-mode-status').hidden=stage!=='try';
     if(activity){
@@ -132,6 +135,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       if(stage==='try')renderBoard();
     }
     const currentConcept=player.plan.concepts[player.conceptIndex];
+    const squareWarmup=Boolean(lesson.squarePractice&&stage==='learn'&&player.conceptIndex===0);
+    for(const id of ['lesson-concept-position','lesson-concept-title','lesson-concept-text'])$(id).hidden=squareWarmup;
     if(currentConcept){
       $('lesson-concept-position').textContent=`Idea ${player.conceptIndex+1} of ${player.plan.concepts.length}`;
       $('lesson-concept-title').textContent=currentConcept.title||study.coach||'Learn the idea';$('lesson-concept-text').textContent=currentConcept.text||'';
@@ -150,7 +155,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       else if(focusedAnswer&&passed)$('lesson-question').focus({preventScroll:true});
       $('lesson-question-previous').hidden=player.questionIndex===0;$('lesson-question-next').hidden=player.questionIndex===player.plan.questions.length-1;$('lesson-question-next').disabled=q.required&&!passed;
     }
-    const detailConcepts=player.plan.concepts.filter((_,i)=>stage!=='learn'||i!==player.conceptIndex),rules=lesson.guide?.rules||[];
+    const detailConcepts=player.plan.concepts.filter((_,i)=>squareWarmup||stage!=='learn'||i!==player.conceptIndex),rules=lesson.guide?.rules||[];
     const present=new Set([...player.plan.concepts.map(item=>item.text),...rules]);
     const goals=(study.goals||[]).filter(goal=>{if(present.has(goal))return false;present.add(goal);return true;});
     $('lesson-more-content').innerHTML=detailConcepts.map(item=>`<p>${escape(item.text)}</p>`).join('')+
@@ -197,6 +202,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     if(focusedPly)$('lesson-moves').querySelector(`[data-lesson-ply="${focusedPly}"]`)?.focus({preventScroll:true});
   }
   $('lesson-stages').onclick=event=>{const stage=event.target.closest('[data-lesson-stage]')?.dataset.lessonStage;if(stage)changeStage(stage);};
+  $('lesson-squares-open').onclick=()=>{player.conceptIndex=0;if(player.setStage('learn')){clearTurn();render();$('lesson-square-prompt').tabIndex=-1;$('lesson-square-prompt').focus({preventScroll:true});$('lesson-square-practice').scrollIntoView({block:'nearest'});}};
   $('lesson-learn-next').onclick=()=>{player.learnNext();clearTurn();render();focusStage();};
   $('lesson-concept-previous').onclick=()=>{player.conceptIndex=Math.max(0,player.conceptIndex-1);player.save();render();focusStage();};
   $('lesson-activities').onclick=event=>{const item=event.target.closest('[data-lesson-activity]');if(item){player.selectActivity(Number(item.dataset.lessonActivity));clearTurn();render();focusStage();}};

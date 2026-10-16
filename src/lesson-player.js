@@ -12,7 +12,9 @@ const fingerprint=value=>{let hash=2166136261;for(const char of JSON.stringify(v
 export function lessonPlan(lesson,study={}){
   const concepts=(lesson.concepts!==undefined?list(lesson.concepts):lesson.guide?.intro?.length?lesson.guide.intro:[lesson.subtitle].filter(Boolean)).map(concept);
   const raw=lesson.activities??lesson.exercises??(lesson.moves?.length?[{...lesson,kind:lesson.kind||'practice',startPly:study.start}]:[]);
-  const activities=list(raw).map((activity,index)=>{
+  const activities=list(raw).map(({squarePractice,...activity},index)=>{
+    // Supplementary square training has its own save; adding it must not
+    // invalidate an existing move exercise's draft or completion signature.
     const moves=activity.moves||[],kind=activity.kind||'practice';
     if(!['practice','demonstration'].includes(kind))throw new Error(`Unknown lesson activity: ${kind}`);
     if(kind==='practice'&&!moves.length)throw new Error(`Practice needs a selected legal continuation: ${lesson.id}`);
