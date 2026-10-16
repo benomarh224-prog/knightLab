@@ -1,0 +1,355 @@
+[
+  {
+    "id": "draw-the-king-out",
+    "course": "talcenter",
+    "game": "Nezhmetdinov–Kamyshov, Yaroslavl 1951",
+    "pages": [
+      7
+    ],
+    "printed": "2",
+    "fen": "r3kb1r/pp3p1p/4pp2/q2pN3/2P5/8/PP3PPP/R2QR1K1 w - - 0 17",
+    "moves": [
+      "Nxf7",
+      "Kxf7",
+      "Qh5+",
+      "Ke7"
+    ],
+    "diagramFen": "r3kb1r/pp3p1p/4pp2/q2pN3/2P5/8/PP3PPP/R2QR1K1 w - - 0 17",
+    "practiceColor": "w",
+    "canonical": [
+      "Nxf7",
+      "Kxf7",
+      "Qh5+",
+      "Ke7"
+    ]
+  },
+  {
+    "id": "remove-the-f7-shield",
+    "course": "talcenter",
+    "game": "Kupreichik–Grigorian, Leningrad 1974",
+    "pages": [
+      8
+    ],
+    "printed": "3",
+    "fen": "r1b1k1r1/1p2bp2/p2ppnn1/q5N1/4P2B/2N3Q1/PPP1B1PP/2KR1R2 w - - 0 17",
+    "moves": [
+      "Nxf7",
+      "Kxf7",
+      "Bxf6",
+      "Bxf6",
+      "Rd5"
+    ],
+    "diagramFen": "r1b1k1r1/1p2bp2/p2ppnn1/q5N1/4P2B/2N3Q1/PPP1B1PP/2KR1R2 w - - 0 17",
+    "practiceColor": "w",
+    "canonical": [
+      "Nxf7",
+      "Kxf7",
+      "Bxf6",
+      "Bxf6",
+      "Rd5"
+    ]
+  },
+  {
+    "id": "strike-at-e6",
+    "course": "talcenter",
+    "game": "Geller–Panno, Gothenburg 1955; chapter analysis",
+    "pages": [
+      9
+    ],
+    "printed": "4",
+    "fen": "rnbqk2r/1p1nbp2/p2pp2p/6P1/3NP2B/2N2Q2/PPP3PP/R3KB1R w KQ - 1 11",
+    "setup": [
+      "g5",
+      "fxg5",
+      "Nfd7"
+    ],
+    "moves": [
+      "Nxe6",
+      "fxe6",
+      "Qh5+",
+      "Kf8",
+      "Bb5"
+    ],
+    "diagramFen": "rnbqk2r/1p2bpp1/p2ppn1p/8/3NPP1B/2N2Q2/PPP3PP/R3KB1R b KQ - 0 9",
+    "practiceColor": "w",
+    "canonical": [
+      "Nxe6",
+      "fxe6",
+      "Qh5+",
+      "Kf8",
+      "Bb5"
+    ]
+  },
+  {
+    "id": "bring-the-rook-with-tempo",
+    "course": "talcenter",
+    "game": "Tal–Sveshnikov, Moscow 1973",
+    "pages": [
+      8,
+      9
+    ],
+    "printed": "3–4",
+    "fen": "r2qk2r/1b1nbpp1/pp2pn1p/4N2P/4PB2/2N3QB/PPP2PP1/3RK2R w K - 0 12",
+    "moves": [
+      "Nxf7",
+      "Kxf7",
+      "Bxe6+",
+      "Kf8",
+      "O-O",
+      "Qc8",
+      "Rxd7",
+      "Nxd7",
+      "Rd1"
+    ],
+    "diagramFen": "r2qk2r/1b1nbpp1/pp2pn1p/4N2P/4PB2/2N3QB/PPP2PP1/3RK2R w K - 0 12",
+    "practiceColor": "w",
+    "canonical": [
+      "Nxf7",
+      "Kxf7",
+      "Bxe6+",
+      "Kf8",
+      "O-O",
+      "Qc8",
+      "Rxd7",
+      "Nxd7",
+      "Rd1"
+    ]
+  },
+  {
+    "id": "break-through-the-center",
+    "course": "talinitiative",
+    "game": "Polugaevsky–C. Hansen, Plovdiv 1983",
+    "pages": [
+      37,
+      38
+    ],
+    "printed": "32–33",
+    "fen": "r1bq1r2/p2nbpk1/1p2p1pp/8/3Pp1PP/2NB1N2/PP1Q1P2/1K1R3R w - - 0 16",
+    "setup": [
+      "dxe4"
+    ],
+    "moves": [
+      "Bxe4",
+      "Rb8",
+      "g5",
+      "h5",
+      "d5",
+      "exd5",
+      "Nxd5",
+      "Nc5",
+      "Qc3+",
+      "Kh7"
+    ],
+    "diagramFen": "r1bq1r2/p2nbpk1/1p2p1pp/3p4/3PP1PP/2NB1N2/PP1Q1P2/1K1R3R b - - 0 15",
+    "practiceColor": "w",
+    "canonical": [
+      "Bxe4",
+      "Rb8",
+      "g5",
+      "h5",
+      "d5",
+      "exd5",
+      "Nxd5",
+      "Nc5",
+      "Qc3+",
+      "Kh7"
+    ]
+  },
+  {
+    "id": "cut-off-the-defenders",
+    "course": "talinitiative",
+    "game": "Tal–Larsen, Bled 1965",
+    "pages": [
+      79
+    ],
+    "printed": "74",
+    "fen": "rqb2rk1/3nbppp/p2pp3/6P1/1p1BPP2/2NB1Q2/PPP4P/2KR3R w - - 0 16",
+    "moves": [
+      "Nd5",
+      "exd5",
+      "exd5"
+    ],
+    "diagramFen": "rqb2rk1/3nbppp/p2pp3/6P1/1p1BPP2/2NB1Q2/PPP4P/2KR3R w - - 0 16",
+    "practiceColor": "w",
+    "canonical": [
+      "Nd5",
+      "exd5",
+      "exd5"
+    ]
+  },
+  {
+    "id": "use-the-long-diagonal",
+    "course": "talinitiative",
+    "game": "Archakova–Andreyeva, Kaliningrad 1970",
+    "pages": [
+      56
+    ],
+    "printed": "51",
+    "fen": "r1b2r2/1q3p1k/2p1p1pp/p1b1B3/P4Q2/8/1PB2PPP/R2R2K1 w - - 0 29",
+    "setup": [
+      "Bxc5"
+    ],
+    "moves": [
+      "Qf6",
+      "Rg8",
+      "Rd8",
+      "Qe7",
+      "Qh8+"
+    ],
+    "diagramFen": "r1b2r2/1q2bp1k/2p1p1pp/p1P1B3/P4Q2/8/1PB2PPP/R2R2K1 b - - 0 28",
+    "practiceColor": "w",
+    "canonical": [
+      "Qf6",
+      "Rg8",
+      "Rd8",
+      "Qe7",
+      "Qh8+"
+    ]
+  },
+  {
+    "id": "build-an-attacking-outpost",
+    "course": "talinitiative",
+    "game": "Makarychev–Kholmov, Frunze 1989",
+    "pages": [
+      94
+    ],
+    "printed": "89",
+    "fen": "8/2pq2bk/2Nn2p1/1p1Pp1Bp/r1b1P2P/R5P1/1Q4BK/8 w - - 0 41",
+    "moves": [
+      "Nd8",
+      "b4",
+      "Rxa4",
+      "Qxa4",
+      "Ne6",
+      "Qa3",
+      "Qf2"
+    ],
+    "diagramFen": "8/2pq2bk/2Nn2p1/1p1Pp1Bp/r1b1P2P/R5P1/1Q4BK/8 w - - 0 41",
+    "practiceColor": "w",
+    "canonical": [
+      "Nd8",
+      "b4",
+      "Rxa4",
+      "Qxa4",
+      "Ne6",
+      "Qa3",
+      "Qf2"
+    ]
+  },
+  {
+    "id": "remove-the-dark-square-bishop",
+    "course": "taldefense",
+    "game": "Ubilava–Timoshchenko, Chelyabinsk 1974",
+    "pages": [
+      111
+    ],
+    "printed": "106",
+    "fen": "1rbqk2r/5p1p/p1ppp1p1/4b3/4P3/2N3Q1/PPP2PPP/R1BR2K1 w - - 0 14",
+    "moves": [
+      "Qxe5",
+      "dxe5",
+      "Rxd8+",
+      "Kxd8",
+      "Bg5+",
+      "Ke8",
+      "Bf6"
+    ],
+    "diagramFen": "1rbqk2r/5p1p/p1ppp1p1/4b3/4P3/2N3Q1/PPP2PPP/R1BR2K1 w - - 0 14",
+    "practiceColor": "w",
+    "canonical": [
+      "Qxe5",
+      "dxe5",
+      "Rxd8+",
+      "Kxd8",
+      "Bg5+",
+      "Ke8",
+      "Bf6"
+    ]
+  },
+  {
+    "id": "open-the-g-file",
+    "course": "taldefense",
+    "game": "Gilfer–Böök, Stockholm 1937",
+    "pages": [
+      133
+    ],
+    "printed": "128",
+    "fen": "1r1q2k1/1pp2ppp/p2b1n2/4r3/P5b1/1QN1P2P/1P1BBPP1/R2R2K1 b - - 0 15",
+    "setup": [
+      "h3"
+    ],
+    "moves": [
+      "Bxh3",
+      "gxh3",
+      "Qd7",
+      "Bf1",
+      "Rg5+",
+      "Kh1",
+      "Qc6+"
+    ],
+    "diagramFen": "1r1q2k1/1pp2ppp/p2b1n2/4r3/P5b1/1QN1P3/1P1BBPPP/R2R2K1 w - - 0 15",
+    "practiceColor": "b",
+    "canonical": [
+      "Bxh3",
+      "gxh3",
+      "Qd7",
+      "Bf1",
+      "Rg5+",
+      "Kh1",
+      "Qc6+"
+    ]
+  },
+  {
+    "id": "distract-the-queen",
+    "course": "taldefense",
+    "game": "Kasparov–Ribli, Skellefteå 1989; chapter analysis",
+    "pages": [
+      121
+    ],
+    "printed": "116",
+    "fen": "5rk1/5ppp/p1Q1p3/1r6/q2b4/4B1P1/P2RPP1P/1R4K1 w - - 0 26",
+    "moves": [
+      "Rxb5",
+      "Bxe3",
+      "Rd8",
+      "Qxb5",
+      "Qd6"
+    ],
+    "practiceColor": "w"
+  },
+  {
+    "id": "deflect-the-f7-defender",
+    "course": "taldefense",
+    "game": "Salov–Sax, Skellefteå 1989",
+    "pages": [
+      134,
+      135
+    ],
+    "printed": "129–130",
+    "fen": "r4rk1/pq1pbppp/1pn5/3N1Q2/2PN4/6P1/PP2P1KP/1R1R4 w - - 0 21",
+    "moves": [
+      "Qf3",
+      "Rfe8",
+      "Nf5",
+      "Bf8",
+      "Nh6+",
+      "gxh6",
+      "Nf6+",
+      "Kh8",
+      "Rxd7"
+    ],
+    "diagramFen": "r4rk1/pq1pbppp/1pn5/3N1Q2/2PN4/6P1/PP2P1KP/1R1R4 w - - 0 21",
+    "practiceColor": "w",
+    "canonical": [
+      "Qf3",
+      "Rfe8",
+      "Nf5",
+      "Bf8",
+      "Nh6+",
+      "gxh6",
+      "Nf6+",
+      "Kh8",
+      "Rxd7"
+    ]
+  }
+]

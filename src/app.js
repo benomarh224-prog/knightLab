@@ -20,6 +20,7 @@ import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceM
 import { createPageRouter } from './routes.js';
 import { createLearningUI } from './learning-ui.js';
 import { createNavigation } from './navigation.js';
+import { COURSES } from './courses.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -798,7 +799,7 @@ try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
   else setGame({pgn:DEMO_PGN},{demo:true,analyze:false});
 } catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false});}
-const learning=createLearningUI({storage:reviewStorage,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(course==='beginners'?'beginners':course==='tactics'?'tactics':'openings');router.go('learn');},onAnalyze:pgn=>{
+const learning=createLearningUI({storage:reviewStorage,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
 const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);
@@ -823,6 +824,10 @@ router=createPageRouter(page=>{
   else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
   if(page==='learn'||page==='home')learning.refresh();
-  if(['french','tactics','opengames','beginners'].includes(page))learning.open(page);
+  if(page==='learn'){
+    const category=new URLSearchParams(location.search).get('category');
+    if(category&&Object.values(COURSES).some(course=>course.category===category))selectLearningCategory(category);
+  }
+  if(Object.hasOwn(COURSES,page))learning.open(page);
 });
 router.start();

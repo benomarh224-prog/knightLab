@@ -22,7 +22,7 @@ test('every current lesson allows legal free play after solving without changing
     const restored=create(course,lesson,storage);assert.equal(restored.exploring,true);assert.equal(restored.exploration.fen,player.exploration.fen);assert.equal(restored.session.fen,fen);
     player.stopExploring();assert.equal(player.session.fen,fen);assert.equal(player.complete,complete);count++;
   }
-  assert.equal(count,190);
+  assert.ok(count>=190);
 });
 test('exploration before solving cannot earn completion, change hint/retry counts or advance a study move',()=>{
   const course=COURSES.opengames,player=create(course,course.lessons[0]);

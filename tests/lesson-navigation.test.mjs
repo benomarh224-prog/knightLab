@@ -7,7 +7,7 @@ const memory=()=>{const data=new Map();return {getItem:key=>data.get(key)||null,
 function make(lesson,course){return new LessonPlayer({lesson,study:course?.study(lesson.id),storage:memory(),progressKey:course?.key||'fixture'});}
 function solve(p){while(p.session.expected){const m=p.session.expected;p.attempt(m.from,m.to,m.promotion);}}
 
-test('all 190 lessons expose the correct nearby continuation without bypassing their completion requirements',()=>{
+test('all current lessons expose the correct nearby continuation without bypassing their completion requirements',()=>{
   let count=0;
   for(const course of Object.values(COURSES))for(const lesson of course.lessons){
     const p=make(lesson,course);p.setStage('try');
@@ -21,7 +21,7 @@ test('all 190 lessons expose the correct nearby continuation without bypassing t
     }
     assert.equal(lessonContinuation(p).action,'next-lesson',lesson.id);assert.equal(p.complete,true);count++;
   }
-  assert.equal(count,190);
+  assert.ok(count>=190);
 });
 
 test('reading progresses one idea at a time, skips absent stages and never invents a board or quiz',()=>{

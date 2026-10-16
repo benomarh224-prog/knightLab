@@ -7,6 +7,9 @@ export function renderLearningProgress({progress,activeLessons,course,player,mem
     const focusedLesson=document.activeElement?.closest('#course-lessons [data-lesson]')?.dataset.lesson;
     $('course-progress-label').textContent=`${inLevel} of ${visible.length} ${course.id==='tactics'?'exercises':'lessons'} practiced`;
     $('course-progress-fill').style.width=`${inLevel/visible.length*100}%`;
+    for(const element of document.querySelectorAll('[data-course-progress]')){
+      const target=COURSES[element.dataset.courseProgress];if(target)element.textContent=`${memoryFor(target).read().length} of ${target.lessons.length} lessons completed`;
+    }
     const frenchDone=memoryFor(COURSES.french).read(),tacticsDone=memoryFor(COURSES.tactics).read();
     $('learn-progress-label').textContent=frenchDone.length?`${frenchDone.length} of ${COURSES.french.lessons.length} lessons practiced`:`${COURSES.french.lessons.length} focused lessons · Interactive practice`;
     $('tactics-progress-label').textContent=`${tacticsDone.length} of ${COURSES.tactics.lessons.length} exercises practiced`;

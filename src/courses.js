@@ -3,12 +3,21 @@ import {lessonStudy,studyIdea} from './lesson-presentation.js';
 import {TACTICAL_LESSONS,TACTICAL_REFERENCE} from './tactical-lessons.js';
 import {OPEN_GAMES_LESSONS,OPEN_GAMES_REFERENCE} from './open-games-lessons.js';
 import {BEGINNER_LESSONS,BEGINNER_REFERENCE} from './beginner-lessons.js';
+import {TAL_LESSONS,TAL_REFERENCE,TAL_COURSE_INFO} from './tal-lessons.js';
 export const COURSES={
   beginners:{id:'beginners',title:'Chess for Beginners',path:'/learn/chess-for-beginners/',lessons:BEGINNER_LESSONS,reference:BEGINNER_REFERENCE,key:'knightlab-beginner-course-v1',study:id=>BEGINNER_LESSONS.find(lesson=>lesson.id===id).study,idea:move=>move&&/[+#]/.test(move.san)?'check':studyIdea(move),label:'Lesson',orientToSolver:false},
   french:{id:'french',title:'French Defense',path:'/learn/french-defense/',lessons:FRENCH_LESSONS,reference:FRENCH_REFERENCE,key:'knightlab-french-course-v1',study:lessonStudy,idea:studyIdea,label:'Lesson',orientToSolver:true,orientationRevision:1},
   tactics:{id:'tactics',title:'Tactical Vision',path:'/learn/tactical-vision/',lessons:TACTICAL_LESSONS,reference:TACTICAL_REFERENCE,key:'knightlab-tactical-course-v1',study:id=>TACTICAL_LESSONS.find(lesson=>lesson.id===id).study,idea:move=>move&&/[+#]/.test(move.san)?'check':studyIdea(move),label:'Exercise',orientToSolver:true},
   opengames:{id:'opengames',title:'Italian Game',path:'/learn/open-games/',lessons:OPEN_GAMES_LESSONS,reference:OPEN_GAMES_REFERENCE,key:'knightlab-open-games-course-v1',study:id=>OPEN_GAMES_LESSONS.find(lesson=>lesson.id===id).study,idea:move=>move&&/[+#]/.test(move.san)?'check':studyIdea(move),label:'Lesson',orientToSolver:true},
 };
+for(const info of TAL_COURSE_INFO){
+  const lessons=TAL_LESSONS.filter(lesson=>lesson.courseId===info.id).sort((a,b)=>a.unit.localeCompare(b.unit));
+  COURSES[info.id]={...info,lessons,reference:TAL_REFERENCE,key:`knightlab-${info.id}-course-v1`,
+    category:'attacking',label:'Lesson',orientToSolver:true,
+    study:id=>lessons.find(lesson=>lesson.id===id)?.study||{},idea:studyIdea,
+    method:['Identify the king’s weak squares and the pieces that defend them.','List forcing checks, captures and direct threats.','Visualize the opponent’s reply before choosing your next move.','Count the full exchange and check your own king’s safety.'],
+  };
+}
 COURSES.beginners.category='beginners';
 COURSES.french.category=COURSES.opengames.category='openings';
 COURSES.tactics.category='tactics';

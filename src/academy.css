@@ -269,3 +269,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   .learning-disclosure { padding:0 16px; }
   #learn-course-map { grid-template-columns:minmax(0,1fr); gap:8px; }
 }
+
+/* Attacking courses reuse the existing course cards and shared LessonPlayer. */
+.learn-page .tal-course-art { position:relative; min-height:320px; padding:28px; overflow:hidden; background:radial-gradient(ellipse at 72% 40%,#52774b88,transparent 65%),repeating-linear-gradient(135deg,transparent 0 55px,#d5edb509 56px 57px),#123b2c; }
+.tal-art-edition { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; color:#e3efd8; font-size:12px; letter-spacing:2.2px; }
+.tal-art-edition b { display:grid; place-items:center; width:40px; height:40px; border:1px solid #d3f36a88; border-radius:50%; color:#dcf783; font-size:16px; letter-spacing:0; }
+.tal-art-piece { position:absolute; width:52%; height:74%; bottom:30px; }
+.tal-art-piece .piece { display:block; width:100%; height:100%; object-fit:contain; }
+.tal-art-black { right:1%; opacity:.68; transform:translateY(-15px); }
+.tal-art-white { left:6%; filter:drop-shadow(0 14px 12px #001b1466); }
+.tal-art-caption { position:absolute; left:28px; right:28px; bottom:20px; padding-top:12px; border-top:1px solid #d8e9c43b; color:#e8f1de; font-size:16px; }
+.tal-course-cover:focus-visible { outline:3px solid #6f912c; outline-offset:4px; }
+@media(max-width:680px){
+ .learn-page .tal-course-art { min-height:250px; }
+ .tal-art-piece { height:78%; bottom:22px; }
+}

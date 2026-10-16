@@ -25,7 +25,7 @@ test('hint ladder reveals the idea, origin piece, then SAN/destination and promo
   assert.ok(progressiveHint(promotion,3).text.includes('queen'));assert.equal(progressiveHint(null,1),null);
 });
 
-test('all 190 lessons can produce graduated hints without modifying legal moves or completion requirements',()=>{
+test('all current lessons can produce graduated hints without modifying legal moves or completion requirements',()=>{
   let count=0;
   for(const [courseId,course] of Object.entries(COURSES))for(const lesson of course.lessons){
     const f=fixture(courseId,lesson.id),fen=f.player.session.fen;
@@ -33,7 +33,7 @@ test('all 190 lessons can produce graduated hints without modifying legal moves 
     assert.equal(f.player.session.fen,fen);assert.equal(f.player.complete,false);solve(f.player);
     assert.equal(f.player.complete,!lesson.quiz);count++;
   }
-  assert.equal(count,190);
+  assert.ok(count>=190);
 });
 
 test('review memory deduplicates exact exercises, keeps courses/questions independent and restores after reload',()=>{

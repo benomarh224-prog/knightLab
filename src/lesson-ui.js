@@ -12,12 +12,14 @@ import { moveTransitions,animatePieces } from './piece-motion.js';
 import { createLessonMotion,lessonFrames } from './lesson-motion.js';
 import { illegalMoveReason } from './lesson-move-help.js';
 import { coursePractice } from './course-practice.js';
+import { renderAttackingCatalog } from './attacking-catalog.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'},stageNames={learn:'Learn',try:'Try',check:'Check'};
 
 export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePractice}){
+  renderAttackingCatalog(COURSES);
   const memoryFor=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key),players=new Map(),memory=createLearningMemory(storage,COURSES);
   let course=COURSES.french,lessons=course.lessons,progress=memoryFor(course),player;
   let selected=null,hint=null,message='',promotion=null;
