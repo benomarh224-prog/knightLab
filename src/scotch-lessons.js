@@ -1,7 +1,7 @@
 // Selected continuations from the user-supplied public-domain booklet.
-// Teaching text and questions are original Knightlab adaptations. Sample replies
+// Teaching text and questions are original ROQVYN adaptations. Sample replies
 // illustrate plans; they are neither forced nor claims of engine-best play.
-export const SCOTCH_REFERENCE='Based on Dr. David Regis, Four opening systems to start with, Exeter Chess Club, summary edition, printed pp. 6–9 and 43, supplied as Scotch Gambit Opening Repertoire. The booklet identifies itself as public domain. Knightlab explanations and questions are original adaptations. Historical examples illustrate ideas and may include inaccurate replies; other legal moves can also be good.';
+export const SCOTCH_REFERENCE='Based on Dr. David Regis, Four opening systems to start with, Exeter Chess Club, summary edition, printed pp. 6–9 and 43, supplied as Scotch Gambit Opening Repertoire. The booklet identifies itself as public domain. ROQVYN explanations and questions are original adaptations. Historical examples illustrate ideas and may include inaccurate replies; other legal moves can also be good.';
 const base=['e4','e5','Nf3','Nc6','d4','exd4','Bc4'];
 const accepted=[...base,'Bc5','c3','dxc3'];
 const forcing=[...accepted,'Bxf7+','Kxf7','Qd5+','Kf8','Qxc5+','Qe7','Qxc3','Qxe4+','Be3','d6','O-O'];

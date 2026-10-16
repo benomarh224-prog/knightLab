@@ -1,6 +1,6 @@
 import positions from './tal-positions.json' with {type:'json'};
 
-export const TAL_REFERENCE='Study positions from the supplied Attack with Mikhail Tal by Mikhail Tal and Iakov Damsky. Knightlab explanations and questions are original. Each exercise follows a selected game or analysis line, not a claim that all replies are forced or that every alternative is wrong. PDF page numbers refer to the supplied scan.';
+export const TAL_REFERENCE='Study positions from the supplied Attack with Mikhail Tal by Mikhail Tal and Iakov Damsky. ROQVYN explanations and questions are original. Each exercise follows a selected game or analysis line, not a claim that all replies are forced or that every alternative is wrong. PDF page numbers refer to the supplied scan.';
 const teaching={
  'draw-the-king-out':{
   title:'Invite the king into the open.',tag:'King safety',unit:'1 · Expose the king',coach:'Look beyond the captured knight.',

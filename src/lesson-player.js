@@ -7,7 +7,8 @@ import { Chess } from 'chess.js';
 const bounded=(value,max)=>Number.isInteger(value)?Math.max(0,Math.min(max,value)):0;
 const list=value=>Array.isArray(value)?value:[];
 const concept=value=>typeof value==='string'?{title:'Learn the idea',text:value}:value;
-const fingerprint=value=>{let hash=2166136261;for(const char of JSON.stringify(value)){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619);}return (hash>>>0).toString(36);};
+// Brand-only wording changes must not invalidate existing lesson drafts.
+const fingerprint=value=>{let hash=2166136261;for(const char of JSON.stringify(value).replaceAll('ROQVYN','Knightlab')){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619);}return (hash>>>0).toString(36);};
 
 // The adapter accepts existing course records and future, explicitly structured lessons.
 // No course name determines stages, board behaviour, or completion requirements.

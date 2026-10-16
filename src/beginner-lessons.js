@@ -1,6 +1,6 @@
 // Original beginner teaching and practice, informed by the supplied book.
 // Only the two specifically credited Capablanca examples reuse published lines.
-export const BEGINNER_REFERENCE='Inspired by the supplied Chess Fundamentals by José Raúl Capablanca, especially the introduction to pieces, simple mates, pawn endings and opening principles. Knightlab explanations, questions and most exercises are original adaptations. The rook demonstration and pawn breakthrough credit their book examples separately. Study replies illustrate the lesson; other legal moves can also be good.';
+export const BEGINNER_REFERENCE='Inspired by the supplied Chess Fundamentals by José Raúl Capablanca, especially the introduction to pieces, simple mates, pawn endings and opening principles. ROQVYN explanations, questions and most exercises are original adaptations. The rook demonstration and pawn breakthrough credit their book examples separately. Study replies illustrate the lesson; other legal moves can also be good.';
 const names={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'};
 function explain(move){
   if(move.isKingsideCastle())return 'The king goes to g1 and the rook to f1. Both moves are part of one kingside castling turn.';
@@ -11,7 +11,7 @@ function explain(move){
 }
 function lesson({id,title,unit,fen,moves,coach,prompt,intro,rules,question,options,answer,reason,takeaway,pages,notes={},start=0,squarePractice,demonstration,objective,hints,migration}){
   return {id,title,unit,tag:unit,fen,moves,practiceColor:'w',course:'Chess for Beginners',subtitle:prompt,takeaway,...(squarePractice?{squarePractice}:{}),
-    source:`Knightlab practice inspired by the supplied book, ${pages}`,
+    source:`ROQVYN practice inspired by the supplied book, ${pages}`,
     notes:verbose=>verbose.map((move,index)=>notes[index+1]||explain(move)),
     ...(demonstration?{demonstration,objective,hints,migration}:{}),guide:{intro,rules},quiz:{question,options,answer,explanation:reason},
     study:{title,start,coach,prompt,goals:[rules[0],takeaway]}};

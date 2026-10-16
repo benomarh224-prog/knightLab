@@ -812,7 +812,7 @@ $('next-mistake').onclick = () => {
 };
 $('download-pgn').onclick = () => {
   const url = URL.createObjectURL(new Blob([state.selected.pgn], {type:'application/x-chess-pgn'}));
-  const link = document.createElement('a'); link.href = url; link.download = 'knightlab-game.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000); toast('PGN downloaded.');
+  const link = document.createElement('a'); link.href = url; link.download = 'roqvyn-game.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000); toast('PGN downloaded.');
 };
 document.addEventListener('keydown', event => {
   if(router?.page!=='analysis')return;

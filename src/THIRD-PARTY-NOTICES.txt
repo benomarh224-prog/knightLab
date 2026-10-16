@@ -1,4 +1,4 @@
-Knightlab uses chess.js (BSD-2-Clause) and Stockfish.js / Stockfish (GPL-3.0).
+ROQVYN uses chess.js (BSD-2-Clause) and Stockfish.js / Stockfish (GPL-3.0).
 Stockfish engine version: 19.0.1 npm package, lite single-threaded build.
 Corresponding source and compilation instructions: https://github.com/nmrugg/stockfish.js/tree/v19.0.1
 Stockfish upstream: https://github.com/official-stockfish/Stockfish
@@ -6,7 +6,7 @@ The engine is distributed as an unmodified, separate worker and WebAssembly modu
 License: https://www.gnu.org/licenses/gpl-3.0.txt
 Chess.js source: https://github.com/jhlywa/chess.js/tree/v1.4.0
 Public player and game data is provided by the Chess.com Published-Data API.
-Knightlab is independent of and not affiliated with Chess.com.
+ROQVYN is independent of and not affiliated with Chess.com.
 
 Opening names and reference positions: lichess-org/chess-openings (CC0-1.0).
 Source: https://github.com/lichess-org/chess-openings

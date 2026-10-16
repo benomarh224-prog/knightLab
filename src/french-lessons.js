@@ -1,5 +1,5 @@
 // Move examples informed by the user-provided First Steps: The French excerpt.
-// All teaching text below is original to Knightlab; every sequence is checked by chess.js.
+// All teaching text below is original to ROQVYN; every sequence is checked by chess.js.
 const base=['e4','e6','d4','d5'];
 const foundationNotes=[
   'White claims central space and opens lines for the queen and bishop.',
@@ -76,4 +76,4 @@ export const FRENCH_LESSONS=[
       'Challenge e5 directly. Before using this break in your games, check captures, king safety and the resulting e6-pawn.',
     ],'Central counterplay and development belong together. Do not open the position casually while your own pieces and king are unready.'),
 ];
-export const FRENCH_REFERENCE='Move examples informed by the provided excerpt of First Steps: The French by Cyrus Lakdawala (Everyman Chess). Teaching text and exercises written for Knightlab.';
+export const FRENCH_REFERENCE='Move examples informed by the provided excerpt of First Steps: The French by Cyrus Lakdawala (Everyman Chess). Teaching text and exercises written for ROQVYN.';

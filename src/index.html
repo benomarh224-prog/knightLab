@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="theme-color" content="#142e23"/>
   <meta name="description" content="Learn chess from your first moves, practice openings and tactics, and review your Chess.com games with Stockfish."/>
-  <title>Knightlab — Every game has a lesson.</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <title>ROQVYN — Every game has a lesson.</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=roqvyn"/>
   <link rel="stylesheet" href="/style.css"/>
   <link rel="stylesheet" href="/pages.css"/>
   <link rel="stylesheet" href="/home.css"/>
@@ -20,7 +20,7 @@
   <div class="app-shell">
     <div class="main-shell">
       <header class="topbar"><div class="navbar-inner">
-        <a class="brand" href="/" data-route="home" aria-label="Knightlab home"><svg class="academy-mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 49h31l-3-8H29c-2-9 13-11 10-23l-8-7-2 7-10 8 1 10 9-5c-7 6-10 10-12 18Z" fill="currentColor"/><circle cx="31" cy="23" r="2" fill="#173b29"/></svg><span class="brand-wordmark">knightlab<span class="brand-accent">.</span></span></a>
+        <a class="brand" href="/" data-route="home" aria-label="ROQVYN home"><img class="brand-logo" src="/assets/roqvyn-logo.svg" alt="ROQVYN" width="232" height="47" fetchpriority="high"/></a>
         <div id="desktop-navigation" class="desktop-navigation"><nav id="workspace-menu" class="main-nav" aria-label="Main navigation">
           <a class="nav-item" href="/" data-route="home"><span class="nav-symbol" data-icon="home"></span><span class="nav-copy"><strong>Home</strong><small>Your chess starting point</small></span><span class="nav-chevron" data-icon="right"></span></a>
           <a class="nav-item" href="/learn/" data-route="learn"><span class="nav-symbol" data-icon="learn"></span><span class="nav-copy"><strong>Learn</strong><small>Beginner lessons, openings &amp; tactics</small></span><span class="nav-chevron" data-icon="right"></span></a>
@@ -31,7 +31,7 @@
         </nav></div>
         <div class="topbar-actions"><button id="sidebar-import" class="quiet-button nav-tool" type="button" aria-label="Import PGN" title="Import PGN"><span data-icon="upload"></span></button><button id="how-it-works" class="quiet-button nav-tool" type="button" aria-label="Quick guide" title="Quick guide"><span data-icon="help"></span></button><button id="open-connect" class="primary-button" type="button"><span data-icon="search"></span><span>Find games</span></button><button id="workspace-menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-haspopup="dialog" aria-controls="navigation-dialog"><span class="menu-bars" aria-hidden="true"><i></i><i></i><i></i></span></button></div>
       </div></header>
-      <dialog id="navigation-dialog" class="navigation-dialog" aria-labelledby="navigation-title"><div class="navigation-dialog-header"><div><span class="navigation-eyebrow">YOUR NEXT MOVE</span><h2 id="navigation-title">Explore Knightlab</h2></div><button id="navigation-close" type="button" aria-label="Close navigation menu"><span data-icon="close"></span></button></div><div id="mobile-navigation"></div></dialog>
+      <dialog id="navigation-dialog" class="navigation-dialog" aria-labelledby="navigation-title"><div class="navigation-dialog-header"><div><span class="navigation-eyebrow">YOUR NEXT MOVE</span><h2 id="navigation-title">Explore ROQVYN</h2></div><button id="navigation-close" type="button" aria-label="Close navigation menu"><span data-icon="close"></span></button></div><div id="mobile-navigation"></div></dialog>
       <main>
         <section class="home-page academy-home" data-page-view="home" aria-labelledby="home-title">
           <div class="academy-hero">
@@ -118,7 +118,7 @@
           <p id="library-note" class="library-note" hidden>Sorted newest first. Recently played games may take time to appear in Chess.com’s public data.</p>
           </div>
         </section>
-        <footer class="footer"><span><span class="footer-brand">knightlab.</span> Your next move, better.</span><span>Powered by Stockfish <span class="footer-dot">·</span> <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noopener noreferrer">Chess.com public data</a></span></footer>
+        <footer class="footer"><span><span class="footer-brand"><img src="/assets/roqvyn-logo.svg" alt="ROQVYN" width="148" height="30" loading="lazy"/></span> Your next move, better.</span><span>Powered by Stockfish <span class="footer-dot">·</span> <a href="https://www.chess.com/news/view/published-data-api" target="_blank" rel="noopener noreferrer">Chess.com public data</a></span></footer>
       </main>
     </div>
   </div>
@@ -127,7 +127,7 @@
   <dialog id="info-dialog"><div class="dialog-header"><h2 id="info-title">How it works</h2><button class="icon-button close-dialog" aria-label="Close dialog">✕</button></div><div id="info-body"></div></dialog>
   <dialog id="practice-dialog" class="practice-dialog" aria-labelledby="practice-dialog-title"><div class="dialog-header"><div><span class="eyebrow">YOUR PERSONAL TRAINING ROOM</span><h2 id="practice-dialog-title">Find a better move</h2></div><button class="icon-button close-dialog" aria-label="Close practice">✕</button></div><div id="practice-play"><div class="practice-progress"><span id="practice-counter">Position 1</span><span id="practice-turn">White to move</span></div><p class="practice-instructions">Find Stockfish’s first choice. Tap a piece, then its destination.</p><div class="practice-board-frame"><div id="practice-board" class="chess-board practice-board" role="group" aria-label="Practice position"></div></div><div id="practice-promotion" class="practice-promotion" hidden><span>Promote to</span><button data-promotion="q">Queen</button><button data-promotion="r">Rook</button><button data-promotion="b">Bishop</button><button data-promotion="n">Knight</button></div><div id="practice-feedback" class="practice-feedback" role="status" aria-live="polite">Choose your move.</div><div id="practice-answer" class="practice-answer" hidden></div><div class="practice-actions"><button id="practice-hint" class="practice-secondary">Hint</button><button id="practice-reveal" class="practice-secondary">Show solution</button><button id="practice-next" class="primary-button" hidden>Next position <span data-icon="arrow"></span></button></div></div><div id="practice-complete" class="practice-complete" hidden><div class="practice-complete-icon" data-icon="spark"></div><h3>Practice complete</h3><p id="practice-complete-summary"></p><div class="practice-complete-actions"><button id="practice-again" class="primary-button">Practice again <span data-icon="arrow"></span></button><button id="practice-back" class="practice-secondary">Back to analysis</button></div></div></dialog>
   <dialog id="lesson-checkmate-dialog" class="lesson-result-dialog" aria-labelledby="lesson-checkmate-title" aria-describedby="lesson-checkmate-description"><button id="lesson-checkmate-close" class="lesson-result-close" aria-label="Close result and explore other moves">×</button><span class="lesson-result-mark" aria-hidden="true">♔</span><h2 id="lesson-checkmate-title">Checkmate!</h2><p id="lesson-checkmate-description"></p><div class="lesson-result-actions"><button id="lesson-checkmate-continue" class="primary-button">Continue lesson</button><button id="lesson-checkmate-explore">Done · Free play</button></div><small>Your earned lesson progress is saved.</small></dialog>
-  <dialog id="focus-dialog" class="focus-dialog" aria-labelledby="focus-title"><div class="focus-header"><div><span class="section-label">KNIGHTLAB</span><h2 id="focus-title">Focus mode</h2></div><button id="exit-focus" class="explore-launch" aria-label="Exit Focus Mode">✕ <span>Exit focus</span></button></div><div id="focus-body"></div></dialog>
+  <dialog id="focus-dialog" class="focus-dialog" aria-labelledby="focus-title"><div class="focus-header"><div><span class="section-label">ROQVYN</span><h2 id="focus-title">Focus mode</h2></div><button id="exit-focus" class="explore-launch" aria-label="Exit Focus Mode">✕ <span>Exit focus</span></button></div><div id="focus-body"></div></dialog>
   <dialog id="explore-dialog" class="practice-dialog explore-dialog play-dialog" aria-labelledby="explore-title">
     <div class="dialog-header"><div><span class="eyebrow">YOUR CHESS PLAYGROUND</span><h2 id="explore-title">Play &amp; Explore</h2></div><button class="icon-button close-dialog" aria-label="Close play board">✕</button></div>
     <p id="explore-origin" class="explore-origin"></p><section id="explore-course-practice" class="explore-course-practice" aria-label="Course practice" hidden><strong id="explore-course-goal"></strong><p id="explore-course-progress" role="status"></p><button id="explore-course-return">Back to lesson</button></section>

@@ -29,7 +29,7 @@ export class PlaySession extends Variation {
   }
   exportPgn() {
     const result = this.chess.isCheckmate() ? this.chess.turn() === 'w' ? '0-1' : '1-0' : this.ending ? '1/2-1/2' : '*';
-    this.chess.header('Event', 'Knightlab Play & Explore', 'White', this.mode === 'engine' && this.color === 'b' ? 'Stockfish' : 'White', 'Black', this.mode === 'engine' && this.color === 'w' ? 'Stockfish' : 'Black', 'Result', result);
+    this.chess.header('Event', 'ROQVYN Play & Explore', 'White', this.mode === 'engine' && this.color === 'b' ? 'Stockfish' : 'White', 'Black', this.mode === 'engine' && this.color === 'w' ? 'Stockfish' : 'Black', 'Result', result);
     return this.chess.pgn();
   }
 }

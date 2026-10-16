@@ -1,5 +1,5 @@
 import positions from './tactical-positions.json' with {type:'json'};
-export const TACTICAL_REFERENCE='Exercises adapted from the provided Improve Your Tactical Vision by Niclas Huschenbeth. Knightlab explanations are original. Lines follow selected published continuations; replies are study examples, not a claim that every response is forced or uniquely best.';
+export const TACTICAL_REFERENCE='Exercises adapted from the provided Improve Your Tactical Vision by Niclas Huschenbeth. ROQVYN explanations are original. Lines follow selected published continuations; replies are study examples, not a claim that every response is forced or uniquely best.';
 export const TACTICAL_LEVELS=['beginner','intermediate','advanced'];
 export const levelName=value=>value.charAt(0).toUpperCase()+value.slice(1);
 const pieceNames={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'};

@@ -20,7 +20,7 @@ export class LessonExploration extends Variation {
     for(const move of this.lesson.verboseMoves.slice(0,this.anchorCursor))super.play(move.from,move.to,move.promotion);
   }
   play(from,to,promotion){return this.ending?{status:'finished',ending:this.ending}:super.play(from,to,promotion);}
-  pgn(){this.chess.header('Event','Knightlab · Lesson exploration');return this.chess.pgn();}
+  pgn(){this.chess.header('Event','ROQVYN · Lesson exploration');return this.chess.pgn();}
   snapshotMoves(){return {anchorCursor:this.anchorCursor,moves:this.moves.map(move=>move.from+move.to+(move.promotion||''))};}
   static restore(session,saved){
     if(!saved||!Number.isInteger(saved.anchorCursor)||saved.anchorCursor<0||saved.anchorCursor>=session.lesson.positions.length||!Array.isArray(saved.moves)||saved.moves.length>1000)return null;

@@ -1,7 +1,7 @@
 // Selected lines from the supplied First Steps: 1 e4 e5 excerpt by John Emms.
-// Knightlab's prompts and explanations are original. These are study examples,
+// ROQVYN's prompts and explanations are original. These are study examples,
 // including deliberately weak replies, rather than a forced opening repertoire.
-export const OPEN_GAMES_REFERENCE='Based on the supplied First Steps: 1 e4 e5 excerpt by John Emms (Everyman Chess), printed pages 6–21. Knightlab teaching text is original. Selected examples include weaker replies to illustrate ideas; other legal moves may also be good. This course covers the supplied introduction and Italian Game extract, not the full book.';
+export const OPEN_GAMES_REFERENCE='Based on the supplied First Steps: 1 e4 e5 excerpt by John Emms (Everyman Chess), printed pages 6–21. ROQVYN teaching text is original. Selected examples include weaker replies to illustrate ideas; other legal moves may also be good. This course covers the supplied introduction and Italian Game extract, not the full book.';
 const italian=['e4','e5','Nf3','Nc6','Bc4','Bc5','d3','Nf6'];
 const queenAttack=['e4','e5','Qh5','Nc6','Bc4','g6','Qf3','Nf6','g4','Nd4','Qd1','d5','exd5','Bxg4','Ne2','Nf3+','Kf1','Bh3#'];
 const f7Exchange=[...italian,'Ng5','O-O','Nxf7','Rxf7','Bxf7+','Kxf7'];

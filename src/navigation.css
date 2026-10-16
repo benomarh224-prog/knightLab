@@ -6,7 +6,10 @@ body[data-page] .topbar {
   box-shadow:0 3px 18px #10291b0c; backdrop-filter:blur(14px);
 }
 .navbar-inner { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:22px; width:100%; max-width:1480px; height:100%; margin:auto; }
-body[data-page] .brand { display:inline-flex; align-items:center; gap:10px; width:fit-content; min-height:44px; color:#fafbef; font:750 22px/1 'Manrope',sans-serif; letter-spacing:-1px; text-transform:none; }
+body[data-page] .brand { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:184px; height:44px; min-height:44px; padding:5px 10px; border-radius:8px; background:#fff; color:#163d2b; }
+body[data-page] .brand>.brand-logo { display:block; width:100%; height:100%; object-fit:contain; filter:none; }
+.footer-brand { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; width:164px; padding:5px 8px; border-radius:6px; background:#fff; }
+.footer-brand img { display:block; width:100%; height:auto; }
 body[data-page] .brand .academy-mark { display:block; width:38px; height:38px; flex-shrink:0; padding:5px; border:1px solid #d9ed9b60; border-radius:11px; background:linear-gradient(140deg,#d8ef9e,#adc87f); color:#173b29; box-shadow:inset 0 1px #f4ffd08a; }
 .brand-accent { color:#d5f080; }
 .desktop-navigation { min-width:0; justify-self:center; }
@@ -56,7 +59,7 @@ body[data-page]:has(#navigation-dialog[open]) { overflow:hidden; }
 @media(max-width:1020px) {
   body[data-page] .topbar { height:64px; min-height:64px; padding:0 16px; backdrop-filter:none; background:#133526; }
   .navbar-inner { grid-template-columns:minmax(0,1fr) auto; gap:12px; }
-  body[data-page] .brand { gap:8px; font-size:21px; letter-spacing:-.8px; }
+  body[data-page] .brand { width:148px; padding:5px 8px; }
   body[data-page] .brand .academy-mark { width:34px; height:34px; padding:4px; border-radius:10px; }
   .desktop-navigation { display:none; }
   body[data-page] .topbar-actions { gap:8px; }
@@ -88,7 +91,7 @@ body[data-page]:has(#navigation-dialog[open]) { overflow:hidden; }
 @media(max-width:360px) {
   body[data-page] .topbar { padding:0 10px; }
   .navbar-inner { gap:6px; }
-  body[data-page] .brand { gap:6px; font-size:18px; }
+  body[data-page] .brand { width:132px; }
   body[data-page] .brand .academy-mark { width:31px; height:31px; }
   body[data-page] .topbar-actions { gap:6px; }
   body[data-page] #open-connect { padding:10px 8px; font-size:11px; }

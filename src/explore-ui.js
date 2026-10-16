@@ -162,7 +162,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   $('play-export').onclick = () => {
     if (!variation?.moves.length) return;
     const url = URL.createObjectURL(new Blob([variation.exportPgn()], {type:'application/x-chess-pgn'}));
-    const link = document.createElement('a'); link.href = url; link.download = 'knightlab-play.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
+    const link = document.createElement('a'); link.href = url; link.download = 'roqvyn-play.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
   };
   dialog.addEventListener('close', () => { cancel(); variation = null; if (resumeReview && savedGame === context().parsed) resume(); resumeReview = false; });
   return { reset, practice: value=>open(true,value.fen,value), tryMove: (fen, uci) => {

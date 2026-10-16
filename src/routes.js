@@ -14,7 +14,7 @@ export function createPageRouter(onChange){
     document.body.dataset.layout=isLesson(current)?'lesson':current;
     for(const page of document.querySelectorAll('[data-page-view]'))page.hidden=page.dataset.pageView!==(PAGE_VIEWS[current]||current);
     const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision',opengames:'Italian Game',beginners:'Chess for Beginners'};
-    document.title=`${COURSES[current]?.title||({analyze:'Analyze a game',train:'Train chess'})[current]||names[current]} · Knightlab`;
+    document.title=`${COURSES[current]?.title||({analyze:'Analyze a game',train:'Train chess'})[current]||names[current]} · ROQVYN`;
     for(const link of document.querySelectorAll('[data-route]')){
       const active=link.dataset.route===current||isLesson(current)&&link.dataset.route==='learn';
       link.classList.toggle('active',active);

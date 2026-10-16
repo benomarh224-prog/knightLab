@@ -34,7 +34,7 @@ export class OpeningLesson {
     this.cursor++;this.correct++;this.skipOpponent();
     return {status:'correct',move,completed:this.completed};
   }
-  pgn(){const chess=new Chess(this.lesson.fen);for(const san of this.lesson.moves.slice(0,this.cursor))chess.move(san);chess.header('Event',`Knightlab · ${this.lesson.course||'French Defense'} lesson`,'White','Study position','Black',this.lesson.course||'French Defense');return chess.pgn();}
+  pgn(){const chess=new Chess(this.lesson.fen);for(const san of this.lesson.moves.slice(0,this.cursor))chess.move(san);chess.header('Event',`ROQVYN · ${this.lesson.course||'French Defense'} lesson`,'White','Study position','Black',this.lesson.course||'French Defense');return chess.pgn();}
 }
 const progressFallbacks=new WeakMap(),noStorageFallback=new Map();
 export function createCourseProgress(storage,ids,key='knightlab-french-course-v1'){
