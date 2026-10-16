@@ -30,7 +30,7 @@ export function lessonPlan(lesson,study={}){
 }
 
 export class LessonPlayer {
-  constructor({lesson,study,storage,progressKey,lessonIds,memory,courseId}){
+  constructor({lesson,study,storage,progressKey,lessonIds,memory,courseId,orientation}){
     this.lesson=lesson;this.plan=lessonPlan(lesson,study);this.storage=storage;
     this.memory=memory;this.courseId=courseId;this.challengeMode=false;this.questionReviewIndex=null;this.reviewSource=null;this.exploring=false;
     this.progress=createCourseProgress(storage,lessonIds||[lesson.id],progressKey);
@@ -42,7 +42,13 @@ export class LessonPlayer {
       if(data.kind==='practice')session.practice({startPly:data.startPly});
       return {data,session,review,challenge:null,challengeHelped:false,challengeMistakes:0,mistakes:0,hintCursor:-1,hintLevel:0,done:false};
     });
-    this.restore();
+    this.orientationRevision=0;
+    const restored=this.restore();
+    if(orientation&&(!restored||(orientation.revision||0)>this.orientationRevision)){
+      this.flipped=Boolean(orientation.toSolver&&lesson.practiceColor==='b');
+      this.orientationRevision=orientation.revision||0;
+      this.save();
+    }
   }
   get activity(){return this.activities[this.activityIndex]||null;}
   get session(){const activity=this.activity;return activity?(this.reviewing?activity.review:this.challengeMode&&activity.challenge?activity.challenge:activity.session):null;}
@@ -137,7 +143,7 @@ export class LessonPlayer {
   save(){
     if(this.boardComplete&&this.checksComplete&&(!this.plan.learnRequired||this.learned))this.progress.complete(this.lesson.id);
     try{this.storage?.setItem(this.storageKey,JSON.stringify({version:1,signature:this.plan.signature,stage:this.stage,conceptIndex:this.conceptIndex,activityIndex:this.activityIndex,questionIndex:this.questionIndex,seen:this.seen,answers:this.answers,flipped:this.flipped,reviewing:this.reviewing,challengeMode:this.challengeMode,questionReviewIndex:this.questionReviewIndex,reviewSource:this.reviewSource,exploring:this.exploring,
-      activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,hintCursor:a.hintCursor,hintLevel:a.hintLevel,exploration:a.exploration?.snapshotMoves()||null,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
+      orientationRevision:this.orientationRevision,activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,hintCursor:a.hintCursor,hintLevel:a.hintLevel,exploration:a.exploration?.snapshotMoves()||null,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
   }
   restore(){
     try{
@@ -167,6 +173,8 @@ export class LessonPlayer {
       this.challengeMode=data.challengeMode===true&&Boolean(this.activity?.challenge);this.questionReviewIndex=Number.isInteger(data.questionReviewIndex)&&this.plan.questions[data.questionReviewIndex]?data.questionReviewIndex:null;
       this.reviewSource=typeof data.reviewSource==='string'?data.reviewSource:null;
       if(this.plan.stages.includes(data.stage)&&(data.stage!=='check'||this.checkUnlocked))this.stage=data.stage;
+      this.orientationRevision=bounded(data.orientationRevision,10000);
+      return true;
     }catch{/* Corrupt or obsolete partial work must not damage legacy completion. */}
   }
 }

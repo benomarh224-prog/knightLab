@@ -27,8 +27,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   function getPlayer(lesson){
     const key=`${course.id}:${lesson.id}`;
     if(!players.has(key)){
-      const value=new LessonPlayer({lesson,study:studyFor(lesson.id),storage,progressKey:course.key,lessonIds:lessons.map(item=>item.id),memory,courseId:course.id});
-      try{if(!storage?.getItem(value.storageKey))value.flipped=Boolean(course.orientToSolver&&lesson.practiceColor==='b');}catch{}
+      const value=new LessonPlayer({lesson,study:studyFor(lesson.id),storage,progressKey:course.key,lessonIds:lessons.map(item=>item.id),memory,courseId:course.id,orientation:{toSolver:course.orientToSolver,revision:course.orientationRevision||0}});
       players.set(key,value);
     }
     return players.get(key);
