@@ -21,6 +21,7 @@ import { createPageRouter } from './routes.js';
 import { createLearningUI } from './learning-ui.js';
 import { createNavigation } from './navigation.js';
 import { installSimpleUI } from './simple-ui.js';
+import { learningCategory } from './lesson-guidance.js';
 import { COURSES } from './courses.js';
 
 const $ = id => document.getElementById(id);
@@ -629,8 +630,11 @@ document.querySelectorAll('[data-home-filter]').forEach(button=>button.onclick=(
 });
 
 function selectLearningCategory(category){
+  if(!Object.values(COURSES).some(course=>course.category===category))return;
   for(const button of document.querySelectorAll('[data-learn-filter]'))button.setAttribute('aria-pressed',String(button.dataset.learnFilter===category));
   for(const section of document.querySelectorAll('[data-learn-category]'))section.hidden=section.dataset.learnCategory!==category;
+  try{reviewStorage?.setItem('knightlab-learning-category',category);}catch{}
+  if(router?.page==='learn'){const query=new URLSearchParams(location.search);query.set('category',category);history.replaceState({},'',`/learn/?${query}`);}
 }
 document.querySelectorAll('[data-learn-filter]').forEach(button=>button.onclick=()=>selectLearningCategory(button.dataset.learnFilter));
 document.addEventListener('click',event=>{
@@ -829,8 +833,8 @@ router=createPageRouter(page=>{
   if(page==='games')setLibraryOpen(true);
   if(page==='learn'||page==='home')learning.refresh();
   if(page==='learn'){
-    const category=new URLSearchParams(location.search).get('category');
-    if(category&&Object.values(COURSES).some(course=>course.category===category))selectLearningCategory(category);
+    let saved;try{saved=reviewStorage?.getItem('knightlab-learning-category');}catch{}
+    selectLearningCategory(learningCategory(COURSES,new URLSearchParams(location.search).get('category'),saved));
   }
   if(Object.hasOwn(COURSES,page))learning.open(page);
 });

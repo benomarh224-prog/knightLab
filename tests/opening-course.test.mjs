@@ -69,7 +69,7 @@ test('practice progress persists unique known lessons and ignores corrupted stor
   assert.deepEqual(progress.read(),['advance']);
   storage.setItem('knightlab-french-course-v1','broken');assert.deepEqual(progress.read(),[]);
   const unavailable=createCourseProgress({getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}},['foundations']);
-  assert.doesNotThrow(()=>unavailable.complete('foundations'));assert.deepEqual(unavailable.read(),[]);
+  assert.doesNotThrow(()=>unavailable.complete('foundations'));assert.deepEqual(unavailable.read(),['foundations']);
 });
 test('public page paths normalize trailing slashes and retain independent destinations',()=>{
   for(const [page,path] of Object.entries(PAGE_PATHS)){

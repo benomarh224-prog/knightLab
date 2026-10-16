@@ -11,12 +11,15 @@ export function createLearningMemory(storage,courses){
   };
   const identity=entry=>`${entry.courseId}/${entry.lessonId}/${entry.kind}/${entry.index}`;
   try{state=JSON.parse(storage?.getItem(key)||'null');}catch{}
-  state={last:valid(state?.last)?state.last:null,review:Array.isArray(state?.review)?state.review.filter(validReview).slice(0,100):[]};
+  const lastByCourse=Object.fromEntries(Object.entries(state?.lastByCourse||{}).filter(([courseId,lessonId])=>valid({courseId,lessonId})));
+  if(valid(state?.last))lastByCourse[state.last.courseId]??=state.last.lessonId;
+  state={last:valid(state?.last)?state.last:null,lastByCourse,review:Array.isArray(state?.review)?state.review.filter(validReview).slice(0,100):[]};
   function save(){try{storage?.setItem(key,JSON.stringify(state));}catch{}}
   return {
     last:()=>state.last,
+    lastFor:courseId=>state.lastByCourse[courseId]||null,
     review:()=>state.review.map(entry=>({...entry})),
-    remember(courseId,lessonId){const entry={courseId,lessonId};if(!valid(entry))return;state.last=entry;save();},
+    remember(courseId,lessonId){const entry={courseId,lessonId};if(!valid(entry))return;state.last=entry;state.lastByCourse[courseId]=lessonId;save();},
     add(entry){if(!validReview(entry))return;
       state.review=[{...entry},...state.review.filter(item=>identity(item)!==identity(entry))].slice(0,100);save();},
     resolve(entry){state.review=state.review.filter(item=>identity(item)!==identity(entry));save();},

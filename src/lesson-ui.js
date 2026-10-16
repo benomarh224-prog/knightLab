@@ -14,6 +14,7 @@ import { illegalMoveReason } from './lesson-move-help.js';
 import { coursePractice } from './course-practice.js';
 import { renderAttackingCatalog } from './attacking-catalog.js';
 import { lessonCheckmate,exploreBeforeCheckmate,createLessonCheckmateDialog } from './lesson-checkmate.js';
+import { lessonEntry,lessonGuidance } from './lesson-guidance.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -35,7 +36,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     }
     return players.get(key);
   }
-  player=getPlayer(lessons[0]);
+  player=getPlayer(lessonEntry(course,{rememberedId:memory.lastFor(course.id),completed:progress.read()}));
   const layout=createLessonLayout({compact:matchMedia('(max-width:1020px)'),layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline')});
   const dock=createLessonDock({footer:document.querySelector('.lesson-course-footer'),root:document.documentElement});
   const continuation=()=>{
@@ -43,7 +44,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     return lastLesson&&next.action==='next-lesson'&&coursePractice(course)?{...next,label:'Finish course →',help:'Optional practice or back to courses'}:next;
   };
   const focusBoard=()=>{
-    ($('lesson-board').querySelector('[tabindex="0"]')||$('lesson-counter')).focus({preventScroll:true});
+    ($('lesson-board').querySelector('[tabindex="0"]')||$('lesson-board')).focus({preventScroll:true});
     $('lesson-board').scrollIntoView({block:'nearest'});
   };
   const checkmateDialog=createLessonCheckmateDialog({dialog:$('lesson-checkmate-dialog'),title:$('lesson-checkmate-title'),description:$('lesson-checkmate-description'),continueButton:$('lesson-checkmate-continue'),exploreButton:$('lesson-checkmate-explore'),closeButton:$('lesson-checkmate-close'),
@@ -90,14 +91,16 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     if(activeStage)$('lesson-stages').querySelector(`[data-lesson-stage="${activeStage}"]`)?.focus({preventScroll:true});
     for(const value of ['learn','try','check'])$('lesson-'+value).hidden=value!==stage;
     $('lesson-instruction').hidden=stage!=='try';
+    $('lesson-mode-status').hidden=stage!=='try';
     if(activity){
-      const side=session.lesson.practiceColor==='w'?'White':'Black';
-      $('lesson-instruction').textContent=player.challengeMode?(session.completed?'Practice complete. Return to your lesson whenever you’re ready.':`${side} to move. Solve this study position without hints.`):player.reviewing?'Review the study line. Your practice position is saved.':activity.done&&session.completed?'Exercise solved. Review the line or continue.':practice&&session.cursor>session.practiceStart?`${side} to move. Find the next move in this study line.`:activity.data.instruction||`${side} to move. Find the study continuation.`;
-      if(exploring)$('lesson-instruction').textContent=session.ending?`${session.ending}. Undo a move to explore another continuation.`:'Free exploration. Move either side; your lesson position is saved.';
-      else if(session.completed&&!player.reviewing)$('lesson-instruction').textContent='Solved. Keep moving the pieces to explore, or continue.';
+      const guidance=lessonGuidance(player,{session,busy:motion.active});
+      $('lesson-instruction').textContent=guidance.instruction;
+      $('lesson-mode-status').textContent=guidance.status;
+      $('lesson-mode-status').dataset.mode=guidance.mode;
       $('lesson-counter').textContent=`${session.completed?'Exercise complete':`${new Chess(session.fen).turn()==='w'?'White':'Black'} to move`}${player.activities.length>1?` · Exercise ${player.activityIndex+1} / ${player.activities.length}`:''}`;
+      $('lesson-counter').hidden=player.activities.length<2;
       $('lesson-promotion').hidden=!promotion;
-      $('lesson-hint').hidden=player.challengeMode||exploring||session.completed;
+      $('lesson-hint').hidden=player.challengeMode||exploring||session.completed||!practice;
       $('lesson-explore-toggle').hidden=!exploring&&!(session.mode==='practice'&&session.completed);
       $('lesson-explore-toggle').textContent=exploring?'Back':'Explore';$('lesson-explore-toggle').setAttribute('aria-label',exploring?'Return to study position':'Explore this position');
       $('lesson-explore-toggle').disabled=motion.active;
@@ -113,11 +116,12 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       $('lesson-challenge').textContent=player.challengeMode?'Back to lesson':'Practice without hints';
       $('lesson-previous').disabled=practice||session.cursor===0;$('lesson-next').disabled=practice||session.cursor===session.lesson.moves.length;
       $('lesson-reset').setAttribute('aria-label',practice?'Restart this exercise':'Restart study line');
+      $('lesson-reset').textContent=exploring?'Reset free play':practice?'Restart exercise':'Restart review';
       if(exploring)$('lesson-reset').setAttribute('aria-label','Reset exploration to study position');
       $('lesson-feedback').textContent=message||hint?.text||(practice?(session.completed?`Well played.${session.hints?` ${session.hints} hint${session.hints===1?'':'s'} used.`:''}`:'Select a piece, then a highlighted destination.'):'Use the arrows or a move in the line to review.');
       $('lesson-feedback').hidden=!message&&!hint&&!session.completed;
       if(exploring){$('lesson-feedback').textContent=message||(session.ending?`${session.ending}. Use Undo to try a different line.`:'');$('lesson-feedback').hidden=!message&&!session.ending;}
-      $('lesson-current-note').hidden=practice||exploring;$('lesson-current-note').textContent=session.note;
+      $('lesson-current-note').hidden=true;$('lesson-current-note').textContent=session.note;
       $('lesson-current-move').textContent=session.last?`${session.last.before.split(' ')[5]}${session.last.color==='w'?'.':'…'} ${session.last.san}`:'Start';
       $('lesson-activities').hidden=player.activities.length<2;
       const focusedActivity=document.activeElement?.closest('[data-lesson-activity]')?.dataset.lessonActivity;
@@ -197,6 +201,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-activities').onclick=event=>{const item=event.target.closest('[data-lesson-activity]');if(item){player.selectActivity(Number(item.dataset.lessonActivity));clearTurn();render();focusStage();}};
   function continueLesson(){
     const next=continuation();if(!next.enabled)return;
+    if(player.exploring)player.stopExploring();
     if(next.action==='next-lesson'){
       if(!player.complete)return;const i=lessons.indexOf(player.lesson);
       if(i===lessons.length-1){motion.cancel();showCoursePractice();return;}
@@ -207,6 +212,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     else if(next.action==='question'){player.questionIndex=next.index;player.setStage('check');}
     else if(next.action==='activity'){player.selectActivity(next.index);player.setStage('try');}
     else if(next.action==='resume-practice'){player.reviewing=false;player.save();}
+    else if(next.action==='end-exploration')player.stopExploring();
     else if(next.action==='demonstration-done')player.acknowledgeDemonstration();
     else if(next.action==='next-study-move'){player.jump(player.session.cursor+1);clearTurn();render();return;}
     else if(next.action==='end-challenge'){player.endChallenge();history.replaceState({},'',`${course.path}?lesson=${encodeURIComponent(player.lesson.id)}`);}
@@ -286,8 +292,10 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   render();return {open(courseId='french'){
     motion.cancel();
     const requested=COURSES[courseId]||COURSES.french,query=new URLSearchParams(location.search),id=query.get('lesson');
-    if(course.id!==requested.id){player.save();course=requested;lessons=course.lessons;progress=memoryFor(course);const done=progress.read();const lesson=lessons.find(item=>item.id===id)||lessons.find(item=>!done.includes(item.id))||lessons[0];player=getPlayer(lesson);clearTurn();render();}
-    else if(id&&id!==player.lesson.id)selectLesson(id,false);else render();
+    player.save();
+    if(course.id!==requested.id){course=requested;lessons=course.lessons;progress=memoryFor(course);focus=false;}
+    player=getPlayer(lessonEntry(course,{requestedId:id,rememberedId:memory.lastFor(course.id),completed:progress.read()}));
+    clearTurn();query.set('lesson',player.lesson.id);history.replaceState({},'',`${course.path}?${query}`);render();
     const review=query.get('review'),rawIndex=query.get('exercise'),index=rawIndex!==null&&/^\d+$/.test(rawIndex)?Number(rawIndex):-1,source=`${review}:${index}`;
     if(player.reviewSource!==source&&((review==='practice'&&player.activities[index]?.data.kind==='practice')||(review==='question'&&player.plan.questions[index]))){
       const opened=review==='practice'?player.startChallenge(index):player.reviewQuestion(index);

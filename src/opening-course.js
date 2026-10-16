@@ -36,7 +36,15 @@ export class OpeningLesson {
   }
   pgn(){const chess=new Chess(this.lesson.fen);for(const san of this.lesson.moves.slice(0,this.cursor))chess.move(san);chess.header('Event',`Knightlab · ${this.lesson.course||'French Defense'} lesson`,'White','Study position','Black',this.lesson.course||'French Defense');return chess.pgn();}
 }
+const progressFallbacks=new WeakMap(),noStorageFallback=new Map();
 export function createCourseProgress(storage,ids,key='knightlab-french-course-v1'){
-  function read(){try {const data=JSON.parse(storage?.getItem(key)||'[]');return Array.isArray(data)?[...new Set(data.filter(id=>ids.includes(id)))]:[];}catch{return [];}}
-  return {read,complete(id){if(!ids.includes(id))return;try{storage?.setItem(key,JSON.stringify([...new Set([...read(),id])]))}catch{}}};
+  let fallback=noStorageFallback;
+  if(storage&&(typeof storage==='object'||typeof storage==='function')){
+    if(!progressFallbacks.has(storage))progressFallbacks.set(storage,new Map());
+    fallback=progressFallbacks.get(storage);
+  }
+  if(!fallback.has(key))fallback.set(key,new Set());
+  const local=fallback.get(key);
+  function read(){let saved=[];try {const data=JSON.parse(storage?.getItem(key)||'[]');if(Array.isArray(data))saved=data.filter(id=>ids.includes(id));}catch{}return [...new Set([...saved,...local].filter(id=>ids.includes(id)))];}
+  return {read,complete(id){if(!ids.includes(id))return;const completed=[...new Set([...read(),id])];try{if(!storage?.setItem)throw Error('Storage unavailable');storage.setItem(key,JSON.stringify(completed));}catch{local.add(id);}}};
 }

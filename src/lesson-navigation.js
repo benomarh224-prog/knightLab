@@ -5,6 +5,7 @@ export function lessonContinuation(player,{lastLesson=false,label='Lesson'}={}){
   const learn=()=>({action:'stage',stage:'learn',label:'Finish reading →',enabled:true,help:'Complete the lesson’s reading'});
   const check=()=>({action:'question',index:Math.max(0,player.plan.questions.findIndex((q,i)=>q.required&&player.answers[i]!==q.answer)),label:'Continue to Check →',enabled:player.checkUnlocked,help:'Check your understanding'});
   if(player.challengeMode)return {action:'end-challenge',label:'Back to lesson →',enabled:true,help:player.session.completed?'Practice complete':'Your original position is saved'};
+  if(player.stage==='try'&&player.exploring&&!player.boardComplete)return {action:'end-exploration',label:'Back to lesson →',enabled:true,help:'Your exercise is saved'};
   if(player.stage==='learn'){
     if(player.learned&&player.complete)return next();
     const more=player.conceptIndex<player.plan.concepts.length-1;
