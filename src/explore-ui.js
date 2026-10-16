@@ -4,6 +4,7 @@ import { Engine } from './engine.js';
 import { formatEvaluation, uciToSan } from './game.js';
 import { pieceSvg } from './pieces.js';
 import { pieceNames } from './training.js';
+import { PLAY_LEVELS,playSearch } from './play-settings.js';
 
 const $ = id => document.getElementById(id);
 export function createExploreUI({ context, pause, resume, playSound }) {
@@ -11,6 +12,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   let variation, selected = null, promotion = null, flipped = false, engine = null;
   let result = null, busy = false, run = 0, savedGame = null, resumeReview = false;
   let originFen = null, coursePractice = null;
+  let hintRequested=false;
   function cancel() { run++; engine?.destroy(); engine = null; busy = false; }
   function reset() { resumeReview = false; cancel(); if (dialog.open) dialog.close(); variation = null; }
   function render(focusSquare) {
@@ -35,25 +37,32 @@ export function createExploreUI({ context, pause, resume, playSound }) {
       $('explore-course-progress').textContent=variation.ending?'Position finished. Review your decisions or return to the lesson.':count>=coursePractice.moves?'Practice target reached. Keep playing or return to the lesson.':`${count} / ${coursePractice.moves} of your moves · Apply the idea and compare replies.`;
     }
     $('explore-turn').textContent = variation.ending ? `${variation.ending}${chess.isCheckmate() ? ` · ${chess.turn() === 'w' ? 'Black' : 'White'} wins` : ''}` : `${chess.turn() === 'w' ? 'White' : 'Black'} to move${variation.engineTurn ? ' · Stockfish' : variation.mode === 'engine' ? ' · Your turn' : ''}${chess.isCheck() ? ' · Check' : ''}`;
-    $('explore-evaluation').textContent = result ? formatEvaluation(result) : busy ? 'Thinking…' : '—';
-    $('explore-best').textContent = variation.ending ? 'This position has ended.' : result ? `Best move: ${uciToSan(variation.fen, result.best)} · Depth ${result.depth}` : 'Evaluating this position';
+    $('explore-evaluation').hidden=!$('play-show-evaluation').checked;
+    $('play-evaluation-perspective').hidden=!$('play-show-evaluation').checked;
+    $('explore-evaluation').textContent=result?formatEvaluation(result):busy?'Thinking…':'—';
+    $('explore-best').hidden=!hintRequested;
+    $('explore-best').textContent=hintRequested?(result?`Suggested move: ${uciToSan(variation.fen,result.best)} · Depth ${result.depth}`:'Finding a suggestion…'):'';
+    $('play-hint').disabled=busy||variation.engineTurn||Boolean(variation.ending);
     $('explore-line').textContent = variation.moves.length ? variation.moves.map((move, index) => `${move.color === 'w' ? move.before.split(' ')[5] + '.' : index === 0 ? move.before.split(' ')[5] + '…' : ''} ${move.san}`).join(' ').trim() : 'Your moves will appear here.';
     $('explore-undo').disabled = !variation.canUndo;
     $('explore-undo').textContent = variation.mode === 'engine' ? 'Undo turn' : 'Undo move';
     $('explore-reset').disabled = !variation.moves.length;
     $('explore-reply').hidden = variation.mode === 'engine' && !variation.engineTurn;
-    $('explore-reply').disabled = busy || Boolean(variation.ending) || Boolean(promotion) || variation.mode === 'free' && !result?.best;
+    $('explore-reply').disabled = busy || Boolean(variation.ending) || Boolean(promotion);
     $('explore-reply').textContent = busy ? 'Stockfish is thinking…' : variation.mode === 'engine' ? 'Retry engine reply' : 'Play engine reply';
-    $('play-settings-summary').textContent = variation.mode === 'free' ? 'Free play · Control both sides' : `Vs Stockfish · You play ${variation.color === 'w' ? 'White' : 'Black'}`;
+    $('play-settings-summary').textContent = variation.mode === 'free' ? 'Explore · Control both sides' : `${PLAY_LEVELS[$('play-difficulty').value].label} · You play ${variation.color === 'w' ? 'White' : 'Black'}`;
     $('play-color-field').hidden = variation.mode === 'free';
+    $('play-difficulty-field').hidden=variation.mode==='free';
+    $('play-difficulty-description').textContent=PLAY_LEVELS[$('play-difficulty').value].description;
     $('play-export').disabled = !variation.moves.length;
     $('explore-board').setAttribute('aria-label', `Play board, ${variation.ending || (chess.turn() === 'w' ? 'White' : 'Black') + ' to move'}. Select a piece and its destination.`);
     $('explore-promotion').hidden = !promotion;
     if (variation.ending) $('explore-feedback').textContent = `${$('explore-turn').textContent}. Undo to try another idea, or start a new game.`;
     if (focusSquare) $('explore-board').querySelector(`[data-square="${focusSquare}"]`)?.focus({ preventScroll: true });
   }
-  async function evaluate() {
+  async function evaluate({playReply=false}={}) {
     cancel(); result = null;
+    if(!variation.engineTurn&&!$('play-show-evaluation').checked&&!hintRequested&&!playReply){render();return;}
     if (variation.ending === 'Draw') {
       result = { cp: 0, mate: null, terminal: true }; render(); return;
     }
@@ -61,13 +70,13 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     engine = active; busy = true; render();
     let replied = false;
     try {
-      const score = await active.evaluate(snapshot.fen, 650);
+      const score = await active.evaluate(snapshot.fen,variation.engineTurn?playSearch($('play-difficulty').value):{milliseconds:650,skill:20});
       if (current !== run || !variation?.matches(snapshot)) return;
       result = score;
-      if (variation.engineTurn && score.best) {
+      if ((variation.engineTurn||playReply) && score.best) {
         const outcome = variation.engineMove(score.best, snapshot);
         if (outcome.status === 'played') {
-          replied = true; selected = null; promotion = null; result = null;
+          replied = true; selected = null; promotion = null; result = null;hintRequested=false;
           playSound(outcome.move); $('explore-feedback').textContent = `Stockfish played ${outcome.move.san}. Your turn.`;
         }
       }
@@ -79,7 +88,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     }
   }
   function afterMove(move) {
-    selected = null; promotion = null; playSound(move);
+    selected = null; promotion = null;hintRequested=false; playSound(move);
     $('explore-feedback').textContent = `${move.san} played. ${variation.engineTurn ? 'Stockfish will reply automatically.' : 'Try the other side or ask Stockfish for a reply.'}`;
     evaluate();
   }
@@ -94,7 +103,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     const fen = $('play-origin').value === 'current' ? originFen : new Chess().fen();
     variation = new PlaySession(fen, { mode: $('play-mode').value, color: $('play-color').value });
     flipped = variation.mode === 'engine' ? variation.color === 'b' : context().flipped;
-    selected = null; promotion = null; result = null;
+    selected = null; promotion = null; result = null;hintRequested=false;
     $('explore-origin').textContent = $('play-origin').value === 'current' ? coursePractice?.title||'From your selected analysis position · Original game preserved' : 'New game · No clock · Play at your own pace';
     $('explore-feedback').textContent = variation.engineTurn ? 'Stockfish is preparing the first move.' : 'Tap a piece, then a highlighted square to play.';
     evaluate();
@@ -132,21 +141,23 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   $('explore-reply').onclick = () => {
     if (busy || !variation || promotion) return;
     if (variation.engineTurn) { evaluate(); return; }
-    if (!result?.best) return;
+    if (!result?.best){evaluate({playReply:true});return;}
     const outcome = variation.engineMove(result.best, variation.snapshot());
     if (outcome.status === 'played') afterMove(outcome.move);
   };
-  $('explore-undo').onclick = () => { const undone = variation.undoTurn(); if (!undone.length) return; selected = null; promotion = null; playSound(undone.at(-1)); $('explore-feedback').textContent = 'Back to your previous position. Try a different idea.'; evaluate(); };
-  $('explore-reset').onclick = () => { variation.reset(); selected = null; promotion = null; $('explore-feedback').textContent = 'Back to the game position. Try another move.'; evaluate(); };
+  $('explore-undo').onclick = () => { const undone = variation.undoTurn(); if (!undone.length) return; selected = null; promotion = null;hintRequested=false; playSound(undone.at(-1)); $('explore-feedback').textContent = 'Back to your previous position. Try a different idea.'; evaluate(); };
+  $('explore-reset').onclick = () => { variation.reset(); selected = null; promotion = null;hintRequested=false; $('explore-feedback').textContent = 'Back to the game position. Try another move.'; evaluate(); };
   $('explore-flip').onclick = () => { flipped = !flipped; render(); };
   $('play-origin').onchange = startPosition;
-  for (const id of ['play-mode', 'play-color']) $(id).onchange = () => {
+  for (const id of ['play-mode', 'play-color','play-difficulty']) $(id).onchange = () => {
     cancel(); variation.configure($('play-mode').value, $('play-color').value);
-    selected = null; promotion = null; result = null;
+    selected = null; promotion = null; result = null;hintRequested=false;
     if (variation.mode === 'engine') flipped = variation.color === 'b';
     $('explore-feedback').textContent = variation.engineTurn ? 'Stockfish will play the next move.' : 'Settings updated. Choose your next move.';
     evaluate();
   };
+  $('play-show-evaluation').onchange=()=>evaluate();
+  $('play-hint').onclick=()=>{hintRequested=true;evaluate();};
   $('play-new').onclick = () => { $('play-origin').value = 'new'; startPosition(); };
   $('play-export').onclick = () => {
     if (!variation?.moves.length) return;

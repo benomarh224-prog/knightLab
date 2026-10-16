@@ -1,5 +1,5 @@
 import { COURSES } from './courses.js';
-export const PAGE_PATHS={home:'/',games:'/games/',analysis:'/analysis/',learn:'/learn/',french:'/learn/french-defense/',tactics:'/learn/tactical-vision/',opengames:'/learn/open-games/',beginners:'/learn/chess-for-beginners/',...Object.fromEntries(Object.values(COURSES).map(course=>[course.id,course.path]))};
+export const PAGE_PATHS={home:'/',games:'/games/',analyze:'/analyze/',analysis:'/analysis/',train:'/train/',learn:'/learn/',french:'/learn/french-defense/',tactics:'/learn/tactical-vision/',opengames:'/learn/open-games/',beginners:'/learn/chess-for-beginners/',...Object.fromEntries(Object.values(COURSES).map(course=>[course.id,course.path]))};
 export const PAGE_VIEWS=Object.fromEntries(Object.keys(COURSES).filter(id=>id!=='french').map(id=>[id,'french']));
 const isLesson=page=>page==='french'||page in PAGE_VIEWS;
 export function pageFromPath(path){
@@ -14,7 +14,7 @@ export function createPageRouter(onChange){
     document.body.dataset.layout=isLesson(current)?'lesson':current;
     for(const page of document.querySelectorAll('[data-page-view]'))page.hidden=page.dataset.pageView!==(PAGE_VIEWS[current]||current);
     const names={home:'Your next move, better',games:'My games',analysis:'Game analysis',learn:'Learn chess',french:'Learn the French Defense',tactics:'Tactical Vision',opengames:'Italian Game',beginners:'Chess for Beginners'};
-    document.title=`${COURSES[current]?.title||names[current]} · Knightlab`;
+    document.title=`${COURSES[current]?.title||({analyze:'Analyze a game',train:'Train chess'})[current]||names[current]} · Knightlab`;
     for(const link of document.querySelectorAll('[data-route]')){
       const active=link.dataset.route===current||isLesson(current)&&link.dataset.route==='learn';
       link.classList.toggle('active',active);

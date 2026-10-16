@@ -1,6 +1,8 @@
 import { OpeningLesson,createCourseProgress } from './opening-course.js';
 import { progressiveHint } from './lesson-hints.js';
 import { LessonExploration } from './lesson-exploration.js';
+import { offTargetFeedback } from './lesson-objectives.js';
+import { Chess } from 'chess.js';
 
 const bounded=(value,max)=>Number.isInteger(value)?Math.max(0,Math.min(max,value)):0;
 const list=value=>Array.isArray(value)?value:[];
@@ -12,7 +14,7 @@ const fingerprint=value=>{let hash=2166136261;for(const char of JSON.stringify(v
 export function lessonPlan(lesson,study={}){
   const concepts=(lesson.concepts!==undefined?list(lesson.concepts):lesson.guide?.intro?.length?lesson.guide.intro:[lesson.subtitle].filter(Boolean)).map(concept);
   const raw=lesson.activities??lesson.exercises??(lesson.moves?.length?[{...lesson,kind:lesson.kind||'practice',startPly:study.start}]:[]);
-  const activities=list(raw).map(({squarePractice,...activity},index)=>{
+  const activities=list(raw).map(({squarePractice,demonstration,migration,...activity},index)=>{
     // Supplementary square training has its own save; adding it must not
     // invalidate an existing move exercise's draft or completion signature.
     const moves=activity.moves||[],kind=activity.kind||'practice';
@@ -92,7 +94,7 @@ export class LessonPlayer {
   }
   selectActivity(index){this.activityIndex=bounded(index,this.activities.length-1);this.reviewing=false;this.challengeMode=false;this.exploring=false;this.save();}
   reviewEntry(kind='practice',index=this.activityIndex){return {courseId:this.courseId,lessonId:this.lesson.id,kind,index};}
-  get currentHint(){const a=this.activity;return !this.challengeMode&&!this.reviewing&&a?.hintCursor===this.session?.cursor?progressiveHint(this.session.expected,a.hintLevel):null;}
+  get currentHint(){const a=this.activity;return !this.challengeMode&&!this.reviewing&&a?.hintCursor===this.session?.cursor?progressiveHint(this.session.expected,a.hintLevel,a.data.hints):null;}
   requestHint(){
     if(this.challengeMode||this.reviewing||this.activity?.data.kind!=='practice'||this.session.completed)return null;
     const a=this.activity;if(a.hintCursor!==this.session.cursor){a.hintCursor=this.session.cursor;a.hintLevel=0;}
@@ -112,6 +114,7 @@ export class LessonPlayer {
   attempt(from,to,promotion){
     if(this.exploring||this.reviewing||this.activity?.data.kind!=='practice')return {status:'inactive'};
     const result=this.session.attempt(from,to,promotion);
+    if(result.status==='different')result.feedback=offTargetFeedback(this.activity.data,new Chess(this.session.fen).move({from,to,promotion}));
     if(result.status==='illegal'||result.status==='different'){
       if(this.challengeMode)this.activity.challengeMistakes++;else this.activity.mistakes++;
       this.memory?.add({...this.reviewEntry(),reason:'retry'});
@@ -158,18 +161,21 @@ export class LessonPlayer {
   }
   restore(){
     try{
-      const data=JSON.parse(this.storage?.getItem(this.storageKey)||'null');if(data?.version!==1||data.signature!==this.plan.signature)return;
+      const data=JSON.parse(this.storage?.getItem(this.storageKey)||'null');if(data?.version!==1)return;
+      const migrated=data.signature!==this.plan.signature&&data.signature===this.lesson.migration?.signature;
+      if(data.signature!==this.plan.signature&&!migrated)return;
+      if(migrated){try{this.storage?.setItem(this.storageKey+':legacy:'+data.signature,JSON.stringify(data));}catch{}}
       this.conceptIndex=bounded(data.conceptIndex,this.plan.concepts.length-1);this.activityIndex=bounded(data.activityIndex,this.activities.length-1);this.questionIndex=bounded(data.questionIndex,this.plan.questions.length-1);
       this.seen=list(data.seen).filter(i=>Number.isInteger(i)&&i>=0&&i<this.plan.concepts.length);
       this.answers=this.plan.questions.map((q,i)=>Number.isInteger(data.answers?.[i])&&data.answers[i]>=0&&data.answers[i]<q.options.length?data.answers[i]:null);
       this.activities.forEach((activity,index)=>{
         const saved=data.activities?.[index];if(!saved)return;
         if(activity.data.kind==='practice'){
-          for(let i=0;i<bounded(saved.correct,activity.data.moves.length)&&activity.session.expected;i++){
+          for(let i=0;i<(migrated?0:bounded(saved.correct,activity.data.moves.length))&&activity.session.expected;i++){
             const move=activity.session.expected;activity.session.attempt(move.from,move.to,move.promotion);
           }
           activity.session.hints=bounded(saved.hints,10000);
-          activity.done=activity.session.completed||saved.done===true;
+          activity.done=activity.session.completed||saved.done===true||migrated&&saved.correct>0;
         }else{activity.session.jump(bounded(saved.cursor,activity.data.moves.length));activity.done=saved.done===true;}
         activity.review.jump(bounded(saved.reviewCursor,activity.data.moves.length));
         activity.exploration=LessonExploration.restore(activity.session,saved.exploration);

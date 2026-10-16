@@ -23,6 +23,9 @@ import { createNavigation } from './navigation.js';
 import { installSimpleUI } from './simple-ui.js';
 import { learningCategory } from './lesson-guidance.js';
 import { COURSES } from './courses.js';
+import { createReviewCache } from './review-cache.js';
+import { collectTraining } from './training.js';
+import { renderReviewStatistics } from './review-statistics.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -69,9 +72,11 @@ $('nav-guide').onclick=()=>{closeWorkspaceMenu();$('how-it-works').click();};
 let reviewStorage;
 try { reviewStorage=localStorage; } catch {}
 const reviewMemory=createReviewMemory(reviewStorage);
+const reviewCache=createReviewCache(reviewStorage);
+let reviewOpened=false;
 let paintedPosition=null, stripPosition=null, stripSource=null, stripSignature='';
 function saveReviewPosition() {
-  if(state.selected)reviewMemory.save(state.selected,{ply:state.ply,flipped:state.flipped,demo:state.demo});
+  if(state.selected&&reviewOpened)reviewMemory.save(state.selected,{ply:state.ply,flipped:state.flipped,demo:state.demo});
 }
 let boardDragging=false, inline, showThreats=true, selectedThreat=null, threatFen=null, threats=[];
 function pauseWorkspace() {
@@ -188,7 +193,7 @@ function setLibraryOpen(open) {
 }
 $('library-toggle').onclick=()=>setLibraryOpen($('library-body').hidden);
 
-function setGame(game, { demo = false, analyze = true } = {}) {
+function setGame(game, { demo = false, analyze = true,remember=true } = {}) {
   const parsed = parseGame(game.pgn);
   inline.reset(); selectedThreat=null; threatFen=null; boardCoach.close(false);
   closeBoardActions(); setLibraryOpen(router?.page==='games');
@@ -197,18 +202,20 @@ function setGame(game, { demo = false, analyze = true } = {}) {
   if ($('focus-dialog').open) $('focus-dialog').close();
   stopAnalysis();
   state.parsed = parsed; state.selected = game; state.demo = demo;
+  reviewOpened=remember;
   selectWorkspaceView('board');
   state.ply = demo ? 19 : 0;
   state.flipped = Boolean(state.username && game.black?.username?.toLowerCase() === state.username);
   const remembered=reviewMemory.position(game.pgn,parsed.moves.length);
   if(remembered){state.ply=remembered.ply;state.flipped=remembered.flipped;}
   paintedPosition=null;
-  state.evaluations = state.cache.get(game.pgn + state.mode) || [];
+  state.evaluations = state.cache.get(game.pgn + state.mode) || reviewCache.load(game.pgn,state.mode,parsed.fens.length);
+  state.cache.set(game.pgn+state.mode,state.evaluations);
   $('analysis-error').hidden = true;
   $('demo-badge').hidden = !demo;
   $('workspace-title').textContent = demo ? 'The Opera Game' : `${game.white?.username || parsed.headers.White || 'White'} vs ${game.black?.username || parsed.headers.Black || 'Black'}`;
   const { headers } = parsed;
-  $('game-subtitle').textContent = demo ? 'The Opera Game · Paris, 1858' : `${game.time_class ? game.time_class[0].toUpperCase() + game.time_class.slice(1) + ' · ' : ''}${headers.Event || 'Imported game'}${game.end_time ? ' · ' + new Date(game.end_time * 1000).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : ''}`;
+  $('game-subtitle').textContent = demo ? 'Sample game · The Opera Game · Paris, 1858' : `${game.time_class ? game.time_class[0].toUpperCase() + game.time_class.slice(1) + ' · ' : ''}${headers.Event || 'Imported game'}${game.end_time ? ' · ' + new Date(game.end_time * 1000).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : ''}`;
   $('game-result').textContent = (headers.Result || '*').replaceAll('-', '–');
   renderOpening();
   updatePlayers(); renderMoveList(); render(); renderGames();
@@ -332,10 +339,11 @@ function render() {
   $('evaluation').textContent = formatEvaluation(score);
   $('position-verdict').textContent = !score ? 'Waiting for the engine' : score.terminal ? (score.cp ? 'Checkmate' : 'Drawn position') : score.mate !== null ? `${score.cp > 0 ? 'White' : 'Black'} has forced mate` : Math.abs(score.cp) < 50 ? 'A balanced position' : `${score.cp > 0 ? 'White' : 'Black'} ${Math.abs(score.cp) > 200 ? 'is winning' : 'has the advantage'}`;
   const summary = summarize(state.parsed, state.evaluations, playerColor());
-  $('best-count').textContent = summary.count ? summary.counts.Best + summary.counts.Great : '—';
-  $('mistake-count').textContent = summary.count ? summary.counts.Mistake : '—';
-  $('blunder-count').textContent = summary.count ? summary.counts.Blunder : '—';
-  $('loss-summary').textContent = summary.count ? `${playerColor() ? 'Your' : 'All'} moves · Avg. loss ${(summary.averageLoss / 100).toFixed(2)} pawns` : `${playerColor() ? 'Your' : 'All'} moves · engine review`;
+  const stats=renderReviewStatistics(state.parsed,state.evaluations,state.mode),combined=stats.combined;
+  $('best-count').textContent = combined.count ? combined.counts.Best + combined.counts.Great : '—';
+  $('mistake-count').textContent = combined.count ? combined.counts.Mistake : '—';
+  $('blunder-count').textContent = combined.count ? combined.counts.Blunder : '—';
+  $('loss-summary').textContent = combined.count ? `Combined White + Black · Avg. evaluation loss ${(combined.averageLoss / 100).toFixed(2)} pawns${stats.provisional?' · Provisional':''}` : 'Combined White + Black · Awaiting review';
   $('next-mistake').disabled = !summary.items.some((item, index) => item && ['Mistake', 'Blunder', 'Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()));
   const move = view.last;
   const item = move ? inline.active?classifyMove(move,view.before,score):summary.items[state.ply - 1] : null;
@@ -387,13 +395,17 @@ function renderCoach(move, before, after) {
   $('board-coach-card').classList.toggle('has-alternative',Boolean(ready&&report.bestMove&&report.bestMove!==played));
   $('insight-text').textContent = report.summary;
   $('coach-details').hidden = !ready;
-  $('coach-why-label').textContent = ['Inaccuracy','Mistake','Blunder'].includes(report.rating) ? 'Why this move is weaker' : 'What this move does';
+  $('coach-why-label').textContent = report.whyLabel||'What this move does';
   $('coach-why').textContent = report.why;
   $('coach-better').textContent = report.better;
+  $('coach-better-section').hidden=!report.hasImprovement;
   $('coach-lesson').textContent = report.lesson;
   $('coach-comparison').textContent = report.comparison || '';
-  $('coach-best-line').textContent = report.bestLine;
-  $('coach-reply-line').textContent = report.replyLine;
+  const lineButtons=kind=>{const line=report.continuations?.find(line=>line.kind===kind);return line?`<span>${escape(line.label)}</span><nav aria-label="${escape(line.label)}"><button data-coach-line="${kind}" data-coach-step="0">Start</button>${line.moves.map((move,index)=>`<button data-coach-line="${kind}" data-coach-step="${index+1}">${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${escape(move.san)}</button>`).join('')}</nav>`:'';};
+  $('coach-best-line').innerHTML=lineButtons('best');
+  $('coach-reply-line').innerHTML=lineButtons('reply');
+  $('coach-reply-context').textContent=report.replyEvidence||'';
+  $('coach-lines').onclick=event=>{const button=event.target.closest('[data-coach-line]');if(!button)return;const line=report.continuations?.find(line=>line.kind===button.dataset.coachLine);if(line){inline.playback(line.fen,line.moves,Number(button.dataset.coachStep));selectWorkspaceView('board');}};
   $('coach-best-row').hidden = !report.bestLine;
   $('coach-reply-row').hidden = !report.replyLine;
   $('coach-lines').hidden = !report.bestLine && !report.replyLine;
@@ -484,6 +496,7 @@ function goTo(ply) {
 }
 
 function stopAnalysis() {
+  if(state.selected&&reviewOpened)reviewCache.save(state.selected.pgn,state.mode,state.evaluations);
   state.run++; state.running = false; state.engine?.destroy(); state.engine = null;
 }
 async function startAnalysis() {
@@ -604,7 +617,7 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>Great moves match the engine’s top choice, beat its next candidate by at least one pawn at the same search depth of at least 8, and lose no more than 0.30 pawn in the resulting position. Best / Great counts combine both categories.</p>
 <p>Move ratings are based on evaluation loss from the player’s perspective. They can change with deeper analysis. Mate scores use a large capped value for the chart and loss calculation.</p>
 <p>Standard review uses 650 ms per position to give you a quick first pass. Deep review targets depth 18 with two candidate moves. If a position needs more time, Deepen remaining searches it again, allowing up to 80 seconds. You can pause and resume either review. The chart is capped at ±5 pawns.</p>
-<p>For a connected account, summary counts cover your moves. Imported and demo games summarize both players. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
+<p>Summary statistics show White and Black separately, with explicitly labelled combined totals. Incomplete reviews remain provisional. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
 <p>Threats highlights only the leading new attack from the current move. The old highlight clears on the next move. Red means check or no immediate legal recapture; amber means a defended attack or risky exchange. Tap the square to see why. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
 <p>The compact coach stays above the board and updates with each move. Details expands the full explanation in the page. It describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
 <p><a href="/STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="/THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
@@ -618,7 +631,7 @@ $('home-search').addEventListener('submit',event=>{
   event.preventDefault();$('username').value=$('home-username').value;searchPlayer();
 });
 $('home-demo').onclick=()=>{setGame({pgn:DEMO_PGN},{demo:true,analyze:false});router.go('analysis');};
-function homeAnalyze(){if(state.games.length)router.go('games');else openConnect();}
+function homeAnalyze(){router.go('analyze');}
 for(const id of ['home-analyze','home-path-review'])$(id).onclick=homeAnalyze;
 for(const id of ['home-play','home-play-art','home-path-play'])$(id).onclick=()=>$('play-open').click();
 for(const id of ['home-tactics','home-tactics-art'])$(id).onclick=()=>{
@@ -641,7 +654,32 @@ document.addEventListener('click',event=>{
   const link=event.target.closest('[data-learn-category-link]');
   if(link&&event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey)selectLearningCategory(link.dataset.learnCategoryLink);
 });
-$('games-nav').onclick = () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); };
+$('games-nav').onclick = () => router.go('analyze');
+$('analysis-entry-paste').onclick=()=>{openImport();$('pgn-input').focus();};
+$('analysis-entry-upload').onclick=()=>{openImport();$('pgn-file').click();};
+$('analysis-entry-find').onclick=openConnect;
+$('analysis-entry-sample').onclick=()=>{setGame({pgn:DEMO_PGN},{demo:true,analyze:false});router.go('analysis');};
+$('analysis-resume').onclick=()=>router.go('analysis');
+let trainGames=[],selectedTrainPgn=null;
+function trainSelection(){
+  const entry=trainGames[Number($('train-review').value)];if(!entry)return null;
+  const parsed=parseGame(entry.game.pgn),evaluations=state.cache.get(entry.game.pgn+state.mode)||reviewCache.load(entry.game.pgn,state.mode,parsed.fens.length);
+  return {entry,parsed,evaluations,exercises:collectTraining(parsed,evaluations,$('train-side').value==='both'?null:$('train-side').value).exercises};
+}
+function renderTrain(){
+  trainGames=reviewMemory.list().filter(entry=>{try{parseGame(entry.game.pgn);return true;}catch{return false;}});
+  $('train-review').innerHTML=trainGames.length?trainGames.map((entry,index)=>{const headers=parseGame(entry.game.pgn).headers;return `<option value="${index}">${escape((entry.demo?'Sample · ':'')+(entry.game.white?.username||headers.White||'White')+' vs '+(entry.game.black?.username||headers.Black||'Black'))}</option>`;}).join(''):'<option value="">Review a game first</option>';
+  const index=trainGames.findIndex(entry=>entry.game.pgn===selectedTrainPgn);if(index>=0)$('train-review').value=String(index);
+  updateTrainSelection();
+}
+function updateTrainSelection(){
+  const selected=trainSelection();selectedTrainPgn=selected?.entry.game.pgn||null;
+  $('train-review').disabled=!selected;$('train-review-game').disabled=!selected;$('train-start').disabled=!selected?.exercises.length;
+  $('train-status').textContent=!selected?'Review or import a game to create personal exercises.':`${selected.exercises.length} mistake position${selected.exercises.length===1?'':'s'} available for ${$('train-side').value==='both'?'both players':$('train-side').value==='w'?'White':'Black'}. ${selected.evaluations.filter(Boolean).length<selected.parsed.fens.length?'Provisional: open the review to analyze more positions.':'From the reviewed game.'}`;
+}
+$('train-review').onchange=updateTrainSelection;$('train-side').onchange=updateTrainSelection;
+$('train-review-game').onclick=()=>{const selected=trainSelection();if(selected){setGame(selected.entry.game,{demo:selected.entry.demo,analyze:false});router.go('analysis');}};
+$('train-start').onclick=()=>{const selected=trainSelection();if(selected?.exercises.length){setGame(selected.entry.game,{demo:selected.entry.demo,analyze:false});training.startExercises(selected.exercises);}};
 $('library-nav').onclick = () => scrollToSection($('game-library'));
 for (const id of ['sidebar-import','hero-import','home-import']) $(id).onclick = openImport;
 $('how-it-works').onclick = () => showInfo('A better way to review', instructions);
@@ -792,8 +830,8 @@ try { $('username').value = $('home-username').value = localStorage.getItem('kni
 const lastReview=reviewMemory.last();
 try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
-  else setGame({pgn:DEMO_PGN},{demo:true,analyze:false});
-} catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false});}
+  else setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});
+} catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});}
 const learning=createLearningUI({storage:reviewStorage,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
@@ -812,13 +850,19 @@ router=createPageRouter(page=>{
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   closeWorkspaceMenu();
   $('library-nav').classList.toggle('active',page==='games');
-  $('games-nav').classList.toggle('active',page==='analysis');
-  for(const [id,active] of [['library-nav',page==='games'],['games-nav',page==='analysis']]){
+  $('games-nav').classList.toggle('active',['analyze','analysis'].includes(page));
+  for(const [id,active] of [['library-nav',page==='games'],['games-nav',['analyze','analysis'].includes(page)]]){
     if(active)$(id).setAttribute('aria-current','page');else $(id).removeAttribute('aria-current');
   }
   if(page==='analysis'){if(!state.running)startAnalysis();}
   else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
+  if(page==='analyze'){
+    $('analysis-resume').hidden=!reviewOpened;
+    $('analysis-resume').textContent=`Resume ${state.demo?'sample review':$('workspace-title').textContent} · Move ${Math.ceil(state.ply/2)}`;
+    $('analysis-entry-title').focus({preventScroll:true});
+  }
+  if(page==='train'){renderTrain();$('train-title').focus({preventScroll:true});}
   if(page==='learn'||page==='home')learning.refresh();
   if(page==='learn'){
     let saved;try{saved=reviewStorage?.getItem('knightlab-learning-category');}catch{}

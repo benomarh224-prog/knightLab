@@ -17,6 +17,8 @@ import { renderOpeningCatalog } from './opening-catalog.js';
 import { lessonCheckmate,exploreBeforeCheckmate,createLessonCheckmateDialog } from './lesson-checkmate.js';
 import { lessonEntry,lessonGuidance } from './lesson-guidance.js';
 import { createSquarePracticeUI } from './square-practice.js';
+import { createLessonViewport } from './lesson-viewport.js';
+import { createGuidedExample } from './lesson-demonstration.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -27,6 +29,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   renderOpeningCatalog(COURSES);
   const memoryFor=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key),players=new Map(),memory=createLearningMemory(storage,COURSES);
   const squarePractice=createSquarePracticeUI({storage});
+  const guidedExample=createGuidedExample({storage});
   let course=COURSES.french,lessons=course.lessons,progress=memoryFor(course),player;
   let selected=null,hint=null,message='',promotion=null;
   let focus=false,painted=null;
@@ -43,6 +46,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   player=getPlayer(lessonEntry(course,{rememberedId:memory.lastFor(course.id),completed:progress.read()}));
   const layout=createLessonLayout({compact:matchMedia('(max-width:1020px)'),layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline')});
   const dock=createLessonDock({footer:document.querySelector('.lesson-course-footer'),root:document.documentElement});
+  const lessonViewport=createLessonViewport();
   const continuation=()=>{
     const lastLesson=lessons.indexOf(player.lesson)===lessons.length-1,next=lessonContinuation(player,{lastLesson,label:course.label});
     return lastLesson&&next.action==='next-lesson'&&coursePractice(course)?{...next,label:'Finish course →',help:'Optional practice or back to courses'}:next;
@@ -95,6 +99,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     if(activeStage)$('lesson-stages').querySelector(`[data-lesson-stage="${activeStage}"]`)?.focus({preventScroll:true});
     for(const value of ['learn','try','check'])$('lesson-'+value).hidden=value!==stage;
     squarePractice.update({lesson,progressKey:course.key,stage,conceptIndex:player.conceptIndex});
+    guidedExample.update({lesson,progressKey:course.key,stage,conceptIndex:player.conceptIndex});
     $('lesson-instruction').hidden=stage!=='try';
     $('lesson-mode-status').hidden=stage!=='try';
     if(activity){
@@ -181,6 +186,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-after-board').textContent=next.label;
     $('lesson-course-practice').hidden=!player.complete||globalIndex!==lessons.length-1||!coursePractice(course);
     dock.measure();
+    lessonViewport.arrange(stage);
     updateProgress();
     checkmateDialog.sync();
   }
@@ -265,7 +271,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     const session=player.session,cursor=session.cursor,fen=session.fen;
     const result=player.attempt(from,to,promote);
     if(result.status==='correct'){clearTurn();message=`${result.move.san} fits this study line.${result.completed?' Exercise complete.':''}`;motion.play(lessonFrames(session,cursor));return;}
-    else{promotion=null;message=result.status==='different'?`${result.san} is legal. This exercise practices another continuation. Try again or get a hint.`:illegalMoveReason(fen,from,to,promote);}
+    else{promotion=null;message=result.status==='different'?result.feedback:illegalMoveReason(fen,from,to,promote);}
     render();
   }
   $('lesson-board').onclick=event=>{
@@ -305,6 +311,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     player.save();
     if(course.id!==requested.id){course=requested;lessons=course.lessons;progress=memoryFor(course);focus=false;}
     player=getPlayer(lessonEntry(course,{requestedId:id,rememberedId:memory.lastFor(course.id),completed:progress.read()}));
+    if(query.get('practice')==='squares'&&player.lesson.squarePractice){player.conceptIndex=0;player.setStage('learn');}
     clearTurn();query.set('lesson',player.lesson.id);history.replaceState({},'',`${course.path}?${query}`);render();
     const review=query.get('review'),rawIndex=query.get('exercise'),index=rawIndex!==null&&/^\d+$/.test(rawIndex)?Number(rawIndex):-1,source=`${review}:${index}`;
     if(player.reviewSource!==source&&((review==='practice'&&player.activities[index]?.data.kind==='practice')||(review==='question'&&player.plan.questions[index]))){

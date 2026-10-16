@@ -27,9 +27,9 @@ export class Engine {
   }
   async evaluate(fen, search, history) {
     const options = typeof search === 'number' ? { milliseconds: search } : search;
-    const { milliseconds, depth, clearHash } = options || {};
+    const { milliseconds, depth, clearHash, skill=20 } = options || {};
     if (!Number.isFinite(milliseconds) || milliseconds <= 0 || milliseconds > 120000 ||
-        (depth !== undefined && (!Number.isInteger(depth) || depth < 1 || depth > 30))) {
+        (depth !== undefined && (!Number.isInteger(depth) || depth < 1 || depth > 30))||!Number.isInteger(skill)||skill<0||skill>20) {
       throw new Error('Invalid engine search limits.');
     }
     const terminal = terminalEvaluation(fen, history);
@@ -54,6 +54,7 @@ export class Engine {
         }
       };
       if (clearHash) this.worker.postMessage('setoption name Clear Hash');
+      this.worker.postMessage(`setoption name Skill Level value ${skill}`);
       this.worker.postMessage(history ? `position fen ${history.startFen}${history.moves.length ? ` moves ${history.moves.join(' ')}` : ''}` : `position fen ${fen}`);
       this.worker.postMessage(`go ${depth ? `depth ${depth} ` : ''}movetime ${milliseconds}`);
     });

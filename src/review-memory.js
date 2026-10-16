@@ -8,6 +8,7 @@ export function createReviewMemory(storage) {
     } catch { return []; }
   }
   return {
+    list:()=>read(),
     last:()=>read()[0]||null,
     position(pgn,total) {
       const saved=read().find(entry=>entry.game.pgn===pgn);

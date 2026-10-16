@@ -80,6 +80,20 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
     else start(cursor,best);
     return true;
   }
+  function playback(fen,moves,cursor){
+    const source=context(),ply=source.parsed.fens.indexOf(fen);
+    // The coach may be inspecting a position in the current explored line.
+    let history;
+    if(ply>=0)history={startFen:source.parsed.fens[0],moves:source.parsed.moves.slice(0,ply).map(coord)};
+    else if(line){const index=[line.rootFen,...line.entries.map(move=>move.after)].indexOf(fen);if(index>=0)history=line.history(index);}
+    if(!history)return false;
+    const replacement=new AnalysisLine(fen,null,history);
+    for(const move of moves){if(move.before!==replacement.fen||replacement.play(move.from,move.to,move.promotion).status!=='played')return false;}
+    replacement.jump(cursor);
+    if(!line){restore=pause();savedGame=source.parsed;}else cancel();
+    line=replacement;selected=null;promotion=null;message='Coach continuation · use the move buttons to step through it. Your game is saved.';
+    $('line-controls').open=true;evaluate();return true;
+  }
   $('line-exit').onclick=()=>exit();
   $('line-undo').onclick=()=>{if(line)jump(line.cursor-1);};
   $('line-reset').onclick=()=>{if(line){cancel();line.reset();selected=null;promotion=null;evaluate();}};
@@ -108,5 +122,5 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
     $('line-moves').innerHTML='<button data-line-ply="0" aria-current="'+(line.cursor===0?'step':'false')+'">Start</button>'+line.entries.map((move,i)=>`<button data-line-ply="${i+1}" aria-current="${line.cursor===i+1?'step':'false'}">${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${move.san}</button>`).join('');
   }
   return {get active(){return Boolean(line);},get line(){return line;},get selected(){return selected;},get targets(){return new Set(selected?line.legal(selected).map(move=>move.to):[]);},start,exit,reset,click,select,attempt,jump,paint,
-    refresh(){if(line&&!busy&&!line.score)evaluate();else onChange();},tryBest};
+    refresh(){if(line&&!busy&&!line.score)evaluate();else onChange();},tryBest,playback};
 }

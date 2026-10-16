@@ -7,7 +7,7 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ 
 
 export function createTrainingUI({ context, navigate, pause, resume, scrollToBoard, icon, playSound = () => {} }) {
   let data = { moments: [], exercises: [] }, session = null, savedContext = null, resumeReview = false;
-  let previousEvaluations = null, previousCount = -1;
+  let previousEvaluations = null, previousCount = -1,previousColor=null;
   const dialog = $('practice-dialog');
 
   function reset() {
@@ -19,9 +19,10 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
   function render() {
     const { parsed, evaluations, color, running } = context();
     const count = evaluations.filter(Boolean).length;
-    if (evaluations !== previousEvaluations || count !== previousCount) {
-      previousEvaluations = evaluations; previousCount = count;
-      data = collectTraining(parsed, evaluations, color);
+    const practiceColor=$('practice-side').value==='both'?null:$('practice-side').value;
+    if (evaluations !== previousEvaluations || count !== previousCount||practiceColor!==previousColor) {
+      previousEvaluations = evaluations; previousCount = count;previousColor=practiceColor;
+      data = collectTraining(parsed, evaluations, practiceColor);
       $('moments-list').innerHTML = data.moments.length ? data.moments.map(event => {
         const owner = color ? event.move.color === color ? 'You' : 'Opponent' : event.move.color === 'w' ? 'White' : 'Black';
         const mate = event.before.mate != null || event.after.mate != null;
@@ -31,7 +32,7 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
       const exercises = data.exercises.length;
       $('start-practice').disabled = !exercises;
       $('start-practice').innerHTML = `${exercises ? `Practice ${exercises} position${exercises === 1 ? '' : 's'}` : count < parsed.fens.length ? 'Waiting for reviewed mistakes' : 'No mistakes to practice'} ${icon('arrow')}`;
-      $('practice-description').textContent = exercises ? `${color ? 'Your mistakes' : 'Mistakes from both players'}, turned into positions to solve. The answer stays hidden until you try or reveal it.` : count === parsed.fens.length ? 'No reviewed inaccuracies, mistakes, or blunders with a valid engine alternative were found.' : 'Positions appear as the engine reviews inaccuracies, mistakes, and blunders.';
+      $('practice-description').textContent = exercises ? `${practiceColor==='w'?'White’s mistakes':practiceColor==='b'?'Black’s mistakes':'Mistakes from both players'}, turned into positions to solve.${count<parsed.fens.length?' Provisional: review is incomplete.':''} The answer stays hidden until you try or reveal it.` : count === parsed.fens.length ? 'No reviewed inaccuracies, mistakes, or blunders with a valid engine alternative were found for this side.' : 'Positions appear as the engine reviews inaccuracies, mistakes, and blunders.';
     }
     $('moments-status').textContent = running ? 'Updating as you review' : count === parsed.fens.length ? `${data.moments.length} moments found` : count ? 'From reviewed positions' : 'Awaiting review';
     document.querySelectorAll('[data-moment]').forEach(button => {
@@ -40,9 +41,10 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     });
   }
 
-  function start() {
-    if (!data.exercises.length) return;
-    session = new PracticeSession(data.exercises);
+  function start(exercises=data.exercises) {
+    const tasks=Array.isArray(exercises)?exercises:data.exercises;
+    if (!tasks.length) return;
+    session = new PracticeSession(tasks);
     savedContext = context().parsed;
     resumeReview = pause();
     renderPractice(); dialog.showModal();
@@ -113,6 +115,7 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     navigate(Number(button.dataset.moment)); scrollToBoard();
   };
   $('start-practice').onclick = start;
+  $('practice-side').onchange=()=>render();
   $('practice-board').onclick = event => {
     const button = event.target.closest('[data-square]');
     if (!button || !session || session.status !== 'playing' || session.promotion) return;
@@ -150,5 +153,5 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
   $('practice-again').onclick = () => { session = new PracticeSession(session.exercises); renderPractice(); $('practice-board').querySelector('[tabindex="0"]').focus(); };
   $('practice-back').onclick = () => dialog.close();
   dialog.addEventListener('close', () => { if (resumeReview && savedContext === context().parsed) resume(); resumeReview = false; session = null; });
-  return { render, reset };
+  return { render, reset,startExercises:start };
 }

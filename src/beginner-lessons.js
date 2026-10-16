@@ -9,11 +9,11 @@ function explain(move){
   const capture=move.captured?` and captures the ${names[move.captured]}`:'';
   return `${side} moves the ${names[move.piece]} from ${move.from} to ${move.to}${capture}.${move.promotion?` The pawn becomes a ${names[move.promotion]}.`:''}${move.san.includes('#')?' This is checkmate.':move.san.includes('+')?' The king is in check.':''}`;
 }
-function lesson({id,title,unit,fen,moves,coach,prompt,intro,rules,question,options,answer,reason,takeaway,pages,notes={},start=0,squarePractice}){
+function lesson({id,title,unit,fen,moves,coach,prompt,intro,rules,question,options,answer,reason,takeaway,pages,notes={},start=0,squarePractice,demonstration,objective,hints,migration}){
   return {id,title,unit,tag:unit,fen,moves,practiceColor:'w',course:'Chess for Beginners',subtitle:prompt,takeaway,...(squarePractice?{squarePractice}:{}),
     source:`Knightlab practice inspired by the supplied book, ${pages}`,
     notes:verbose=>verbose.map((move,index)=>notes[index+1]||explain(move)),
-    guide:{intro,rules},quiz:{question,options,answer,explanation:reason},
+    ...(demonstration?{demonstration,objective,hints,migration}:{}),guide:{intro,rules},quiz:{question,options,answer,explanation:reason},
     study:{title,start,coach,prompt,goals:[rules[0],takeaway]}};
 }
 const pieces='1 · Board & pieces',rulesUnit='2 · Rules & king safety',tactics='3 · Your first plans',endings='4 · Simple endings';
@@ -26,8 +26,10 @@ export const BEGINNER_LESSONS=[
     rules:['Keep a light square at your near-right corner','The queens start on d1 and d8, on their own color','Select a piece, then select a highlighted destination'],
     question:'Which square is in White’s near-right corner?',options:['a1, a dark square','h1, a light square','h8, a dark square'],answer:1,reason:'From White’s side, h1 is the light square at the near-right corner. The coordinates stay the same when the board is flipped.',
     takeaway:'Read a square as a letter followed by a number. White makes the first move.'}),
-  lesson({id:'pawn-moves-and-captures',title:'Pawns move and capture differently.',unit:pieces,fen:'6k1/8/8/4p3/3P4/8/8/6K1 w - - 0 1',moves:['dxe5'],pages:'Pawn, printed p. 8',
-    coach:'Capture diagonally.',prompt:'Move your pawn from d4 to e5 to capture Black’s pawn. It cannot capture straight ahead.',
+  lesson({id:'pawn-moves-and-captures',title:'Pawns move and capture differently.',unit:pieces,fen:'6k1/8/8/1p6/2P5/8/8/6K1 w - - 0 1',moves:['cxb5'],pages:'Pawn, printed p. 8',
+    demonstration:{fen:'6k1/8/8/4p3/3P4/8/8/6K1 w - - 0 1',moves:['dxe5'],instruction:'Guided example: the pawn on d4 captures diagonally on e5.',explanation:'The White pawn moves one square diagonally forward and captures the Black pawn. A straight pawn move cannot capture.'},
+    objective:{kind:'capture',piece:'p',rule:'Pawns capture diagonally.'},hints:['Pawns capture one square diagonally forward. Look for an enemy pawn.','Focus on your White pawn. Which enemy piece can it capture?'],migration:{signature:'g5vcbp'},
+    coach:'Apply the pawn-capture rule.',prompt:'Independent practice · White to move. Capture the enemy pawn with your pawn.',
     intro:['White pawns move toward rank 8; Black pawns move toward rank 1. An ordinary pawn move goes one square straight forward onto an empty square.','From its starting rank, a pawn may move two squares if both squares are empty. To capture, it moves one square diagonally forward onto an enemy piece.'],
     rules:['Pawns capture one square diagonally forward','A pawn cannot move backward','A pawn cannot move straight ahead into an occupied square'],
     question:'How does the White pawn on d4 capture the pawn on e5?',options:['Straight ahead to d5','Diagonally to e5','Backward to e3'],answer:1,reason:'The pawn captures diagonally from d4 to e5. A forward move and a capture follow different rules.',

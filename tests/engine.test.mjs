@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { Worker as ThreadWorker } from 'node:worker_threads';
 import { Engine } from '../src/engine.js';
 import { parseGame, DEMO_PGN } from '../src/game.js';
+import { Chess } from 'chess.js';
+import { playSearch } from '../src/play-settings.js';
 
 class NodeWorker {
   constructor() {
@@ -13,6 +15,20 @@ class NodeWorker {
   postMessage(command) { this.thread.postMessage(command); }
   terminate() { this.thread.terminate(); }
 }
+
+test('real Stockfish accepts reduced and full skill settings, and both return legal replies', {timeout:20000}, async()=>{
+ const original=globalThis.Worker,commands=[];
+ class ObservedWorker extends NodeWorker {postMessage(command){commands.push(command);super.postMessage(command);}}
+ globalThis.Worker=ObservedWorker;const engine=new Engine(),fen=new Chess().fen();
+ try{
+  for(const level of ['beginner','casual','strong']){
+   const options=playSearch(level),result=await engine.evaluate(fen,{...options,clearHash:true});
+   assert.ok(commands.includes(`setoption name Skill Level value ${options.skill}`));assert.ok(commands.includes(`go depth ${options.depth} movetime ${options.milliseconds}`));
+   assert.doesNotThrow(()=>new Chess(fen).move({from:result.best.slice(0,2),to:result.best.slice(2,4),promotion:result.best[4]}));
+  }
+  await assert.rejects(engine.evaluate(fen,{milliseconds:100,skill:21}),/Invalid/);
+ }finally{engine.destroy();globalThis.Worker=original;}
+});
 test('real Stockfish handshake, forced mate, terminal state, and cancellation', {timeout:20000}, async () => {
   const original = globalThis.Worker;
   globalThis.Worker = NodeWorker;

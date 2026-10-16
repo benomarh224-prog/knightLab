@@ -4,6 +4,15 @@ import { parseGame } from '../src/game.js';
 import { createInlineAnalysis } from '../src/inline-analysis.js';
 
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
+
+test('coach playback validates the full continuation before replacing a branch and keeps its board synchronized',()=>{
+ const h=harness(),c=h.controller;
+ const line=parseGame('1. e4 e5 2. Nf3 *').moves;
+ assert.equal(c.playback(h.state.parsed.fens[0],line,2),true);assert.equal(c.line.cursor,2);assert.equal(c.line.fen,line[1].after);assert.equal(c.line.entries.length,3);
+ c.jump(3);assert.equal(c.line.last.san,'Nf3');assert.equal(c.line.fen,line[2].after);assert.equal(h.state.ply,0);
+ const before=c.line.fen;assert.equal(c.playback(h.state.parsed.fens[0],[{...line[0],before:'wrong'}],1),false);assert.equal(c.line.fen,before);
+ c.exit();assert.equal(c.active,false);assert.equal(h.resumes,1);
+});
 function harness(pgn='1. e4 e5 2. Nf3 Nc6 *',ply=0){
  const nodes=new Map();
  const node=id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,disabled:false,open:false,textContent:'',classList:{toggle(){}},setAttribute(){}});return nodes.get(id);};
