@@ -15,3 +15,5 @@ The images are decorative editorial illustrations. They do not assert evaluated 
 `open-games.svg` is an original code-generated vector cover, using Knightlab’s Staunton piece SVGs and the legal position after `1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5`. It is not an illustration copied from the supplied book.
 
 The current opening-course covers are the user-supplied `italian-game-cover.jpg` and `french-defense-cover.jpg`, copied unchanged from their attached images. They replace the earlier cover references in the catalog; the French cover also illustrates the homepage Openings category. Their embedded headings are preserved using `object-fit: contain`, with a full 3:2 image area on phones.
+
+`scotch-gambit.svg` is an original Knightlab vector cover showing the legal position after `1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Bc4`. Its nested chess pieces use the unchanged Chessnut artwork by Alexis Luengas under Apache-2.0, credited in `THIRD-PARTY-NOTICES.txt`. The cover is not copied from the supplied opening booklet.

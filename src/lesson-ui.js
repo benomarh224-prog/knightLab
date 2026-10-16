@@ -13,6 +13,7 @@ import { createLessonMotion,lessonFrames } from './lesson-motion.js';
 import { illegalMoveReason } from './lesson-move-help.js';
 import { coursePractice } from './course-practice.js';
 import { renderAttackingCatalog } from './attacking-catalog.js';
+import { renderOpeningCatalog } from './opening-catalog.js';
 import { lessonCheckmate,exploreBeforeCheckmate,createLessonCheckmateDialog } from './lesson-checkmate.js';
 import { lessonEntry,lessonGuidance } from './lesson-guidance.js';
 import { createSquarePracticeUI } from './square-practice.js';
@@ -23,6 +24,7 @@ const names={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'},stageNa
 
 export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePractice}){
   renderAttackingCatalog(COURSES);
+  renderOpeningCatalog(COURSES);
   const memoryFor=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key),players=new Map(),memory=createLearningMemory(storage,COURSES);
   const squarePractice=createSquarePracticeUI({storage});
   let course=COURSES.french,lessons=course.lessons,progress=memoryFor(course),player;

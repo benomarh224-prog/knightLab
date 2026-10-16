@@ -36,7 +36,7 @@ test('every lesson starts fresh on the displayed board while an explicit resume 
   p.stopExploring();const restored=make(c,l,storage);assert.equal(restored.resumeExploration(),true,l.id);assert.equal(restored.exploration.fen,branch,l.id);
   assert.equal(restored.session.fen,anchor);assert.equal(restored.boardComplete,false);count++;
  }
- assert.equal(count,202);
+ assert.equal(count,Object.values(COURSES).reduce((total,course)=>total+course.lessons.length,0));
 });
 
 test('clicking a completed board can start fresh, play the selected piece, and return without a position jump',()=>{
