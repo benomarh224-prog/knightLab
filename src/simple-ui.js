@@ -22,7 +22,7 @@ export function installSimpleUI(doc=document) {
   get('board-actions-toggle').setAttribute('aria-label','More board options');
   get('board-actions-toggle').firstElementChild.textContent='More';
   get('board-actions-toggle').title='More board options';
-  createCompactMenu({host:get('lesson-controls'),controls:['lesson-reset','lesson-flip','lesson-focus','lesson-explore-start','lesson-replay','lesson-challenge'].map(get),document:doc}).classList.add('lesson-options');
+  createCompactMenu({host:get('lesson-controls'),controls:['lesson-reset','lesson-flip','lesson-focus','lesson-explore-start','lesson-explore-resume','lesson-replay','lesson-challenge'].map(get),document:doc}).classList.add('lesson-options');
   get('lesson-reset').textContent='Restart exercise';get('lesson-flip').textContent='Flip board';
   for(const menu of doc.querySelectorAll('.compact-options')) {
     menu.addEventListener('toggle',()=>{

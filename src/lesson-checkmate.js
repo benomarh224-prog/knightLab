@@ -12,7 +12,7 @@ export function lessonCheckmate(player) {
 export function exploreBeforeCheckmate(player) {
   const result=lessonCheckmate(player);
   if(!result?.canExplore)return false;
-  if(!player.exploring&&!player.startExploring())return false;
+  if(!player.exploring&&!player.startExploring({fresh:true}))return false;
   // Rewind the free branch only. The solved exercise and earned progress stay intact.
   if(!player.exploration.undo())return false;
   player.save();return true;

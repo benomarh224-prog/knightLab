@@ -54,11 +54,20 @@ export class LessonPlayer {
   get session(){const activity=this.activity;return activity?(this.reviewing?activity.review:this.challengeMode&&activity.challenge?activity.challenge:activity.session):null;}
   get question(){return this.plan.questions[this.questionIndex]||null;}
   get exploration(){return this.exploring?this.activity?.exploration||null:null;}
-  startExploring(){
+  get resumableExploration(){
+    const session=this.session;if(!session)return null;
+    return [this.activity.exploration,this.activity.savedExploration].find(line=>line&&line.anchorFen===session.fen&&line.fen!==session.fen)||null;
+  }
+  startExploring({fresh=false}={}){
     const session=this.session;if(!session)return false;
     if(this.challengeMode)this.activity.challengeHelped=true;
-    if(!this.activity.exploration||this.activity.exploration.anchorFen!==session.fen)this.activity.exploration=new LessonExploration(session);
+    if(fresh&&this.resumableExploration)this.activity.savedExploration=this.resumableExploration;
+    if(fresh||!this.activity.exploration||this.activity.exploration.anchorFen!==session.fen)this.activity.exploration=new LessonExploration(session);
     this.exploring=true;this.stage='try';this.save();return true;
+  }
+  resumeExploration(){
+    const saved=this.resumableExploration;if(!saved)return false;
+    this.activity.exploration=saved;return this.startExploring();
   }
   stopExploring(){this.exploring=false;this.save();}
   exploreMove(from,to,promotion){
@@ -143,7 +152,7 @@ export class LessonPlayer {
   save(){
     if(this.boardComplete&&this.checksComplete&&(!this.plan.learnRequired||this.learned))this.progress.complete(this.lesson.id);
     try{this.storage?.setItem(this.storageKey,JSON.stringify({version:1,signature:this.plan.signature,stage:this.stage,conceptIndex:this.conceptIndex,activityIndex:this.activityIndex,questionIndex:this.questionIndex,seen:this.seen,answers:this.answers,flipped:this.flipped,reviewing:this.reviewing,challengeMode:this.challengeMode,questionReviewIndex:this.questionReviewIndex,reviewSource:this.reviewSource,exploring:this.exploring,
-      orientationRevision:this.orientationRevision,activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,hintCursor:a.hintCursor,hintLevel:a.hintLevel,exploration:a.exploration?.snapshotMoves()||null,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
+      orientationRevision:this.orientationRevision,activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,hintCursor:a.hintCursor,hintLevel:a.hintLevel,exploration:a.exploration?.snapshotMoves()||null,savedExploration:a.savedExploration?.snapshotMoves()||null,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
   }
   restore(){
     try{
@@ -162,6 +171,7 @@ export class LessonPlayer {
         }else{activity.session.jump(bounded(saved.cursor,activity.data.moves.length));activity.done=saved.done===true;}
         activity.review.jump(bounded(saved.reviewCursor,activity.data.moves.length));
         activity.exploration=LessonExploration.restore(activity.session,saved.exploration);
+        activity.savedExploration=LessonExploration.restore(activity.session,saved.savedExploration);
         activity.mistakes=bounded(saved.mistakes,10000);activity.hintCursor=Number.isInteger(saved.hintCursor)?saved.hintCursor:-1;activity.hintLevel=bounded(saved.hintLevel,3);
         if(saved.challenge&&activity.data.kind==='practice'){
           activity.challenge=new OpeningLesson(activity.data);activity.challenge.practice({startPly:activity.data.startPly});

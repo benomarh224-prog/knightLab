@@ -102,9 +102,10 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       $('lesson-promotion').hidden=!promotion;
       $('lesson-hint').hidden=player.challengeMode||exploring||session.completed||!practice;
       $('lesson-explore-toggle').hidden=!exploring&&!(session.mode==='practice'&&session.completed);
-      $('lesson-explore-toggle').textContent=exploring?'Back':'Explore';$('lesson-explore-toggle').setAttribute('aria-label',exploring?'Return to study position':'Explore this position');
+      $('lesson-explore-toggle').textContent=exploring?'Back to lesson':'Explore';$('lesson-explore-toggle').setAttribute('aria-label',exploring?'Return to study position':'Start free play from the current position');
       $('lesson-explore-toggle').disabled=motion.active;
       $('lesson-explore-start').hidden=exploring||player.challengeMode||session.completed;
+      $('lesson-explore-resume').hidden=exploring||player.challengeMode||!player.resumableExploration;
       $('lesson-hint').disabled=motion.active||!practice||session.completed||hint?.level===3;
       $('lesson-hint').textContent=hint?.level===1?'Show piece':hint?.level===2?'Reveal move':hint?.level===3?'Revealed':'Hint';
       $('lesson-hint').setAttribute('aria-label',hint?.level===1?'Show the piece':hint?.level===2?'Reveal the study move':hint?.level===3?'Study move revealed':'Get a hint');
@@ -119,7 +120,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       $('lesson-reset').textContent=exploring?'Reset free play':practice?'Restart exercise':'Restart review';
       if(exploring)$('lesson-reset').setAttribute('aria-label','Reset exploration to study position');
       $('lesson-feedback').textContent=message||hint?.text||(practice?(session.completed?`Well played.${session.hints?` ${session.hints} hint${session.hints===1?'':'s'} used.`:''}`:'Select a piece, then a highlighted destination.'):'Use the arrows or a move in the line to review.');
-      $('lesson-feedback').hidden=!message&&!hint&&!session.completed;
+      $('lesson-feedback').hidden=!message&&!hint;
       if(exploring){$('lesson-feedback').textContent=message||(session.ending?`${session.ending}. Use Undo to try a different line.`:'');$('lesson-feedback').hidden=!message&&!session.ending;}
       $('lesson-current-note').hidden=true;$('lesson-current-note').textContent=session.note;
       $('lesson-current-move').textContent=session.last?`${session.last.before.split(' ')[5]}${session.last.color==='w'?'.':'…'} ${session.last.san}`:'Start';
@@ -226,10 +227,11 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-reset').onclick=()=>{player.reset();clearTurn();render();};
   $('lesson-undo').onclick=()=>{const exploring=player.exploring;clearTurn();if(player.undo())message=exploring?'Move taken back. Try another continuation.':'Back to your previous decision. Your earned completion is saved.';render();};
   function toggleExploration(){
-    clearTurn();if(player.exploring)player.stopExploring();else player.startExploring();render();
-    ($('lesson-explore-toggle').hidden?$('lesson-explore-start'):$('lesson-explore-toggle')).focus({preventScroll:true});
+    clearTurn();if(player.exploring)player.stopExploring();else player.startExploring({fresh:true});render();
+    if($('lesson-explore-toggle').hidden)focusBoard();else $('lesson-explore-toggle').focus({preventScroll:true});
   }
   $('lesson-explore-toggle').onclick=toggleExploration;$('lesson-explore-start').onclick=toggleExploration;
+  $('lesson-explore-resume').onclick=()=>{clearTurn();if(player.resumeExploration()){render();focusBoard();}};
   $('lesson-focus').onclick=()=>{focus=!focus;render();$('lesson-focus').focus({preventScroll:true});document.querySelector('.lesson-topline').scrollIntoView({block:'start'});};
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&focus&&!document.querySelector('dialog[open]')){focus=false;render();$('lesson-focus').focus({preventScroll:true});}});
   $('lesson-previous').onclick=()=>{player.jump(player.session.cursor-1);clearTurn();render();};$('lesson-next').onclick=()=>{player.jump(player.session.cursor+1);clearTurn();render();};
@@ -261,7 +263,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-board').onclick=event=>{
     let session=player.exploration||player.session;if(motion.active||!session||session.mode==='watch'||promotion)return;
     const square=event.target.closest('[data-square]')?.dataset.square;if(!square)return;
-    if(!player.exploring&&session.completed){player.startExploring();session=player.exploration;}
+    if(!player.exploring&&session.completed){player.startExploring({fresh:true});session=player.exploration;}
     if(player.exploration?.ending){message=`${session.ending}. Undo a move to explore another continuation.`;render();return;}
     const chess=new Chess(session.fen),piece=chess.get(square);
     const color=player.exploring?chess.turn():session.lesson.practiceColor;
