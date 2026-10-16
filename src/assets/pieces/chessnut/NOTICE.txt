@@ -1,0 +1,4 @@
+Chessnut chess piece artwork by Alexis Luengas.
+Source: https://github.com/LexLuengas/chessnut-pieces
+Distributed under the Apache License, Version 2.0.
+SVG files supplied unchanged from the Lichess Chessnut asset set.

@@ -13,3 +13,8 @@ Source: https://github.com/lichess-org/chess-openings
 Snapshot revision: a6189a30dc273ccb21fc2536a9a2fefd5592a67a.
 The checked-in snapshot includes 3865 distinct opening positions.
 See OPENINGS-LICENSE.txt for the CC0 Public Domain Dedication.
+
+Chessnut chess piece artwork by Alexis Luengas (Apache-2.0).
+Source: https://github.com/LexLuengas/chessnut-pieces
+Unmodified SVGs from the Lichess Chessnut asset set.
+See assets/pieces/chessnut/LICENSE.txt, NOTICE.txt and SOURCES.json.

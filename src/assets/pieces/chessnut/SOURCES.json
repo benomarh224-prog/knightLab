@@ -1,0 +1,70 @@
+{
+  "set": "Chessnut",
+  "author": "Alexis Luengas",
+  "license": "Apache-2.0",
+  "license_source": "https://raw.githubusercontent.com/LexLuengas/chessnut-pieces/master/LICENSE.txt",
+  "lichess_license_reference": "https://github.com/lichess-org/lila/blob/master/COPYING.md",
+  "downloaded_on": "2026-10-15",
+  "assets": [
+    {
+      "file": "pieces/wK.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/wK.svg",
+      "sha256": "f64f2d088fe96a10fa77104cd1a42339e5495f56d6dcfda491298decbda7b2fa"
+    },
+    {
+      "file": "pieces/wQ.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/wQ.svg",
+      "sha256": "2d20b17499c7c268ca87f3c4038a3b1335e0a087010037b0d854f2f7f84aa254"
+    },
+    {
+      "file": "pieces/wR.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/wR.svg",
+      "sha256": "57d662b9b905a603e1cf28e36d61576dfd1a50695b23724c7189cd0f15736f03"
+    },
+    {
+      "file": "pieces/wB.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/wB.svg",
+      "sha256": "ec62a67ea0212ec75e151ff673b2ef27e33e1732665839148dfdd27c357ab096"
+    },
+    {
+      "file": "pieces/wN.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/wN.svg",
+      "sha256": "f0fac07e481f7b31d1b074e458908f8fcad9ee4abdc76d84c274b8c4f438e388"
+    },
+    {
+      "file": "pieces/wP.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/wP.svg",
+      "sha256": "81cde9f22edf3f750a282335a6d1367f011642d5a9bb8a94c6c6859ab1b326ea"
+    },
+    {
+      "file": "pieces/bK.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/bK.svg",
+      "sha256": "9e3c0ec404aec41dfabea96a204712c3feae80a456496ec0398499a1a77e642f"
+    },
+    {
+      "file": "pieces/bQ.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/bQ.svg",
+      "sha256": "cf47f78c1ad9a99163e942f70365f8dd2b6d911011a5d8298be3d0596ad924a2"
+    },
+    {
+      "file": "pieces/bR.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/bR.svg",
+      "sha256": "b588445132bd2295989b94b058d6ed91605b5dffbb5b4533a2f782848cae1684"
+    },
+    {
+      "file": "pieces/bB.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/bB.svg",
+      "sha256": "933697379921e0a36f17a6863f5324e7f05fa73b243dab3d94e5ce8c37d064c2"
+    },
+    {
+      "file": "pieces/bN.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/bN.svg",
+      "sha256": "8842b49915174de6d224273f9dffd2a84f65dc5fc2b67c83441cfbe1b423d008"
+    },
+    {
+      "file": "pieces/bP.svg",
+      "source": "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/chessnut/bP.svg",
+      "sha256": "22da60dfa9fc6bfb54b1ee369dc9e3555e567e43eaea0fccad2e0211259ff0aa"
+    }
+  ]
+}
