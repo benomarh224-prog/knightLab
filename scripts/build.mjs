@@ -1,3 +1,4 @@
+import './bundle-pieces.mjs';
 import { build } from 'esbuild';
 import { mkdir, copyFile, readdir, readFile, cp } from 'node:fs/promises';
 import { PAGE_PATHS } from '../src/routes.js';
