@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createBoardCoach } from '../src/board-coach.js';
 
 function fixture(wide){
- const elements=new Map(),listeners={};let focusMode=false;
+ const elements=new Map(),listeners={};let focusMode=false,otherDialog=null;
  function node(id){
   if(elements.has(id))return elements.get(id);
   const classes=new Set();
@@ -19,15 +19,15 @@ function fixture(wide){
  board.append(area,card);card.append(node('coach-panel'));
  const desktop={matches:wide,addEventListener(_event,handler){this.change=handler;}};
  globalThis.matchMedia=query=>query.includes('min-width')?desktop:{matches:!desktop.matches};
- globalThis.document={activeElement:null,getElementById:node,createElement:()=>node('players'),querySelector:node,addEventListener(event,handler){listeners[event]=handler;}};
+ globalThis.document={activeElement:null,getElementById:node,createElement:()=>node('players'),querySelector:selector=>selector==='dialog[open]'?otherDialog:node(selector),addEventListener(event,handler){listeners[event]=handler;}};
  const controller=createBoardCoach({showBoard(){},navigate(){}});
- return {controller,desktop,node,board,side,area,card,listeners,set focusMode(value){focusMode=value;}};
+ return {controller,desktop,node,board,side,area,card,listeners,set focusMode(value){focusMode=value;},set otherDialog(value){otherDialog=value;}};
 }
 
 test('desktop coach sits next to the board and resizing moves the same live panel above it',()=>{
  const h=fixture(true),panel=h.node('coach-panel');
- assert.equal(h.card.parent,h.side);assert.equal(h.card.contains(panel),true);assert.equal(h.card.classList.contains('is-expanded'),true);
- assert.equal(h.node('board-coach-close').hidden,true);
+ assert.equal(h.card.parent,h.side);assert.equal(h.card.contains(panel),true);assert.equal(h.card.classList.contains('is-expanded'),false);
+ assert.equal(h.node('board-coach-close').hidden,false);
  panel.focus();h.desktop.matches=false;h.desktop.change();
  assert.equal(h.card.parent,h.board);assert.equal(h.card.contains(panel),true);assert.equal(document.activeElement,panel);
  assert.equal(h.card.classList.contains('is-expanded'),false);assert.equal(h.node('board-coach-close').hidden,false);
@@ -38,6 +38,9 @@ test('focus mode brings the coach along and an adjacent coach does not swallow E
  const h=fixture(true);let prevented=false;
  const escape={key:'Escape',preventDefault(){prevented=true;},stopImmediatePropagation(){}};
  h.listeners.keydown(escape);assert.equal(prevented,false);
+ h.node('board-coach-close').onclick();h.otherDialog={id:'connect-dialog'};
+ h.listeners.keydown(escape);assert.equal(prevented,false);assert.equal(h.card.classList.contains('is-expanded'),true);
+ h.otherDialog=null;h.listeners.keydown(escape);assert.equal(prevented,true);assert.equal(h.card.classList.contains('is-expanded'),false);
  h.focusMode=true;h.controller.position();assert.equal(h.card.parent,h.board);assert.equal(h.card.classList.contains('is-expanded'),false);
  h.node('board-coach-close').onclick();assert.equal(h.card.classList.contains('is-expanded'),true);
  // close() is tested independently of viewport geometry in reveal().

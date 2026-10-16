@@ -31,10 +31,10 @@ export function createBoardCoach({showBoard,navigate}) {
   }
   desktop.addEventListener('change',position);
   function close(restoreFocus=false) {
-    card.classList.toggle('is-expanded',adjacent());
-    $('board-coach-close').hidden=adjacent();
+    card.classList.remove('is-expanded');
+    $('board-coach-close').hidden=false;
     $('board-coach-close').textContent='Details';
-    $('board-coach-close').setAttribute('aria-expanded',String(adjacent()));
+    $('board-coach-close').setAttribute('aria-expanded','false');
     $('board-coach-close').setAttribute('aria-label','Show coach details');
     if(restoreFocus)$('board-coach-close').focus({preventScroll:true});
   }
@@ -63,7 +63,7 @@ export function createBoardCoach({showBoard,navigate}) {
   $('coach-previous').onclick=()=>navigate(-1);
   $('coach-next').onclick=()=>navigate(1);
   document.addEventListener('keydown',event=>{
-    if(!adjacent() && card.classList.contains('is-expanded') && event.key==='Escape'){
+    if(card.classList.contains('is-expanded') && event.key==='Escape' && (!document.querySelector('dialog[open]')||board.closest('.focus-dialog'))){
       event.preventDefault();event.stopImmediatePropagation();close(true);reveal();
     }
   },true);

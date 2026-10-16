@@ -20,6 +20,7 @@ import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceM
 import { createPageRouter } from './routes.js';
 import { createLearningUI } from './learning-ui.js';
 import { createNavigation } from './navigation.js';
+import { installSimpleUI } from './simple-ui.js';
 import { COURSES } from './courses.js';
 
 const $ = id => document.getElementById(id);
@@ -814,6 +815,7 @@ for(const id of ['course-cover-board']){
   }
   $(id).innerHTML=html;
 }
+installSimpleUI();
 router=createPageRouter(page=>{
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   closeWorkspaceMenu();
