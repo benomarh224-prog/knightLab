@@ -1,3 +1,4 @@
+import {navigationSoundMove} from './sound.js';
 import { AnalysisLine } from './analysis-line.js';
 import { Chess } from 'chess.js';
 import { Engine } from './engine.js';
@@ -6,6 +7,7 @@ const $=id=>document.getElementById(id);
 const coord=move=>move.from+move.to+(move.promotion||'');
 
 export function createInlineAnalysis({context,pause,resume,onChange,playSound,createEngine=()=>new Engine()}) {
+  let navigationAudio=0;
   let line=null, selected=null, promotion=null, engine=null, run=0, busy=false, restore=false, savedGame=null, message='';
   function cancel() { run++; engine?.destroy(); engine=null; busy=false; }
   function reset() { cancel(); line=null; selected=null; promotion=null; restore=false; $('line-controls').open=false; }
@@ -43,7 +45,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
     if (outcome.status==='promotion') { promotion={from,to}; onChange(); return; }
     if (outcome.status!=='played') { message='That move is not legal. Choose a highlighted square.'; $('line-controls').open=true; onChange(); return; }
     selected=null; promotion=null; message=`Exploring ${outcome.move.san}. The original game is unchanged.`;
-    playSound(outcome.move); evaluate();
+    evaluate();playSound(outcome.move);
   }
   function select(square, repaint=true) {
     if (promotion) return;
@@ -68,7 +70,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
   }
   function jump(cursor) {
     if (!line) return;
-    cancel(); line.jump(cursor); selected=null; promotion=null; evaluate();
+    const previous=line.cursor;cancel();line.jump(cursor);selected=null;promotion=null;evaluate();playSound(navigationSoundMove(line.entries,previous,line.cursor),{eventId:'variation-'+(++navigationAudio)});
   }
   function tryBest(best,{replaceLast=false}={}) {
     if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(best||''))return false;

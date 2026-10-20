@@ -1,3 +1,5 @@
+import {animatePieces,moveTransitions} from './piece-motion.js';
+import {finishBoard,enableBoardDrag} from './board-surface.js';
 import { Chess } from 'chess.js';
 import { pieceSvg } from './pieces.js';
 import { collectTraining, PracticeSession, moveLabel, pieceNames } from './training.js';
@@ -5,7 +7,8 @@ import { collectTraining, PracticeSession, moveLabel, pieceNames } from './train
 const $ = id => document.getElementById(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 
-export function createTrainingUI({ context, navigate, pause, resume, scrollToBoard, icon, playSound = () => {} }) {
+export function createTrainingUI({ context, navigate, pause, resume, scrollToBoard, icon, playSound = () => {},feedbackSound=()=>{} }) {
+  let painted=null;
   let data = { moments: [], exercises: [] }, session = null, savedContext = null, resumeReview = false;
   let previousEvaluations = null, previousCount = -1,previousColor=null;
   const dialog = $('practice-dialog');
@@ -76,7 +79,10 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
       const label = `${square}${piece ? `, ${piece.color === 'w' ? 'White' : 'Black'} ${pieceNames[piece.type]}` : ', empty'}${selected ? ', selected' : ''}${targets.has(square) ? ', legal destination' : ''}`;
       squares += `<button class="square practice-square${dark ? ' dark' : ''}${selected ? ' piece-selected' : ''}${targets.has(square) ? ' legal-target' : ''}${hintSquare === square ? ' hint-square' : ''}${answer ? ' answer-square' : ''}" data-square="${square}" tabindex="${square === tabSquare ? 0 : -1}" aria-label="${escape(label)}" aria-pressed="${selected}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}</button>`;
     }
-    $('practice-board').innerHTML = squares;
+    $('practice-board').innerHTML = squares;finishBoard($('practice-board'),chess,session.selected);
+    const solution=session.exercise.solution;
+    const position={game:session.exercise,fen:chess.fen(),last:session.status==='playing'?null:new Chess(session.exercise.fen).move({from:solution.slice(0,2),to:solution.slice(2,4),promotion:solution[4]}),flipped};
+    animatePieces($('practice-board'),moveTransitions(painted,position));painted=position;
     $('practice-board').setAttribute('aria-label', `Practice position, ${exercise.color === 'w' ? 'White' : 'Black'} to move. Select a piece and its destination.`);
     $('practice-dialog-title').textContent = 'Find a better move';
     $('practice-counter').textContent = `Position ${session.index + 1} of ${session.exercises.length}`;
@@ -103,11 +109,11 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
       renderPractice(); $('practice-promotion').querySelector('button').focus(); return;
     }
     session.promotion = null;
-    if (['correct', 'retry'].includes(result.status)) playSound(chess.move({ from, to, promotion }));
+    const accepted=result.status==='correct'?chess.move({from,to,promotion}):null;
     if (result.status === 'correct') { session.feedback = 'Correct! You found Stockfish’s first choice.'; session.selected = null; }
     else if (result.status === 'retry') { session.feedback = `${result.san} is legal, but it is not Stockfish’s first choice. Try another move.`; session.selected = null; }
     else session.feedback = 'That move is not legal. Choose a highlighted destination.';
-    renderPractice(to);
+    renderPractice(to);if(accepted)playSound(accepted);else if(['retry','illegal'].includes(result.status))feedbackSound('incorrect');
   }
 
   $('moments-list').onclick = event => {
@@ -116,6 +122,7 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
   };
   $('start-practice').onclick = start;
   $('practice-side').onchange=()=>render();
+  enableBoardDrag($('practice-board'),{read:()=>({chess:session?new Chess(session.exercise.fen):null,disabled:!session||session.status!=='playing'||Boolean(session.promotion)}),select:from=>{session.selected=from;renderPractice();},play:attempt});
   $('practice-board').onclick = event => {
     const button = event.target.closest('[data-square]');
     if (!button || !session || session.status !== 'playing' || session.promotion) return;
@@ -146,10 +153,10 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
   $('practice-reveal').onclick = () => {
     if (!session || session.status !== 'playing') return;
     const chess = new Chess(session.exercise.fen), solution = session.exercise.solution;
-    session.reveal(); playSound(chess.move({ from: solution.slice(0,2), to: solution.slice(2,4), promotion: solution[4] }));
-    session.feedback = 'Solution revealed. Study the move, then try the next position.'; renderPractice(); $('practice-next').focus();
+    session.reveal();const accepted=chess.move({from:solution.slice(0,2),to:solution.slice(2,4),promotion:solution[4]});
+    session.feedback = 'Solution revealed. Study the move, then try the next position.'; renderPractice();playSound(accepted);$('practice-next').focus();
   };
-  $('practice-next').onclick = () => { if (!session) return; session.next(); renderPractice(); if (!session.finished) $('practice-board').querySelector('[tabindex="0"]').focus(); };
+  $('practice-next').onclick = () => { if (!session) return; session.next();renderPractice();if(session.finished)feedbackSound('complete'); if (!session.finished) $('practice-board').querySelector('[tabindex="0"]').focus(); };
   $('practice-again').onclick = () => { session = new PracticeSession(session.exercises); renderPractice(); $('practice-board').querySelector('[tabindex="0"]').focus(); };
   $('practice-back').onclick = () => dialog.close();
   dialog.addEventListener('close', () => { if (resumeReview && savedContext === context().parsed) resume(); resumeReview = false; session = null; });

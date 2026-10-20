@@ -13,6 +13,9 @@ import { createInlineAnalysis } from './inline-analysis.js';
 import { primaryMoveThreat, arrowPath } from './board-visuals.js';
 import { createBoardCoach } from './board-coach.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
+import { createAudioSettings } from './audio-settings.js';
+import { createAutoplay } from './autoplay.js';
+import { finishBoard,enableBoardDrag } from './board-surface.js';
 import { createReviewMemory } from './review-memory.js';
 import { moveTransitions, animatePieces, fadePreviousHighlights } from './piece-motion.js';
 import { compactCoachText, compactMoveText } from './compact-review.js';
@@ -80,6 +83,7 @@ function saveReviewPosition() {
 }
 let boardDragging=false, inline, showThreats=true, selectedThreat=null, threatFen=null, threats=[];
 function pauseWorkspace() {
+  autoplay.stop();
   const running=state.running, restoring=inline?.active ? inline.exit(false) : false;
   stopAnalysis(); render(); return running || restoring;
 }
@@ -96,12 +100,23 @@ $('opening-card').addEventListener('toggle', () => {
   $('opening-toggle-label').textContent = $('opening-card').open ? 'Less' : 'Details';
 });
 positionOpeningCard();
-let soundEnabled = true, soundWarning = false;
-try { soundEnabled = localStorage.getItem('knightlab-sound') !== 'off'; } catch {}
-const moveSounds = new MoveSounds({ enabled: soundEnabled, onState: audioState => {
-  $('toggle-sound').dataset.audioState = audioState;
-  if (audioState === 'unavailable' && !soundWarning) { soundWarning = true; toast('Move sounds are unavailable in this browser.'); }
-} });
+const moveSounds=new MoveSounds({storage:reviewStorage,onState:audioState=>{
+  $('toggle-sound').dataset.audioState=audioState;
+  $('audio-settings-status').textContent=['blocked','unavailable'].includes(audioState)?'Audio is paused by the browser. Tap Sound on to try again.':'';
+}});
+let navigationAudio=0;
+const playSound=(move,options)=>moveSounds.play(move,options);
+const feedbackSound=(kind,options)=>moveSounds.feedback(kind,options);
+const playbackButton=document.createElement('button');playbackButton.id='autoplay-moves';playbackButton.type='button';playbackButton.textContent='Play moves';playbackButton.setAttribute('aria-pressed','false');
+const autoplay=createAutoplay({read:()=>inline?.active?{source:inline.line,cursor:inline.line.cursor,total:inline.line.entries.length}:state.parsed?{source:state.parsed,cursor:state.ply,total:state.parsed.moves.length}:null,
+  next:()=>stepMove(1,{automatic:true}),onState:active=>{
+    playbackButton.textContent=active?'Pause playback':'Play moves';playbackButton.setAttribute('aria-pressed',String(active));
+    const toggle=$('board-actions-toggle');toggle.firstElementChild.textContent=active?'Pause':'More';
+    toggle.setAttribute('aria-label',active?'Pause playback':'More board options');toggle.title=active?'Pause playback':'More board options';
+    if(active){toggle.removeAttribute('aria-expanded');toggle.removeAttribute('aria-controls');}
+    else{toggle.setAttribute('aria-expanded',String(!$('board-actions-panel').hidden));toggle.setAttribute('aria-controls','board-actions-panel');}
+  }});
+playbackButton.onclick=()=>autoplay.toggle();
 const training = createTrainingUI({
   context: () => ({ parsed: state.parsed, evaluations: state.evaluations, color: playerColor(), running: state.running, ply: state.ply }),
   navigate: goTo,
@@ -109,15 +124,15 @@ const training = createTrainingUI({
   resume: startAnalysis,
   scrollToBoard: () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); },
   icon,
-  playSound: move => moveSounds.play(move),
+  playSound,feedbackSound,
 });
 const explorer = createExploreUI({
   context: () => ({ parsed: state.parsed, ply: state.ply, flipped: state.flipped }),
   pause: pauseWorkspace,
   resume: startAnalysis,
-  playSound: move => moveSounds.play(move),
+  playSound,feedbackSound,
 });
-inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound:move=>moveSounds.play(move)});
+inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound});
 const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove});
 const actionsToggle=$('board-actions-toggle'), actionsPanel=$('board-actions-panel');
@@ -136,6 +151,7 @@ function closeBoardActions(restoreFocus=false) {
   if(restoreFocus)actionsToggle.focus({preventScroll:true});
 }
 actionsToggle.onclick=()=>{
+  if(autoplay.active){autoplay.stop();return;}
   const opening=actionsPanel.hidden;
   actionsPanel.hidden=!opening;
   actionsToggle.setAttribute('aria-expanded',String(opening));
@@ -194,6 +210,7 @@ function setLibraryOpen(open) {
 $('library-toggle').onclick=()=>setLibraryOpen($('library-body').hidden);
 
 function setGame(game, { demo = false, analyze = true,remember=true } = {}) {
+  autoplay.stop();
   const parsed = parseGame(game.pgn);
   inline.reset(); selectedThreat=null; threatFen=null; boardCoach.close(false);
   closeBoardActions(); setLibraryOpen(router?.page==='games');
@@ -284,7 +301,7 @@ function renderBoard() {
     const label=`${square}${piece ? ': ' + (piece.color === 'w' ? 'White ' : 'Black ') + names[piece.type] : ': empty'}${threat ? '. '+threat.explanation : ''}${targets.has(square)?'. Legal destination':''}`;
     squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}${threat?' threatened threat-'+threat.kind:''}${selection===square?' piece-selected':''}${targets.has(square)?' legal-target':''}" data-square="${square}" role="button" tabindex="${focusedSquare===square||!focusedSquare&&(selection===square||!selection&&f===0&&r===7)?0:-1}" aria-label="${escape(label)}" ${piece?.color===chess.turn()?'draggable="true"':''} title="${escape(label)}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${threat?'<span class="threat-dot" aria-hidden="true">!</span>':''}${badge}</div>`;
   }
-  $('board').innerHTML = squares;
+  $('board').innerHTML = squares;finishBoard($('board'),chess,selection);
   const nextPosition={fen:view.fen,last:view.last,flipped:state.flipped,game:state.parsed};
   animatePieces($('board'),moveTransitions(paintedPosition,nextPosition));
   fadePreviousHighlights($('board'),fadingHighlights);
@@ -482,12 +499,13 @@ function updateMoveRatings(items) {
     if (item) { dot.className = 'stat-dot ' + item.label.toLowerCase(); button.title = `${state.parsed.moves[ply - 1].san}: ${item.label}. Evaluation loss: ${(item.loss / 100).toFixed(2)} pawns.`; }
   });
 }
-function goTo(ply) {
+function goTo(ply,{automatic=false}={}) {
+  if(!automatic)autoplay.stop();
   boardCoach.close();
   const restart=inline.active?inline.exit(false):false;
   const previous = state.ply;
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
-  moveSounds.play(navigationSoundMove(state.parsed.moves, previous, state.ply)); render();
+  render();playSound(navigationSoundMove(state.parsed.moves,previous,state.ply),{eventId:'review-'+(++navigationAudio)});
   saveReviewPosition();
   const selectedCell=document.querySelector(`.move-cell[data-ply="${state.ply}"]`);
   if (state.tab === 'moves'&&selectedCell?.getClientRects().length) selectedCell.scrollIntoView({ block:'nearest', behavior:'instant' });
@@ -711,7 +729,7 @@ $('games-list').onclick = event => {
 document.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { state.filter = button.dataset.filter; state.libraryPage = 0; document.querySelectorAll('[data-filter]').forEach(element => { element.classList.toggle('selected', element === button); element.setAttribute('aria-pressed', String(element === button)); }); renderGames(); });
 for (const [id, change] of [['library-prev', -1], ['library-next', 1]]) $(id).onclick = () => { state.libraryPage += change; renderGames(); scrollToSection($('game-library')); };
 $('load-more').onclick = loadOlder;
-function stepMove(delta) { if(inline.active){boardCoach.close();inline.jump(inline.line.cursor+delta);boardCoach.reveal({playback:true});}else goTo(state.ply+delta); }
+function stepMove(delta,{automatic=false}={}) { if(!automatic)autoplay.stop(); if(inline.active){boardCoach.close();inline.jump(inline.line.cursor+delta);boardCoach.reveal({playback:true});}else goTo(state.ply+delta,{automatic}); }
 $('first-move').onclick = () => inline.active?inline.jump(0):goTo(0);
 $('previous-move').onclick = () => stepMove(-1);
 $('next-move').onclick = () => stepMove(1);
@@ -727,23 +745,10 @@ $('board').onclick = event => {
   if (badge) { badge.setAttribute('aria-pressed', String(badge.getAttribute('aria-pressed') !== 'true'));return; }
   const square=event.target.closest('[data-square]')?.dataset.square;
   if(!square) return;
-  inline.click(square);
+  autoplay.stop();inline.click(square);
   if(showThreats && threats.some(item=>item.square===square)) {selectedThreat=square;renderBoard();}
 };
-$('board').addEventListener('dragstart',event=>{
-  const square=event.target.closest('[data-square]')?.dataset.square;
-  if(!square||event.target.closest('.piece-rating')){event.preventDefault();return;}
-  boardDragging=true; inline.select(square,false); event.dataTransfer.setData('text/plain',square);event.dataTransfer.effectAllowed='move';
-  if(inline.selected!==square){boardDragging=false;event.preventDefault();return;}
-  for(const tile of $('board').querySelectorAll('[data-square]')) {tile.classList.toggle('piece-selected',tile.dataset.square===inline.selected);tile.classList.toggle('legal-target',inline.targets.has(tile.dataset.square));}
-});
-$('board').addEventListener('dragend',()=>{boardDragging=false;inline.refresh();});
-$('board').addEventListener('dragover',event=>{if(inline.active)event.preventDefault();});
-$('board').addEventListener('drop',event=>{
-  if(!inline.active)return;event.preventDefault();boardDragging=false;
-  const from=event.dataTransfer.getData('text/plain'),to=event.target.closest('[data-square]')?.dataset.square;
-  if(/^[a-h][1-8]$/.test(from)&&to)inline.attempt(from,to);
-});
+enableBoardDrag($('board'),{read:()=>({chess:new Chess(boardView().fen)}),select:from=>inline.select(from),play:(from,to)=>{autoplay.stop();inline.attempt(from,to);}});
 $('board').addEventListener('keydown',event=>{
   const square=event.target.closest('[data-square]')?.dataset.square;if(!square||event.target.closest('.piece-rating'))return;
   if(event.key==='Enter'||event.key===' '){event.preventDefault();event.target.click();return;}
@@ -767,7 +772,7 @@ $('toggle-sound').onclick = () => {
   moveSounds.setEnabled(!moveSounds.enabled);
   try { localStorage.setItem('knightlab-sound', moveSounds.enabled ? 'on' : 'off'); } catch {}
   renderSoundControl();
-  if (moveSounds.enabled) moveSounds.play({ flags: 'n' });
+
 };
 renderSoundControl();
 $('chart').onclick = event => { const rect = $('chart').getBoundingClientRect(); goTo(Math.round(Math.max(0,Math.min(1,(event.clientX - rect.left)/rect.width)) * state.parsed.moves.length)); };
@@ -825,14 +830,14 @@ document.addEventListener('keydown', event => {
   if (event.key === 'End') { event.preventDefault(); $('last-move').onclick(); }
   if (event.key.toLowerCase() === 'f') $('flip-board').onclick();
 });
-window.addEventListener('pagehide', () => { saveReviewPosition(); inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
+window.addEventListener('pagehide', () => { autoplay.stop(); saveReviewPosition(); inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
 try { $('username').value = $('home-username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
 const lastReview=reviewMemory.last();
 try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
   else setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});
 } catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});}
-const learning=createLearningUI({storage:reviewStorage,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
+const learning=createLearningUI({storage:reviewStorage,playSound,feedbackSound,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
 const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);
@@ -845,7 +850,10 @@ for(const id of ['course-cover-board']){
   }
   $(id).innerHTML=html;
 }
-installSimpleUI();
+installSimpleUI();$('board-actions-panel').append(playbackButton);
+createAudioSettings(moveSounds,{beforeOpen:()=>{autoplay.stop();closeWorkspaceMenu();closeBoardActions();for(const menu of document.querySelectorAll('.compact-options'))menu.open=false;}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){autoplay.stop();moveSounds.stop();}});
+document.addEventListener('click',event=>{if(autoplay.active&&!event.target.closest('#autoplay-moves,#board-actions-toggle'))autoplay.stop();},true);
 router=createPageRouter(page=>{
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   closeWorkspaceMenu();

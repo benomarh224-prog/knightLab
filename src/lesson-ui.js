@@ -1,3 +1,5 @@
+import {finishBoard,enableBoardDrag} from './board-surface.js';
+import {navigationSoundMove} from './sound.js';
 import { Chess } from 'chess.js';
 import { pieceSvg } from './pieces.js';
 import { COURSES,courseLessons } from './courses.js';
@@ -24,16 +26,17 @@ const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const names={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'},stageNames={learn:'Learn',try:'Try',check:'Check'};
 
-export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePractice}){
+export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePractice,playSound=()=>{},feedbackSound=()=>{}}){
   renderAttackingCatalog(COURSES);
   renderOpeningCatalog(COURSES);
   const memoryFor=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key),players=new Map(),memory=createLearningMemory(storage,COURSES);
-  const squarePractice=createSquarePracticeUI({storage});
-  const guidedExample=createGuidedExample({storage});
+  const squarePractice=createSquarePracticeUI({storage,feedbackSound});
+  const guidedExample=createGuidedExample({storage,playSound});
   let course=COURSES.french,lessons=course.lessons,progress=memoryFor(course),player;
   let selected=null,hint=null,message='',promotion=null;
   let focus=false,painted=null;
-  const motion=createLessonMotion({paint:()=>render(),reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches});
+  let audioSequence=0;
+  const motion=createLessonMotion({onFrame:frame=>playSound(frame.last,{eventId:'lesson-motion-'+(++audioSequence)}),paint:()=>render(),reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches});
   const studyFor=id=>course.study?.(id)||{},activeLessons=()=>courseLessons(course,player.lesson.level);
   function getPlayer(lesson){
     const key=`${course.id}:${lesson.id}`;
@@ -200,7 +203,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       const label=`${square}: ${piece?`${piece.color==='w'?'White':'Black'} ${names[piece.type]}`:'empty'}${targets.has(square)?'. Legal destination':''}`,tag=interactive?'button':'div';
       html+=`<${tag} class="square${dark?' dark':''}${last?' last':''}${selected===square?' lesson-selected':''}${targets.has(square)?' lesson-target':''}${hint&&[hint.from,hint.to].includes(square)?' lesson-hint-square':''}" data-square="${square}" ${tag==='button'?`type="button" tabindex="${square===(focusSquare||selected||files[0]+ranks[7])?0:-1}"`:''} aria-label="${escape(label)}">${f===0?`<span class="rank" aria-hidden="true">${ranks[r]}</span>`:''}${r===7?`<span class="file" aria-hidden="true">${files[f]}</span>`:''}${piece?pieceSvg(piece):''}</${tag}>`;
     }
-    $('lesson-board').innerHTML=html;$('lesson-board').setAttribute('aria-label',`${player.lesson.title}. ${chess.turn()==='w'?'White':'Black'} to move. ${player.flipped?'Black':'White'} view. ${session.fen}`);
+    $('lesson-board').innerHTML=html;finishBoard($('lesson-board'),chess,selected);$('lesson-board').setAttribute('aria-label',`${player.lesson.title}. ${chess.turn()==='w'?'White':'Black'} to move. ${player.flipped?'Black':'White'} view. ${session.fen}`);
     const nextPaint={game:player.exploration||player.session,fen:session.fen,last:session.last,flipped:player.flipped};
     animatePieces($('lesson-board'),moveTransitions(painted,nextPaint));painted=nextPaint;
     $('lesson-counter').tabIndex=-1;
@@ -229,13 +232,13 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     else if(next.action==='resume-practice'){player.reviewing=false;player.save();}
     else if(next.action==='end-exploration')player.stopExploring();
     else if(next.action==='demonstration-done')player.acknowledgeDemonstration();
-    else if(next.action==='next-study-move'){player.jump(player.session.cursor+1);clearTurn();render();return;}
+    else if(next.action==='next-study-move'){jumpStudy(player.session.cursor+1);return;}
     else if(next.action==='end-challenge'){player.endChallenge();history.replaceState({},'',`${course.path}?lesson=${encodeURIComponent(player.lesson.id)}`);}
     clearTurn();render();focusStage();
   }
   $('lesson-after-board').onclick=continueLesson;
   $('lesson-demonstration-done').onclick=()=>{player.acknowledgeDemonstration();render();};
-  $('lesson-answers').onclick=event=>{const item=event.target.closest('[data-lesson-answer]');if(item){player.answer(Number(item.dataset.lessonAnswer));render();}};
+  $('lesson-answers').onclick=event=>{const item=event.target.closest('[data-lesson-answer]');if(item){const answer=Number(item.dataset.lessonAnswer);player.answer(answer);render();if(answer!==player.question.answer)feedbackSound('incorrect');else if(player.complete)feedbackSound('complete');}};
   for(const [id,delta] of [['lesson-question-previous',-1],['lesson-question-next',1]])$(id).onclick=()=>{player.questionIndex=Math.max(0,Math.min(player.plan.questions.length-1,player.questionIndex+delta));player.save();render();focusStage();};
   $('course-lessons').onclick=event=>{const item=event.target.closest('[data-lesson]');if(item){selectLesson(item.dataset.lesson);layout.close();$('lesson-title').focus({preventScroll:true});document.querySelector('.lesson-page-heading').scrollIntoView({block:'start'});}};
   $('lesson-reset').onclick=()=>{player.reset();clearTurn();render();};
@@ -248,7 +251,11 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-explore-resume').onclick=()=>{clearTurn();if(player.resumeExploration()){render();focusBoard();}};
   $('lesson-focus').onclick=()=>{focus=!focus;render();$('lesson-focus').focus({preventScroll:true});document.querySelector('.lesson-topline').scrollIntoView({block:'start'});};
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&focus&&!document.querySelector('dialog[open]')){focus=false;render();$('lesson-focus').focus({preventScroll:true});}});
-  $('lesson-previous').onclick=()=>{player.jump(player.session.cursor-1);clearTurn();render();};$('lesson-next').onclick=()=>{player.jump(player.session.cursor+1);clearTurn();render();};
+  function jumpStudy(cursor){
+    const session=player.session,previous=session.cursor;player.jump(cursor);clearTurn();render();
+    playSound(navigationSoundMove(session.lesson.verboseMoves,previous,session.cursor),{eventId:'lesson-navigation-'+(++audioSequence)});
+  }
+  $('lesson-previous').onclick=()=>jumpStudy(player.session.cursor-1);$('lesson-next').onclick=()=>jumpStudy(player.session.cursor+1);
   $('lesson-replay').onclick=()=>{player.stopExploring();player.reviewing=!player.reviewing;player.save();clearTurn();render();};
   $('lesson-flip').onclick=()=>{motion.cancel();player.flipped=!player.flipped;player.save();render();};
   $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();if(hint)$('lesson-feedback').scrollIntoView({block:'nearest'});};
@@ -259,21 +266,29 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   };
   $('lesson-course-previous').onclick=()=>{const i=lessons.indexOf(player.lesson);if(i>0){selectLesson(lessons[i-1].id);focusStage();}};
   $('lesson-course-next').onclick=continueLesson;
-  $('lesson-moves').onclick=event=>{const item=event.target.closest('[data-lesson-ply]');if(item){player.jump(Number(item.dataset.lessonPly));clearTurn();render();}};
+  $('lesson-moves').onclick=event=>{const item=event.target.closest('[data-lesson-ply]');if(item)jumpStudy(Number(item.dataset.lessonPly));};
   $('lesson-analyze').onclick=()=>{const session=player.exploration||player.session;if(session?.cursor)onAnalyze(session.pgn());};
   function attemptMove(from,to,promote){
     if(motion.active)return;
+    const active=player.exploration||player.session;
+    if(active&&!promote&&new Chess(active.fen).moves({square:from,verbose:true}).some(move=>move.to===to&&move.promotion)){
+      promotion={from,to};message='Choose the promotion piece.';render();$('lesson-promotion').querySelector('button').focus();return;
+    }
     if(player.exploration){
       const fen=player.exploration.fen,result=player.exploreMove(from,to,promote);clearTurn();
       message=result.status==='played'?`${result.move.san} played. ${player.exploration.ending||`${player.exploration.chess.turn()==='w'?'White':'Black'} to move.`}`:result.status==='finished'?`${result.ending}. Undo to try another continuation.`:illegalMoveReason(fen,from,to,promote);
-      render();return;
+      render();if(result.status==='played')playSound(result.move);return;
     }
     const session=player.session,cursor=session.cursor,fen=session.fen;
     const result=player.attempt(from,to,promote);
     if(result.status==='correct'){clearTurn();message=`${result.move.san} fits this study line.${result.completed?' Exercise complete.':''}`;motion.play(lessonFrames(session,cursor));return;}
     else{promotion=null;message=result.status==='different'?result.feedback:illegalMoveReason(fen,from,to,promote);}
-    render();
+    render();if(['different','illegal'].includes(result.status))feedbackSound('incorrect');
   }
+  enableBoardDrag($('lesson-board'),{
+    read:()=>{const session=player.exploration||player.session;return {chess:session?new Chess(session.fen):null,disabled:motion.active||!session||session.mode==='watch'||Boolean(promotion)};},
+    select:from=>{if(!player.exploring&&player.session.completed)player.startExploring({fresh:true});selected=from;render();},play:attemptMove
+  });
   $('lesson-board').onclick=event=>{
     let session=player.exploration||player.session;if(motion.active||!session||session.mode==='watch'||promotion)return;
     const square=event.target.closest('[data-square]')?.dataset.square;if(!square)return;

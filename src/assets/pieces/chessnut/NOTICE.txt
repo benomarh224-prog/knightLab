@@ -4,4 +4,5 @@ Distributed under the Apache License, Version 2.0.
 SVG files supplied unchanged from the Lichess Chessnut asset set.
 
 ROQVYN also embeds these vectors inline in its application bundle. Only root
-accessibility and CSS class attributes are added; drawing paths and colors are unchanged.
+accessibility, CSS class and viewBox framing attributes are added; drawing paths
+and colors are unchanged. Framing removes transparent margins for balanced sizing.

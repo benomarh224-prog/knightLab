@@ -18,3 +18,9 @@ Chessnut chess piece artwork by Alexis Luengas (Apache-2.0).
 Source: https://github.com/LexLuengas/chessnut-pieces
 Unmodified SVGs from the Lichess Chessnut asset set.
 See assets/pieces/chessnut/LICENSE.txt, NOTICE.txt and SOURCES.json.
+
+Wooden chess sounds adapted from Kenney's Impact Sounds (2019), CC0 1.0.
+Source: https://kenney.nl/assets/impact-sounds
+Clips trimmed, softened, mixed, faded and resampled by ROQVYN.
+See assets/audio/LICENSE.txt, NOTICE.txt and SOURCES.json.
+The procedural fallback sounds are original ROQVYN synthesis.

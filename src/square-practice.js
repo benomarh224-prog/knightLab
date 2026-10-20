@@ -51,7 +51,7 @@ export class SquarePractice {
   save(){try{this.storage?.setItem(this.key,JSON.stringify({version:1,signature:this.signature,solved:this.solved,labels:this.labels}));}catch{/* Keep progress in memory if storage is unavailable. */}}
 }
 
-export function createSquarePracticeUI({document:doc=document,storage}){
+export function createSquarePracticeUI({document:doc=document,storage,feedbackSound=()=>{}}){
   const get=id=>doc.getElementById(id),board=get('lesson-square-board'),models=new Map();
   board.before(get('lesson-square-view'));
   let trainer=null;
@@ -73,7 +73,7 @@ export function createSquarePracticeUI({document:doc=document,storage}){
     }).join('');
     if(focusSquare)board.querySelector(`[data-square="${focusSquare}"]`)?.focus({preventScroll:true});
   }
-  board.onclick=event=>{const square=event.target.closest('button[data-square]')?.dataset.square;if(trainer&&square){trainer.attempt(square);render();}};
+  board.onclick=event=>{const square=event.target.closest('button[data-square]')?.dataset.square;if(trainer&&square){const outcome=trainer.attempt(square);if(outcome.status==='retry')feedbackSound('incorrect');else if(outcome.completed)feedbackSound('complete');render();}};
   board.addEventListener('keydown',event=>{
     if(!trainer)return;
     const next=squareNeighbor(event.target.dataset.square,event.key,trainer.target.orientation);

@@ -16,13 +16,17 @@ export function installSimpleUI(doc=document) {
   const get=id=>doc.getElementById(id);
   createCompactMenu({host:doc.querySelector('.topbar-actions'),controls:['sidebar-import','how-it-works'].map(get),document:doc}).classList.add('header-options');
   get('sidebar-import').textContent='Import PGN';get('how-it-works').textContent='Quick guide';
+  const soundButton=()=>{const button=doc.createElement('button');button.type='button';button.dataset.audioOpen='';button.textContent='Sound settings';return button;};
+  doc.querySelector('.header-options .compact-options-panel').append(soundButton());
   // The mobile navigation already contains Import and Guide.
   const boardMenu=get('board-actions-panel');
   boardMenu.append(get('focus-mode'),get('line-reply'),get('download-pgn'));
+  boardMenu.append(soundButton());
   get('board-actions-toggle').setAttribute('aria-label','More board options');
   get('board-actions-toggle').firstElementChild.textContent='More';
   get('board-actions-toggle').title='More board options';
   createCompactMenu({host:get('lesson-controls'),controls:['lesson-reset','lesson-flip','lesson-focus','lesson-explore-start','lesson-explore-resume','lesson-replay','lesson-challenge'].map(get),document:doc}).classList.add('lesson-options');
+  doc.querySelector('.lesson-options .compact-options-panel').append(soundButton());
   // Stages remain available for review without occupying the lesson header.
   createCompactMenu({host:doc.querySelector('.lesson-topline'),controls:[get('lesson-stages'),get('lesson-squares-open')],document:doc}).classList.add('lesson-stage-options');
   get('lesson-reset').textContent='Restart exercise';get('lesson-flip').textContent='Flip board';

@@ -14,7 +14,7 @@ test('all twelve Chessnut pieces paint inline with the original drawing and no i
   assert.equal(artwork[id],original);
   const rendered=pieceSvg({color:id[0],type:id[1].toLowerCase()});
   assert.match(rendered,/^<svg class="piece chessnut-piece/);assert.match(rendered,/aria-hidden="true" focusable="false" draggable="false"/);
-  assert.equal(rendered.replace(/^<svg [^]*? draggable="false" /,'<svg '),original,file);
+  assert.equal(rendered.replace(/^<svg [^]*? draggable="false" /,'<svg ').replace(/viewBox="[^"]*"/,'viewBox="0 0 800 800"'),original,file);
   assert.doesNotMatch(rendered,/<img\b|<image\b|(?:src|href)=|\bid=|url\(/i,file);
  }
 });

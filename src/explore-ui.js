@@ -1,3 +1,5 @@
+import {animatePieces,moveTransitions} from './piece-motion.js';
+import {finishBoard,enableBoardDrag} from './board-surface.js';
 import { Chess } from 'chess.js';
 import { PlaySession } from './play.js';
 import { Engine } from './engine.js';
@@ -12,7 +14,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   let variation, selected = null, promotion = null, flipped = false, engine = null;
   let result = null, busy = false, run = 0, savedGame = null, resumeReview = false;
   let originFen = null, coursePractice = null;
-  let hintRequested=false;
+  let hintRequested=false,painted=null;
   function cancel() { run++; engine?.destroy(); engine = null; busy = false; }
   function reset() { resumeReview = false; cancel(); if (dialog.open) dialog.close(); variation = null; }
   function render(focusSquare) {
@@ -28,7 +30,8 @@ export function createExploreUI({ context, pause, resume, playSound }) {
       const label = `${square}, ${piece ? `${piece.color === 'w' ? 'White' : 'Black'} ${pieceNames[piece.type]}` : 'empty'}${targets.has(square) ? ', legal destination' : ''}`;
       html += `<button class="square practice-square${(files.charCodeAt(f)-97+ranks[r])%2 === 1 ? ' dark' : ''}${selected === square ? ' piece-selected' : ''}${targets.has(square) ? ' legal-target' : ''}${last && [last.from,last.to].includes(square) ? ' last' : ''}" data-square="${square}" tabindex="${square === tabSquare ? 0 : -1}" aria-label="${label}" aria-pressed="${selected === square}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}</button>`;
     }
-    $('explore-board').innerHTML = html;
+    $('explore-board').innerHTML = html;finishBoard($('explore-board'),chess,selected);
+    const position={game:variation,fen:variation.fen,last:variation.moves.at(-1),flipped};animatePieces($('explore-board'),moveTransitions(painted,position));painted=position;
     const practicing=coursePractice&&$('play-origin').value==='current';
     $('explore-course-practice').hidden=!practicing;
     if(practicing){
@@ -77,7 +80,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
         const outcome = variation.engineMove(score.best, snapshot);
         if (outcome.status === 'played') {
           replied = true; selected = null; promotion = null; result = null;hintRequested=false;
-          playSound(outcome.move); $('explore-feedback').textContent = `Stockfish played ${outcome.move.san}. Your turn.`;
+          render();playSound(outcome.move,{completion:Boolean(variation.ending)}); $('explore-feedback').textContent = `Stockfish played ${outcome.move.san}. Your turn.`;
         }
       }
     } catch (error) {
@@ -88,9 +91,9 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     }
   }
   function afterMove(move) {
-    selected = null; promotion = null;hintRequested=false; playSound(move);
+    selected = null; promotion = null;hintRequested=false;
     $('explore-feedback').textContent = `${move.san} played. ${variation.engineTurn ? 'Stockfish will reply automatically.' : 'Try the other side or ask Stockfish for a reply.'}`;
-    evaluate();
+    evaluate();playSound(move,{completion:Boolean(variation.ending)});
   }
   function attempt(from, to, piece) {
     const outcome = variation.play(from, to, piece);
@@ -121,6 +124,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   $('try-move').onclick = () => open(true);
   $('play-open').onclick = () => open(false);
   $('explore-course-return').onclick=()=>dialog.close();
+  enableBoardDrag($('explore-board'),{read:()=>({chess:variation?.chess,disabled:!variation||variation.engineTurn||Boolean(promotion)||Boolean(variation.ending)}),select:from=>{selected=from;render();},play:attempt});
   $('explore-board').onclick = event => {
     const button = event.target.closest('[data-square]'); if (!button || !variation || promotion || variation.ending) return;
     if (variation.engineTurn) { $('explore-feedback').textContent = busy ? 'Wait for Stockfish’s move, or switch to Free play.' : 'Retry the engine reply or switch to Free play.'; return; }
@@ -145,7 +149,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     const outcome = variation.engineMove(result.best, variation.snapshot());
     if (outcome.status === 'played') afterMove(outcome.move);
   };
-  $('explore-undo').onclick = () => { const undone = variation.undoTurn(); if (!undone.length) return; selected = null; promotion = null;hintRequested=false; playSound(undone.at(-1)); $('explore-feedback').textContent = 'Back to your previous position. Try a different idea.'; evaluate(); };
+  $('explore-undo').onclick = () => { const undone = variation.undoTurn(); if (!undone.length) return; selected = null; promotion = null;hintRequested=false; $('explore-feedback').textContent = 'Back to your previous position. Try a different idea.'; evaluate(); };
   $('explore-reset').onclick = () => { variation.reset(); selected = null; promotion = null;hintRequested=false; $('explore-feedback').textContent = 'Back to the game position. Try another move.'; evaluate(); };
   $('explore-flip').onclick = () => { flipped = !flipped; render(); };
   $('play-origin').onchange = startPosition;

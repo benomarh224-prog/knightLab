@@ -20,7 +20,7 @@ export function animatePieces(board,transitions) {
     if(!origin||!piece?.animate)continue;
     const start=origin.getBoundingClientRect(),end=destination.getBoundingClientRect();
     if(!end.width)continue;
-    const animation=piece.animate([{transform:`translate(${start.x-end.x}px,${start.y-end.y}px)`},{transform:'translate(0,0)'}],{duration:190,easing:'cubic-bezier(.22,.7,.3,1)'});
+    const animation=piece.animate([{transform:`translate(${start.x-end.x}px,${start.y-end.y}px)`},{transform:'translate(0,0)'}],{duration:150,easing:'cubic-bezier(.22,.7,.3,1)'});
     destination.classList.add('piece-in-motion');
     animation.finished.then(()=>destination.classList.remove('piece-in-motion')).catch(()=>{});
   }

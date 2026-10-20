@@ -5,18 +5,18 @@ export function lessonFrames(session,fromCursor){
     frame.completed=frame.cursor===session.cursor&&session.completed;return frame;
   });
 }
-export function createLessonMotion({paint,reduced=()=>false,schedule=setTimeout,unschedule=clearTimeout}){
+export function createLessonMotion({paint,onFrame=()=>{},reduced=()=>false,schedule=setTimeout,unschedule=clearTimeout}){
   let timer=null,frame=null,active=false,generation=0;
   function cancel(){generation++;if(timer!==null)unschedule(timer);timer=null;frame=null;active=false;}
   return {get frame(){return frame;},get active(){return active;},cancel,
     play(frames){
       cancel();if(!frames.length)return;
-      if(reduced()){paint();return;}
+      if(reduced()){paint();onFrame(frames.at(-1));return;}
       const revision=generation;let index=0;active=true;
       function next(){
         if(revision!==generation)return;
         if(index===frames.length){frame=null;active=false;timer=null;paint();return;}
-        frame=frames[index++];paint();timer=schedule(next,260);
+        frame=frames[index++];paint();onFrame(frame);timer=schedule(next,260);
       }
       next();
     }

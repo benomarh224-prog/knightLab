@@ -1,0 +1,15 @@
+{
+  "source": "https://kenney.nl/assets/impact-sounds",
+  "license": "CC0-1.0",
+  "originals": [
+    {
+      "file": "impactWood_light_000.ogg",
+      "sha256": "eb45e35b4bed784d3f120de4afec4b0d6ac09d9e143cce8cfcb7d739e1b1f3c3"
+    },
+    {
+      "file": "impactWood_medium_001.ogg",
+      "sha256": "15271dbe8e2872dbb0ff1aeb7b12b2d2b92b7c1951c88532b9ab9158c36dfc73"
+    }
+  ],
+  "preparation": "Trimmed, softened, mixed, faded and resampled to 24 kHz mono PCM WAV by ROQVYN."
+}
