@@ -11,6 +11,10 @@ import { PLAY_LEVELS,playSearch } from './play-settings.js';
 const $ = id => document.getElementById(id);
 export function createExploreUI({ context, pause, resume, playSound }) {
   const dialog = $('explore-dialog');
+  const backToBoard=document.createElement('button');backToBoard.type='button';backToBoard.id='play-settings-done';backToBoard.textContent='Done · Back to board';
+  $('play-settings').querySelector('.play-settings-grid').append(backToBoard);
+  backToBoard.onclick=()=>{$('play-settings').open=false;$('play-settings').querySelector('summary').focus({preventScroll:true});$('explore-board').scrollIntoView({block:'nearest'});};
+  $('play-settings').addEventListener('keydown',event=>{if(event.key==='Escape'&&$('play-settings').open){event.preventDefault();event.stopPropagation();backToBoard.click();}});
   let variation, selected = null, promotion = null, flipped = false, engine = null;
   let result = null, busy = false, run = 0, savedGame = null, resumeReview = false;
   let originFen = null, coursePractice = null;

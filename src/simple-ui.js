@@ -1,14 +1,15 @@
+import {createViewportMenu} from './viewport-menu.js';
 // Keep the existing controls and handlers; only secondary tools move into disclosures.
 export function createCompactMenu({host,controls,label='More',document:doc=document}) {
   const menu=doc.createElement('details'),summary=doc.createElement('summary'),panel=doc.createElement('div');
   menu.className='compact-options';summary.textContent=label;summary.setAttribute('aria-label',label+' options');
   panel.className='compact-options-panel';panel.append(...controls);menu.append(summary,panel);host.append(menu);
   menu.addEventListener('click',event=>{
-    const action=event.target.closest('button,a');
-    if(!action||action.disabled)return;
-    const hadFocus=panel.contains(doc.activeElement);
-    menu.open=false;if(hadFocus)summary.focus({preventScroll:true});
+    const action=event.target.closest('button,a');if(!action||action.disabled)return;
+    const hadFocus=panel.contains(doc.activeElement);menu.open=false;
+    if(hadFocus)summary.focus({preventScroll:true});
   });
+  if(doc.defaultView)createViewportMenu({trigger:summary,panel,details:menu,doc,dismissOnAction:false});
   return menu;
 }
 

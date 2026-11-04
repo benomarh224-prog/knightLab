@@ -15,6 +15,8 @@ import { createBoardCoach } from './board-coach.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
 import { createAudioSettings } from './audio-settings.js';
 import { createAutoplay } from './autoplay.js';
+import {createViewportMenu} from './viewport-menu.js';
+import {evaluationLossText} from './accuracy.js';
 import { finishBoard,enableBoardDrag } from './board-surface.js';
 import { createReviewMemory } from './review-memory.js';
 import { moveTransitions, animatePieces, fadePreviousHighlights } from './piece-motion.js';
@@ -146,15 +148,12 @@ for(const id of ['first-move','last-move','flip-board','toggle-threats']) {
   actionsPanel.append(button);
 }
 function closeBoardActions(restoreFocus=false) {
-  actionsPanel.hidden=true;
-  actionsToggle.setAttribute('aria-expanded','false');
-  if(restoreFocus)actionsToggle.focus({preventScroll:true});
+  boardMenu.close(restoreFocus);
 }
+const boardMenu=createViewportMenu({trigger:actionsToggle,panel:actionsPanel});
 actionsToggle.onclick=()=>{
   if(autoplay.active){autoplay.stop();return;}
-  const opening=actionsPanel.hidden;
-  actionsPanel.hidden=!opening;
-  actionsToggle.setAttribute('aria-expanded',String(opening));
+  boardMenu.toggle();
 };
 actionsPanel.addEventListener('click',event=>{
   if(!event.target.closest('button'))return;
@@ -360,7 +359,7 @@ function render() {
   $('best-count').textContent = combined.count ? combined.counts.Best + combined.counts.Great : '—';
   $('mistake-count').textContent = combined.count ? combined.counts.Mistake : '—';
   $('blunder-count').textContent = combined.count ? combined.counts.Blunder : '—';
-  $('loss-summary').textContent = combined.count ? `Combined White + Black · Avg. evaluation loss ${(combined.averageLoss / 100).toFixed(2)} pawns${stats.provisional?' · Provisional':''}` : 'Combined White + Black · Awaiting review';
+  $('loss-summary').textContent = combined.count ? `Combined White + Black · ${combined.count} moves rated${stats.provisional?' · Provisional':''}. Separate player accuracy is in Summary.` : 'Combined White + Black · Awaiting review';
   $('next-mistake').disabled = !summary.items.some((item, index) => item && ['Mistake', 'Blunder', 'Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()));
   const move = view.last;
   const item = move ? inline.active?classifyMove(move,view.before,score):summary.items[state.ply - 1] : null;
@@ -448,7 +447,7 @@ function renderChart() {
   });
   const selected = values[state.ply];
   const x = state.ply / total * 400;
-  $('chart').innerHTML = `<svg viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" class="chart-line" stroke-width="2.3" fill="none" vector-effect="non-scaling-stroke"/><line x1="${x}" x2="${x}" y1="0" y2="100" class="chart-cursor" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>${selected ? `<circle cx="${x}" cy="${y(selected.cp)}" r="3.5" class="chart-point"/>` : ''}<text x="4" y="9" class="chart-scale" font-size="8">+5</text><text x="4" y="98" class="chart-scale" font-size="8">−5</text></svg>`;
+  $('chart').innerHTML = `<svg viewBox="0 0 400 100" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" class="chart-line" stroke-width="2.3" fill="none" vector-effect="non-scaling-stroke"/><line x1="${x}" x2="${x}" y1="0" y2="100" class="chart-cursor" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>${selected ? `<circle cx="${x}" cy="${y(selected.cp)}" r="3.5" class="chart-point"/>` : ''}<text x="4" y="14" class="chart-scale" font-size="12">+5</text><text x="4" y="96" class="chart-scale" font-size="12">−5</text></svg>`;
 }
 
 function renderMoveList() {
@@ -496,7 +495,7 @@ function updateMoveRatings(items) {
     button.setAttribute('aria-current', ply === state.ply ? 'step' : 'false');
     const dot = button.querySelector('i');
     dot.hidden = !item;
-    if (item) { dot.className = 'stat-dot ' + item.label.toLowerCase(); button.title = `${state.parsed.moves[ply - 1].san}: ${item.label}. Evaluation loss: ${(item.loss / 100).toFixed(2)} pawns.`; }
+    if (item) { dot.className = 'stat-dot ' + item.label.toLowerCase(); button.title = `${state.parsed.moves[ply - 1].san}: ${item.label}. ${evaluationLossText(state.parsed.moves[ply-1],state.evaluations[ply-1],state.evaluations[ply])}.`; }
   });
 }
 function goTo(ply,{automatic=false}={}) {
