@@ -54,7 +54,9 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
       if(!square||!chess.moves({square}).length)return;
       start(source.ply,null,{silent:true});
       selected=square;
-      if(repaint)evaluate();
+      // Selecting a piece is a UI action, not a new engine search. Wait for an
+      // accepted move so rapid tap/drag gestures do not repeatedly boot WASM.
+      if(repaint)onChange();
       return;
     }
     if(!square){selected=null;if(repaint)onChange();return;}

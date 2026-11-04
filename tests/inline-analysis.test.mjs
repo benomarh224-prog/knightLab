@@ -71,7 +71,7 @@ test('Play best works at the game starting position and Undo is disabled at the 
 
 test('stale engine results cannot overwrite a newer position or a closed variation',async()=>{
  const h=harness(),c=h.controller;
- c.click('e2');const stale=h.engines[0].requests[0];c.click('e4');
+ c.click('e2');assert.equal(h.engines.length,0);c.click('e4');const stale=h.engines[0].requests[0];c.click('e7');c.click('e5');
  stale.resolve({cp:999,best:'d2d4'});await tick();assert.equal(c.line.scores[0],null);assert.equal(c.line.score,null);
  c.exit();for(const engine of h.engines)for(const request of engine.requests)request.resolve({cp:10,best:null});
  await tick();assert.equal(c.active,false);
@@ -85,8 +85,13 @@ test('promotion waits for an explicit piece and insufficient material does not l
 });
 
 test('engine failure leaves free movement, retry, and return to game available',async()=>{
- const h=harness(),c=h.controller;c.click('e2');
+ const h=harness(),c=h.controller;c.click('e2');c.click('e4');
  h.engines[0].requests[0].reject(new Error('Engine unavailable'));await tick();
  assert.equal(h.nodes.get('line-retry').hidden,false);
- c.click('e4');assert.equal(c.line.last.san,'e4');c.exit();assert.equal(c.active,false);
+ c.click('e7');c.click('e5');assert.equal(c.line.last.san,'e5');c.exit();assert.equal(c.active,false);
+});
+test('selecting or changing a piece paints legal destinations without booting an engine',()=>{
+ const h=harness(),c=h.controller;c.click('e2');c.click('g1');assert.equal(c.selected,'g1');
+ assert.ok(c.targets.has('f3'));assert.equal(h.engines.length,0);assert.deepEqual(h.sounds,[]);
+ c.click('f3');assert.equal(c.line.last.san,'Nf3');assert.equal(h.engines.length,1);c.exit();
 });

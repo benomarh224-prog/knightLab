@@ -126,5 +126,5 @@ test('all licensed WAV samples are small, distinct, restrained mono PCM with sil
   let peak=0;for(let i=44;i<bytes.length;i+=2)peak=Math.max(peak,Math.abs(bytes.readInt16LE(i))/32768);
   assert.ok(peak>.1&&peak<.7);assert.ok(Math.abs(bytes.readInt16LE(bytes.length-2))<4);
  }
- assert.equal(new Set(files).size,SOUND_KINDS.length);assert.match(await readFile('src/assets/audio/NOTICE.txt','utf8'),/Kenney.*CC0/);
+ assert.equal(new Set(files).size,SOUND_KINDS.length);assert.match(await readFile('src/assets/audio/NOTICE.txt','utf8'),/Original dry chess taps/);
 });

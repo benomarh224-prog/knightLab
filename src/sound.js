@@ -10,22 +10,8 @@ export function moveSoundKind(move,{completion=false}={}){
   if(/[kq]/.test(move.flags||''))return 'castle';
   return 'move';
 }
-// Soft, damped wood/felt fallback. Normal playback uses bundled Kenney CC0 recordings.
-export function woodenSamples(sampleRate,kind='move'){
-  if(typeof kind==='boolean')kind=kind?'capture':'move';
-  const duration=kind==='complete'?.4:kind==='promotion'?.34:kind==='incorrect'?.15:.25;
-  const samples=new Float32Array(Math.ceil(sampleRate*duration));let seed=17389,low=0;
-  const hits=kind==='castle'?[[0,.45],[.065,.3]]:kind==='promotion'?[[0,.4],[.075,.23],[.145,.2]]:kind==='complete'?[[0,.36],[.14,.24]]:kind==='check'?[[0,.5],[.085,.14]]:[[0,kind==='capture'?.58:kind==='incorrect'?.22:.46]];
-  for(let i=0;i<samples.length;i++){
-    const t=i/sampleRate;seed=(seed*16807)%2147483647;low=.76*low+.24*(seed/1073741823.5-1);
-    for(const [start,gain] of hits){const time=t-start;if(time<0)continue;
-      const attack=Math.min(1,time/.0015),pitch=kind==='capture'?350:kind==='incorrect'?240:470;
-      samples[i]+=gain*attack*(.35*Math.sin(2*Math.PI*pitch*time)*Math.exp(-60*time)+.18*Math.sin(2*Math.PI*1260*time)*Math.exp(-95*time)+low*Math.exp(-100*time));
-    }
-    samples[i]*=Math.min(1,(duration-t)/.025);
-  }
-  return samples;
-}
+import {woodenSamples} from './wood-audio.js';
+export {woodenSamples} from './wood-audio.js';
 export function navigationSoundMove(moves,previous,next){return previous===next?null:moves[(next<previous?previous:next)-1]||null;}
 export class MoveSounds{
   constructor({enabled=true,volume=.45,storage=null,createContext=null,fetcher=globalThis.fetch,onState=()=>{},onPlay=()=>{}}={}){

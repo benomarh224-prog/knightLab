@@ -17,6 +17,7 @@ import { createAudioSettings } from './audio-settings.js';
 import { createAutoplay } from './autoplay.js';
 import {createViewportMenu} from './viewport-menu.js';
 import {evaluationLossText} from './accuracy.js';
+import {nextReviewPosition} from './review-schedule.js';
 import { finishBoard,enableBoardDrag } from './board-surface.js';
 import { createReviewMemory } from './review-memory.js';
 import { moveTransitions, animatePieces, fadePreviousHighlights } from './piece-motion.js';
@@ -66,7 +67,7 @@ const iconPaths = {
 function icon(name) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || ''}</svg>`; }
 document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = icon(element.dataset.icon));
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
-const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'deep', tab: 'moves', mobileView: 'board', demo: true };
+const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'quick', tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
 let router;
 const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:$('workspace-menu'),desktopSlot:$('desktop-navigation'),mobileSlot:$('mobile-navigation'),dialog:$('navigation-dialog'),toggle:$('workspace-menu-toggle'),closeButton:$('navigation-close')});
@@ -76,6 +77,8 @@ $('nav-import').onclick=()=>{closeWorkspaceMenu();$('sidebar-import').click();};
 $('nav-guide').onclick=()=>{closeWorkspaceMenu();$('how-it-works').click();};
 let reviewStorage;
 try { reviewStorage=localStorage; } catch {}
+try{const savedMode=reviewStorage?.getItem('roqvyn-review-mode');if(['quick','deep','precise'].includes(savedMode))state.mode=savedMode;}catch{}
+$('analysis-speed').value=state.mode;
 const reviewMemory=createReviewMemory(reviewStorage);
 const reviewCache=createReviewCache(reviewStorage);
 let reviewOpened=false;
@@ -137,6 +140,9 @@ const explorer = createExploreUI({
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound});
 const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove});
+const liveProgress=document.querySelector('.engine-progress');
+function positionReviewProgress(){if(compactLayout.matches&&state.mobileView==='board')document.querySelector('.board-area').before(liveProgress);else document.querySelector('.review-controls').after(liveProgress);}
+compactLayout.addEventListener('change',positionReviewProgress);positionReviewProgress();
 const actionsToggle=$('board-actions-toggle'), actionsPanel=$('board-actions-panel');
 for(const id of ['first-move','last-move','flip-board','toggle-threats']) {
   const button=$(id);
@@ -298,7 +304,7 @@ function renderBoard() {
     const threat=threatened.get(square);
     const badge = rated ? `<button class="piece-rating ${rating.tone}${r === 0 ? ' edge-top' : ''}${f === 7 ? ' edge-right' : ''}${r < 2 ? ' tooltip-below' : ''}${f < 2 ? ' tooltip-left' : ''}" data-ply="${state.ply}" aria-label="${escape(rating.move + ': ' + rating.label)}" aria-pressed="${Boolean(showRating)}" title="${escape(rating.label)}"><span class="piece-rating-symbol" aria-hidden="true">${qualityGlyph(classification.label)}</span><span class="piece-rating-label" aria-hidden="true">${escape(rating.label)}</span></button>` : '';
     const label=`${square}${piece ? ': ' + (piece.color === 'w' ? 'White ' : 'Black ') + names[piece.type] : ': empty'}${threat ? '. '+threat.explanation : ''}${targets.has(square)?'. Legal destination':''}`;
-    squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}${threat?' threatened threat-'+threat.kind:''}${selection===square?' piece-selected':''}${targets.has(square)?' legal-target':''}" data-square="${square}" role="button" tabindex="${focusedSquare===square||!focusedSquare&&(selection===square||!selection&&f===0&&r===7)?0:-1}" aria-label="${escape(label)}" ${piece?.color===chess.turn()?'draggable="true"':''} title="${escape(label)}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${threat?'<span class="threat-dot" aria-hidden="true">!</span>':''}${badge}</div>`;
+    squares += `<div class="square${dark ? ' dark' : ''}${highlight ? ' last' : ''}${rated ? ' rated' : ''}${threat?' threatened threat-'+threat.kind:''}${selection===square?' piece-selected':''}${targets.has(square)?' legal-target':''}" data-square="${square}" role="button" tabindex="${focusedSquare===square||!focusedSquare&&(selection===square||!selection&&f===0&&r===7)?0:-1}" aria-label="${escape(label)}" ${piece?.color===chess.turn()?'data-can-drag="true"':''} title="${escape(label)}">${f === 0 ? `<span class="rank" aria-hidden="true">${ranks[r]}</span>` : ''}${r === 7 ? `<span class="file" aria-hidden="true">${files[f]}</span>` : ''}${piece ? pieceSvg(piece) : ''}${threat?'<span class="threat-dot" aria-hidden="true">!</span>':''}${badge}</div>`;
   }
   $('board').innerHTML = squares;finishBoard($('board'),chess,selection);
   const nextPosition={fen:view.fen,last:view.last,flipped:state.flipped,game:state.parsed};
@@ -385,11 +391,11 @@ function render() {
   document.querySelector('.progress-track').setAttribute('aria-valuenow',String(percent));
   document.querySelector('.engine-progress').setAttribute('aria-busy',String(state.running));
   $('progress-fill').style.width = `${percent}%`;
-  $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? `Reviewing position ${state.reviewIndex + 1} of ${total}${state.mode === 'precise' ? ' · depth 18' : ''}` : analyzed === total ? 'Review complete' : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
+  $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? `${state.mode==='quick'?'Fast review':'Reviewing'} · ${analyzed}/${total} positions${state.mode === 'precise' ? ' · depth 18' : ''}` : analyzed === total ? 'Review complete'+(state.mode==='quick'?' · Fast estimate':'') : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
   document.querySelector('.engine-progress').classList.toggle('running', state.running);
   $('analyze-label').textContent = state.running ? 'Pause review' : analyzed === total ? 'Review complete' : searched === total ? 'Deepen remaining' : searched ? 'Resume review' : 'Review this game';
   $('analyze-button').disabled = inline.active || analyzed === total && !state.running;
-  $('analysis-speed').disabled = state.running || inline.active;
+  $('analysis-speed').disabled = inline.active;
   if(inline.active) $('analyze-label').textContent='Exploring line';
   updateMoveRatings(summary.items);
   training.render();
@@ -474,6 +480,7 @@ function renderMoveStrip(){
   for(const button of strip.querySelectorAll('[data-strip-ply]')){
     const ply=Number(button.dataset.stripPly),current=ply===cursor;
     button.setAttribute('aria-current',current?'step':'false');
+    button.dataset.notation=ply?moveLabelForStrip(moves[ply-1]):'Start';
     const move=moves[ply-1],rating=move?classifyMove(move,scores[ply-1],scores[ply]):null;
     const dot=button.querySelector('.strip-dot');
     if(dot){dot.hidden=!rating;if(rating)dot.style.background=qualityColors[rating.label];}
@@ -520,25 +527,27 @@ async function startAnalysis() {
   if (state.running) return;
   const run = ++state.run;
   const key = state.selected.pgn + state.mode;
-  state.evaluations = state.cache.get(key) || [];
+  state.evaluations = state.cache.get(key) || reviewCache.load(state.selected.pgn,state.mode,state.parsed.fens.length);
   state.cache.set(key, state.evaluations);
   state.engine = new Engine(); state.running = true; state.reviewIndex = 0;
   $('analysis-error').hidden = true; render();
   try {
     const engine = state.engine;
     const parsed = state.parsed;
-    for (let index = 0; index < parsed.fens.length; index++) {
+    const attempted=new Set();
+    while(true) {
       if (run !== state.run) return;
-      if (evaluationReady(state.evaluations[index], state.mode)) continue;
-      state.reviewIndex = index; render();
+      const index=nextReviewPosition(parsed.fens.length,state.ply,state.evaluations,state.mode,attempted);if(index===null)break;
+      attempted.add(index);state.reviewIndex = index;
       const history = { startFen: parsed.fens[0], moves: parsed.moves.slice(0, index).map(move => move.from + move.to + (move.promotion || '')) };
       const score = await engine.evaluate(parsed.fens[index], reviewSearch(state.mode, state.evaluations[index]), history);
       if (run !== state.run) return;
       state.evaluations[index] = score;
       render();
+      if(attempted.size%8===0)reviewCache.save(parsed.pgn,state.mode,state.evaluations);
       await new Promise(resolve => setTimeout(resolve, 0));
     }
-    if (run === state.run) { state.running = false; state.engine?.destroy(); state.engine = null; render(); }
+    if (run === state.run) { state.running = false; state.engine?.destroy(); state.engine = null; reviewCache.save(parsed.pgn,state.mode,state.evaluations);render(); }
   } catch (error) {
     if (run !== state.run) return;
     state.running = false; state.engine?.destroy(); state.engine = null;
@@ -779,6 +788,7 @@ $('move-list').onclick = event => { const button = event.target.closest('[data-p
 function selectWorkspaceView(view) {
   if(view==='coach'){boardCoach.open();return;}
   state.mobileView = view;
+  positionReviewProgress();
   document.querySelector('.workspace').dataset.mobileView = view;
   if(view==='board'&&state.parsed)renderMoveStrip();
   if (view !== 'board') state.tab = view;
@@ -807,7 +817,7 @@ for (const tablist of document.querySelectorAll('[role="tablist"]')) tablist.add
   tabs[next].click(); tabs[next].focus({preventScroll:true});
 });
 $('analyze-button').onclick = () => { if (state.running) { stopAnalysis(); render(); } else startAnalysis(); };
-$('analysis-speed').onchange = () => { stopAnalysis(); state.mode = $('analysis-speed').value; state.evaluations = state.cache.get(state.selected.pgn + state.mode) || []; render(); startAnalysis(); };
+$('analysis-speed').onchange = () => { stopAnalysis(); state.mode = $('analysis-speed').value; try{reviewStorage?.setItem('roqvyn-review-mode',state.mode);}catch{} state.evaluations = state.cache.get(state.selected.pgn + state.mode) || reviewCache.load(state.selected.pgn,state.mode,state.parsed.fens.length); render(); startAnalysis(); };
 $('next-mistake').onclick = () => {
   const { items } = summarize(state.parsed, state.evaluations, playerColor());
   const mistakes = items.map((item,index) => item && ['Mistake','Blunder','Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()) ? index + 1 : null).filter(Boolean);

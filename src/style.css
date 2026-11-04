@@ -1133,7 +1133,7 @@ main { max-width: 1580px; margin: 0 auto; padding: 14px 22px 24px; }
   .mobile-workspace-tabs button { min-height: 32px; height: 32px; padding: 4px; font-size: 11px; }
   .board-card .opening-summary, .board-card .opening-toggle { min-height: 30px; }
   .board-players .player-identity strong { font-size: 10px; }
-  .board-controls { grid-template-columns: minmax(0,1fr) auto !important; }
+  .board-controls { grid-template-columns: minmax(0,1fr) auto; }
   .board-controls>.playback-heading { grid-column: 1; grid-row: 1; margin: 0; }
   .board-controls>.board-tools { grid-column: 2; grid-row: 1; gap: 5px; }
   .board-controls>.move-controls { grid-column: 1/-1; grid-row: 2; }

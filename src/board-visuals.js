@@ -45,7 +45,9 @@ export function positionThreats(fen) {
 
 // Only the leading attack introduced by this move belongs on the board.
 // Comparing positions clears an old threat when an unrelated piece moves.
+const primaryThreats=new Map();
 export function primaryMoveThreat(fen,last=null) {
+  const key=[fen,last?.before,last?.color].join('|');if(primaryThreats.has(key))return primaryThreats.get(key);
   let candidates=positionThreats(fen);
   if(last?.before) {
     const previous=positionThreats(last.before);
@@ -53,7 +55,8 @@ export function primaryMoveThreat(fen,last=null) {
   }
   const priority={check:4,loose:3,exchange:2,defended:1};
   candidates.sort((a,b)=>priority[b.kind]-priority[a.kind] || value[b.piece.type]-value[a.piece.type] || a.square.localeCompare(b.square));
-  return candidates[0] || null;
+  const result=candidates[0]||null;primaryThreats.set(key,result);
+  if(primaryThreats.size>128)primaryThreats.delete(primaryThreats.keys().next().value);return result;
 }
 
 export function arrowPath(from,to,flipped=false) {

@@ -66,3 +66,46 @@ body[data-page] .viewport-menu button { width:100%; text-align:left; }
   body[data-page] .workspace .board-area { width:min(100%,max(220px,calc(100svh - 120px))); }
   body[data-page] .board-card,.lesson-player { overflow:visible; }
 }
+
+/* A familiar chess workspace: board first, quiet coaching, one playback row. */
+body[data-page="analysis"] { background:#F5F6F2; }
+body[data-page="analysis"] main { background:transparent; }
+body[data-page="analysis"] .footer { display:none; }
+body[data-page] :is(.board-wrapper,.lesson-board-frame,.practice-board-frame) { border-radius:4px; box-shadow:0 2px 6px #18362018; }
+body[data-page] .board-coach-card:not(.is-expanded) { background:#fff; border:1px solid #d8dfd0; border-left:3px solid #769656; border-radius:8px; box-shadow:none; }
+body[data-page] .board-coach-card:not(.is-expanded) .move-insight { background:transparent; padding:12px; }
+body[data-page] .board-coach-card:not(.is-expanded) .coach-brief { margin:8px 0 0; color:#3f4d39; }
+body[data-page] .board-coach-card #board-coach-close { border-color:#d4dccd; background:#f3f5ee; box-shadow:none; }
+body[data-page] .board-coach-card .insight-heading { gap:8px; align-items:center; }
+body[data-page] .best-move-arrow { stroke:#76AB45; opacity:.7; stroke-width:12; }
+body[data-page] .best-arrow-shadow { opacity:.12; }
+body[data-page] .analysis-play-tools p { margin:0; color:#607052; }
+@media(max-width:860px) {
+  body[data-page] .mobile-workspace-tabs { background:#f5f6f2; border-bottom:1px solid #dce2d5; gap:4px; padding-bottom:4px; }
+  body[data-page] .mobile-workspace-tabs button { border-radius:0; border:0; border-bottom:3px solid transparent; background:transparent; box-shadow:none; color:#5b6b52; }
+  body[data-page] .mobile-workspace-tabs button[aria-selected="true"] { border-bottom-color:#769656; color:#264527; background:transparent; box-shadow:none; }
+  body[data-page] .board-card .board-coach-card:not(.is-expanded) { min-height:0; height:auto; margin:0; }
+  body[data-page] .board-card .coach-brief { min-height:40px; font-size:15px; }
+  body[data-page] .board-card .board-top { gap:8px; }
+  body[data-page] .board-card .player-identity strong { font-size:14px; }
+  body[data-page] .board-card #insight-title { font-size:16px; }
+  body[data-page] .workspace .board-card { display:flex; flex-direction:column; gap:8px; }
+  body[data-page] .workspace .board-card>.engine-progress { width:100%; margin:0; padding:2px 0; }
+  body[data-page] .workspace .board-card>.engine-progress .engine-progress-label { font-size:12px; margin-bottom:5px; }
+  body[data-page] .workspace .board-card>.engine-progress .progress-track { height:3px; }
+  body[data-page] .workspace .board-area { margin-inline:auto; width:min(100%,max(220px,calc(100svh - 420px))); }
+  body[data-page] .workspace[data-mobile-view="board"] .board-controls,body[data-page] .focus-dialog .board-controls { display:grid; grid-template-columns:80px minmax(0,1fr) 80px; grid-template-rows:48px; gap:8px; height:48px; min-height:48px; width:100%; padding:0; }
+  body[data-page] :is(.workspace,.focus-dialog) :is(#previous-move,#next-move) { width:100%; min-height:48px; height:48px; padding:8px; border-radius:6px; box-shadow:none; font-size:14px; gap:2px; background:#fff; color:#284a29; border:1px solid #d3ddc8; }
+  body[data-page] :is(.workspace,.focus-dialog) #next-move { background:#769656; color:white; border-color:#6b884e; }
+  body[data-page] :is(.workspace,.focus-dialog) .move-controls .step-button>span:not([data-icon]) { display:inline; }
+  body[data-page] .focus-dialog .move-controls { display:contents; }
+  body[data-page] .focus-dialog #previous-move { grid-column:1; grid-row:1; }
+  body[data-page] .focus-dialog #next-move { grid-column:3; grid-row:1; }
+  body[data-page] .focus-dialog #move-strip { grid-column:2; grid-row:1; }
+  body[data-page] #move-strip { justify-content:center; align-items:center; scroll-behavior:auto; height:48px; padding:0; margin:0; }
+  body[data-page] #move-strip button:not([aria-current="step"]) { display:none; }
+  body[data-page] #move-strip button[aria-current="step"] { justify-content:center; width:100%; max-width:100%; min-width:0; border:0; background:transparent; box-shadow:none; padding:8px 0; color:#3b5034; font:600 15px/1.4 'DM Sans',sans-serif; white-space:nowrap; }
+  body[data-page] #move-strip button::before { content:attr(data-notation); }
+  body[data-page] #move-strip button>span,body[data-page] #move-strip .strip-dot { display:none; }
+}
+@media(max-height:500px) and (max-width:860px) { body[data-page] .workspace .board-area { width:min(100%,max(220px,calc(100svh - 120px))); } }

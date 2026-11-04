@@ -5,8 +5,8 @@
 .analysis-play-tools #line-reply { background:#d3ef79; border-color:#b8ce79; }
 .analysis-play-tools button:disabled { opacity:.5; cursor:default; }
 .analysis-play-tools button:focus-visible,#board .square:focus-visible { outline:3px solid #588332; outline-offset:2px; }
-#board .square[draggable="true"] { cursor:grab; }
-#board .square[draggable="true"]:active { cursor:grabbing; }
+#board .square[data-can-drag="true"] { cursor:grab; }
+#board .square[data-can-drag="true"]:active { cursor:grabbing; }
 #board .square.legal-target { cursor:pointer; }
 #board .piece { pointer-events:none; user-select:none; -webkit-user-select:none; }
 .board-card .line-toolbar button { min-height:44px; font-size:13px; }

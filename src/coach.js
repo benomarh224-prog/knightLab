@@ -68,7 +68,16 @@ export function continuationEvidence(line) {
   return {text,exchange};
 }
 
+const reports=new WeakMap();
 export function coachMove(move,before,after){
+  if(!move||!before||!after)return computeCoachMove(move,before,after);
+  const key=JSON.stringify([move.before,move.after,move.san,before,after]);
+  let cached=reports.get(move);if(cached?.has(key))return cached.get(key);
+  const report=computeCoachMove(move,before,after);
+  if(!cached){cached=new Map();reports.set(move,cached);}cached.set(key,report);
+  if(cached.size>4)cached.delete(cached.keys().next().value);return report;
+}
+function computeCoachMove(move,before,after){
   const empty={why:'',better:'',lesson:'',bestLine:'',replyLine:'',bestMove:null,continuations:[],hasImprovement:false};
   if(!move)return {...empty,status:'start',title:'Your move coach',summary:'Select a move to see its purpose and the engine continuation.'};
   if(!before||!after||!Number.isFinite(before.cp)||!Number.isFinite(after.cp))return {...empty,status:'pending',title:moveLabel(move),summary:'The coach is waiting for the positions before and after this move to be reviewed.'};

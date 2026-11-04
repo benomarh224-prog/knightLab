@@ -9,7 +9,7 @@ function score(value){
   return clean;
 }
 export function createReviewCache(storage){
-  let entries=[];try{const saved=JSON.parse(storage?.getItem(KEY)||'[]');if(Array.isArray(saved))entries=saved.filter(entry=>typeof entry.pgn==='string'&&entry.pgn.length<=250000&&['deep','precise'].includes(entry.mode)&&Array.isArray(entry.scores)).slice(0,8);}catch{}
+  let entries=[];try{const saved=JSON.parse(storage?.getItem(KEY)||'[]');if(Array.isArray(saved))entries=saved.filter(entry=>typeof entry.pgn==='string'&&entry.pgn.length<=250000&&['quick','deep','precise'].includes(entry.mode)&&Array.isArray(entry.scores)).slice(0,8);}catch{}
   return {load(pgn,mode,total){const found=entries.find(entry=>entry.pgn===pgn&&entry.mode===mode);return found?found.scores.slice(0,total).map(score):[];},
-    save(pgn,mode,evaluations){if(!evaluations.some(Boolean)||!['deep','precise'].includes(mode))return;entries=[{pgn,mode,scores:evaluations.map(score)},...entries.filter(entry=>entry.pgn!==pgn||entry.mode!==mode)].slice(0,8);try{storage?.setItem(KEY,JSON.stringify(entries));}catch{}}};
+    save(pgn,mode,evaluations){if(!evaluations.some(Boolean)||!['quick','deep','precise'].includes(mode))return;entries=[{pgn,mode,scores:evaluations.map(score)},...entries.filter(entry=>entry.pgn!==pgn||entry.mode!==mode)].slice(0,8);try{storage?.setItem(KEY,JSON.stringify(entries));}catch{}}};
 }

@@ -49,14 +49,19 @@ export function terminalEvaluation(fen, history) {
   return null;
 }
 
+const notationCache=new Map(),ratingCache=new WeakMap();
 export function uciToSan(fen, uci) {
   if (!uci || !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) return '—';
-  try { return new Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }).san; }
+  const key=fen+'|'+uci;if(notationCache.has(key))return notationCache.get(key);
+  try { const san=new Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }).san;
+    notationCache.set(key,san);if(notationCache.size>1024)notationCache.delete(notationCache.keys().next().value);return san; }
   catch { return '—'; }
 }
 
 export function classifyMove(move, before, after) {
   if (!before || !after) return null;
+  const signature=[move.before,move.from,move.to,move.promotion,move.color,before.cp,after.cp,before.best,before.depth,before.alternative?.cp,before.alternative?.depth].join('|');
+  const cached=ratingCache.get(move);if(cached?.signature===signature)return cached.result;
   const played = move.from + move.to + (move.promotion || '');
   const loss = Math.max(0, (before.cp - after.cp) * (move.color === 'w' ? 1 : -1));
   const best = before.best === played;
@@ -64,7 +69,7 @@ export function classifyMove(move, before, after) {
   const advantage = alternative ? (before.cp - alternative.cp) * (move.color === 'w' ? 1 : -1) : 0;
   const great = best && loss <= 30 && before.depth >= 8 && alternative?.depth === before.depth && advantage >= 100;
   const label = great ? 'Great' : best ? 'Best' : loss >= 200 ? 'Blunder' : loss >= 100 ? 'Mistake' : loss >= 50 ? 'Inaccuracy' : 'Good';
-  return { label, loss, best: uciToSan(move.before, before.best) };
+  const result={ label, loss, best: uciToSan(move.before, before.best) };ratingCache.set(move,{signature,result});return result;
 }
 
 export function formatEvaluation(value) {

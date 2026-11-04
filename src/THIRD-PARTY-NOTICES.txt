@@ -19,8 +19,9 @@ Source: https://github.com/LexLuengas/chessnut-pieces
 Unmodified SVGs from the Lichess Chessnut asset set.
 See assets/pieces/chessnut/LICENSE.txt, NOTICE.txt and SOURCES.json.
 
-Wooden chess sounds adapted from Kenney's Impact Sounds (2019), CC0 1.0.
-Source: https://kenney.nl/assets/impact-sounds
-Clips trimmed, softened, mixed, faded and resampled by ROQVYN.
-See assets/audio/LICENSE.txt, NOTICE.txt and SOURCES.json.
-The procedural fallback sounds are original ROQVYN synthesis.
+Classic default piece set: Colin M. L. Burnett, GPL-2.0-or-later.
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/cburnett
+See assets/pieces/classic/LICENSE.txt, NOTICE.txt and SOURCES.json.
+
+Default chess audio: original ROQVYN dry taps, dedicated to CC0 1.0.
+See assets/audio/NOTICE.txt and scripts/prepare-classic-audio.mjs.
