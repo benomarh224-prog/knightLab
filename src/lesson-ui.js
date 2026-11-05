@@ -21,6 +21,7 @@ import { lessonEntry,lessonGuidance } from './lesson-guidance.js';
 import { createSquarePracticeUI } from './square-practice.js';
 import { createLessonViewport } from './lesson-viewport.js';
 import { createGuidedExample } from './lesson-demonstration.js';
+import { createLessonCoach } from './lesson-coach.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -50,6 +51,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   const layout=createLessonLayout({compact:matchMedia('(max-width:1020px)'),layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline')});
   const dock=createLessonDock({footer:document.querySelector('.lesson-course-footer'),root:document.documentElement});
   const lessonViewport=createLessonViewport();
+  const coach=createLessonCoach();
   const continuation=()=>{
     const lastLesson=lessons.indexOf(player.lesson)===lessons.length-1,next=lessonContinuation(player,{lastLesson,label:course.label});
     return lastLesson&&next.action==='next-lesson'&&coursePractice(course)?{...next,label:'Finish course →',help:'Optional practice or back to courses'}:next;
@@ -73,6 +75,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor});renderLearningCompanion({memory,courses:COURSES,storage});}
   function clearTurn(){motion.cancel();selected=null;hint=null;message='';promotion=null;}
   function focusStage(){
+    coach.close();
     $('lesson-stage-heading').focus({preventScroll:true});
     document.querySelector('.lesson-topline').scrollIntoView({block:'start'});
   }
@@ -133,7 +136,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       $('lesson-reset').textContent=exploring?'Reset free play':practice?'Restart exercise':'Restart review';
       if(exploring)$('lesson-reset').setAttribute('aria-label','Reset exploration to study position');
       $('lesson-feedback').textContent=message||hint?.text||(practice?(session.completed?`Well played.${session.hints?` ${session.hints} hint${session.hints===1?'':'s'} used.`:''}`:'Select a piece, then a highlighted destination.'):'Use the arrows or a move in the line to review.');
-      $('lesson-feedback').hidden=!message&&!hint;
+      $('lesson-feedback').hidden=!message&&!hint||Boolean(hint&&message===hint.text);
       if(exploring){$('lesson-feedback').textContent=message||(session.ending?`${session.ending}. Use Undo to try a different line.`:'');$('lesson-feedback').hidden=!message&&!session.ending;}
       $('lesson-current-note').hidden=true;$('lesson-current-note').textContent=session.note;
       $('lesson-current-move').textContent=session.last?`${session.last.before.split(' ')[5]}${session.last.color==='w'?'.':'…'} ${session.last.san}`:'Start';
@@ -190,6 +193,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-course-practice').hidden=!player.complete||globalIndex!==lessons.length-1||!coursePractice(course);
     dock.measure();
     lessonViewport.arrange(stage);
+    coach.update({lessonKey:course.id+':'+lesson.id,stage,title:study.coach||lesson.title,instruction:stage==='try'?$('lesson-instruction').textContent:player.plan.concepts[player.conceptIndex]?.text,hint,feedback:message||hint?.text});
     updateProgress();
     checkmateDialog.sync();
   }
@@ -258,7 +262,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-previous').onclick=()=>jumpStudy(player.session.cursor-1);$('lesson-next').onclick=()=>jumpStudy(player.session.cursor+1);
   $('lesson-replay').onclick=()=>{player.stopExploring();player.reviewing=!player.reviewing;player.save();clearTurn();render();};
   $('lesson-flip').onclick=()=>{motion.cancel();player.flipped=!player.flipped;player.save();render();};
-  $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();if(hint)$('lesson-feedback').scrollIntoView({block:'nearest'});};
+  $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();if(hint)coach.open($('lesson-hint'));};
   $('lesson-challenge').onclick=()=>{
     if(player.challengeMode){player.endChallenge();history.replaceState({},'',`${course.path}?lesson=${encodeURIComponent(player.lesson.id)}`);}
     else player.startChallenge();
@@ -267,7 +271,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-course-previous').onclick=()=>{const i=lessons.indexOf(player.lesson);if(i>0){selectLesson(lessons[i-1].id);focusStage();}};
   $('lesson-course-next').onclick=continueLesson;
   $('lesson-moves').onclick=event=>{const item=event.target.closest('[data-lesson-ply]');if(item)jumpStudy(Number(item.dataset.lessonPly));};
-  $('lesson-analyze').onclick=()=>{const session=player.exploration||player.session;if(session?.cursor)onAnalyze(session.pgn());};
+  $('lesson-analyze').onclick=()=>{const session=player.exploration||player.session;if(session?.cursor){coach.close();onAnalyze(session.pgn());}};
   function attemptMove(from,to,promote){
     if(motion.active)return;
     const active=player.exploration||player.session;

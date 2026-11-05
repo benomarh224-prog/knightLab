@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseGame } from '../src/game.js';
 import { createInlineAnalysis } from '../src/inline-analysis.js';
+import { analysisNavigation } from '../src/analysis-navigation.js';
 
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
@@ -35,7 +36,7 @@ test('the review board accepts direct selection and both sides can move during e
  c.click('e4');c.click('e7');c.click('e5');
  assert.deepEqual(h.sounds,['e4','e5']);assert.equal(c.line.cursor,2);
  assert.equal(JSON.stringify(h.state.parsed),original);assert.equal(h.state.ply,0);
- assert.match(h.nodes.get('analysis-board-instruction').textContent,/White.*Free play/);
+ assert.match(h.nodes.get('analysis-board-instruction').textContent,/White.*Drag or tap/);
  c.exit();assert.equal(c.active,false);assert.equal(h.resumes,1);assert.equal(h.pauses,1);
 });
 
@@ -94,4 +95,26 @@ test('selecting or changing a piece paints legal destinations without booting an
  const h=harness(),c=h.controller;c.click('e2');c.click('g1');assert.equal(c.selected,'g1');
  assert.ok(c.targets.has('f3'));assert.equal(h.engines.length,0);assert.deepEqual(h.sounds,[]);
  c.click('f3');assert.equal(c.line.last.san,'Nf3');assert.equal(h.engines.length,1);c.exit();
+});
+
+test('a variation keeps the preceding game moves in the shared playback timeline',()=>{
+ const h=harness(undefined,2),c=h.controller;c.click('d2');c.click('d4');
+ const nav=analysisNavigation(h.state.parsed,h.state.evaluations,h.state.ply,c.line);
+ assert.deepEqual(nav.moves.map(m=>m.san),['e4','e5','d4']);assert.equal(nav.cursor,3);assert.equal(nav.base,2);
+ assert.equal(h.nodes.get('line-toolbar').hidden,true);assert.equal(h.nodes.has('line-exit'),false);
+ c.exit();
+});
+
+test('Previous crosses a branch root and Next replays that same branch without a return-mode action',()=>{
+ const h=harness(undefined,2),c=h.controller,original=JSON.stringify(h.state.parsed);c.click('d2');c.click('d4');const variation=c.line.fen;
+ c.jump(0);c.jump(-1);assert.equal(c.active,true);assert.equal(c.line.fen,h.state.parsed.fens[1]);
+ assert.deepEqual(c.line.entries.map(m=>m.san),['e4','e5','d4']);
+ c.jump(3);assert.equal(c.line.fen,variation);assert.equal(JSON.stringify(h.state.parsed),original);c.exit();
+});
+
+test('navigation scores retain each player perspective and a custom-FEN root',()=>{
+ const h=harness('[SetUp "1"]\n[FEN "7k/8/8/8/8/8/P7/7K b - - 0 25"]\n\n25... Kg8 26. a4 *',1),c=h.controller;
+ h.state.evaluations=[{cp:10},{cp:20}];c.click('h1');c.click('g1');
+ const nav=analysisNavigation(h.state.parsed,h.state.evaluations,1,c.line);
+ assert.equal(nav.moves[0].san,'Kg8');assert.equal(nav.moves[1].san,'Kg1');assert.equal(nav.scores[0].cp,10);assert.equal(nav.scores[1].cp,20);assert.equal(nav.cursor,2);c.exit();
 });

@@ -6,7 +6,7 @@ import { formatEvaluation } from './game.js';
 const $=id=>document.getElementById(id);
 const coord=move=>move.from+move.to+(move.promotion||'');
 
-export function createInlineAnalysis({context,pause,resume,onChange,playSound,createEngine=()=>new Engine()}) {
+export function createInlineAnalysis({context,pause,resume,onChange,playSound,navigate=()=>{},createEngine=()=>new Engine()}) {
   let navigationAudio=0;
   let line=null, selected=null, promotion=null, engine=null, run=0, busy=false, restore=false, savedGame=null, message='';
   function cancel() { run++; engine?.destroy(); engine=null; busy=false; }
@@ -27,7 +27,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
         line.scores[index]=score; onChange();
       }
       message=line.chess.isCheckmate()?'Checkmate. Undo to explore a different continuation.':line.chess.isStalemate()?'Stalemate. Undo to try another idea.':line.chess.isDraw()?'Drawn position. You can still explore legal moves.':`${line.chess.turn()==='w'?'White':'Black'} to move. You control both sides.`;
-    } catch(error) { if(current===run) message=error.message; }
+    } catch(error) { if(current===run){message=error.message;$('line-controls').open=true;} }
     finally { active.destroy(); if(current===run) {engine=null;busy=false;onChange();} }
   }
   function start(ply=context().ply, best=null, {silent=false}={}) {
@@ -72,6 +72,23 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
   }
   function jump(cursor) {
     if (!line) return;
+    // Previous follows the shared game history, even across a variation's root.
+    // No separate "return to game" mode or button is needed.
+    if(cursor<0||!line.entries.length&&cursor>0){
+      const source=context(),base=line.origin.moves.length;
+      if(source.parsed.fens[base]===line.rootFen){
+        if(cursor<0&&base){
+          // Extend the same continuation backwards rather than throwing it
+          // away. Next can now replay the learner's branch after going back.
+          const previous=line,replacement=new AnalysisLine(source.parsed.fens[0],source.evaluations[0]||null);
+          for(const move of [...source.parsed.moves.slice(0,base),...previous.entries])replacement.play(move.from,move.to,move.promotion);
+          replacement.scores=[...Array.from({length:base},(_,i)=>source.evaluations[i]||null),...previous.scores];
+          cancel();line=replacement;line.jump(Math.max(0,base+cursor));selected=null;promotion=null;evaluate();
+          playSound(navigationSoundMove(source.parsed.moves,base,Math.max(0,base+cursor)),{eventId:'variation-'+(++navigationAudio)});return;
+        }
+        const restart=exit(false);navigate(base+cursor);if(restart)resume();return;
+      }
+    }
     const previous=line.cursor;cancel();line.jump(cursor);selected=null;promotion=null;evaluate();playSound(navigationSoundMove(line.entries,previous,line.cursor),{eventId:'variation-'+(++navigationAudio)});
   }
   function tryBest(best,{replaceLast=false}={}) {
@@ -98,7 +115,6 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
     line=replacement;selected=null;promotion=null;message='Coach continuation · use the move buttons to step through it. Your game is saved.';
     $('line-controls').open=true;evaluate();return true;
   }
-  $('line-exit').onclick=()=>exit();
   $('line-undo').onclick=()=>{if(line)jump(line.cursor-1);};
   $('line-reset').onclick=()=>{if(line){cancel();line.reset();selected=null;promotion=null;evaluate();}};
   $('line-reply').onclick=()=>{const source=context(),best=line?line.score?.best:source.evaluations[source.ply]?.best;if(best&&!busy)tryBest(best);};
@@ -108,16 +124,16 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
   $('line-promotion-cancel').onclick=()=>{promotion=null;selected=null;onChange();};
   function paint() {
     document.querySelector('.board-card').classList.toggle('exploring',Boolean(line));
-    $('line-toolbar').hidden=!line; $('line-controls').hidden=!line;
+    $('line-toolbar').hidden=true; $('line-controls').hidden=!line;
     $('try-move').setAttribute('aria-pressed',String(Boolean(line)));
     $('try-move').classList.toggle('toggled',Boolean(line));
     const source=context(),chess=line?.chess||new Chess(source.parsed.fens[source.ply]),score=line?line.score:source.evaluations[source.ply];
-    $('analysis-board-instruction').textContent=chess.isCheckmate()?'Checkmate':chess.isStalemate()?'Stalemate':`${chess.turn()==='w'?'White':'Black'} to move · ${line?'Free play':'Drag or tap a piece'}`;
+    $('analysis-board-instruction').textContent=chess.isCheckmate()?'Checkmate':chess.isStalemate()?'Stalemate':`${chess.turn()==='w'?'White':'Black'} to move · Drag or tap a piece`;
     $('line-undo').hidden=!line;
     $('line-undo').disabled=!line?.cursor||Boolean(promotion);
     $('line-reply').disabled=busy||!score?.best||!chess.moves().length||Boolean(promotion);
     if (!line) return;
-    if(promotion||!busy&&!line.score)$('line-controls').open=true;
+    if(promotion)$('line-controls').open=true;
     $('line-message').textContent=busy?'Stockfish is checking this continuation…':message;
     $('line-score').textContent=line.score?formatEvaluation(line.score):'…';
     $('line-reset').disabled=!line.entries.length;
@@ -125,6 +141,6 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,cr
     $('line-promotion').hidden=!promotion;
     $('line-moves').innerHTML='<button data-line-ply="0" aria-current="'+(line.cursor===0?'step':'false')+'">Start</button>'+line.entries.map((move,i)=>`<button data-line-ply="${i+1}" aria-current="${line.cursor===i+1?'step':'false'}">${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${move.san}</button>`).join('');
   }
-  return {get active(){return Boolean(line);},get line(){return line;},get selected(){return selected;},get targets(){return new Set(selected?line.legal(selected).map(move=>move.to):[]);},start,exit,reset,click,select,attempt,jump,paint,
+  return {get active(){return Boolean(line);},get busy(){return busy;},get line(){return line;},get selected(){return selected;},get targets(){return new Set(selected?line.legal(selected).map(move=>move.to):[]);},start,exit,reset,click,select,attempt,jump,paint,
     refresh(){if(line&&!busy&&!line.score)evaluate();else onChange();},tryBest,playback};
 }
