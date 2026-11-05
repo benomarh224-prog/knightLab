@@ -121,3 +121,46 @@ body[data-page] #lesson-coach-board { width:100%; min-height:48px; }
   body[data-page] .workspace .board-area { width:min(100%,max(220px,calc(100svh - 400px))); }
 }
 @media(prefers-reduced-motion:reduce) { .lesson-coach-dialog { scroll-behavior:auto; } }
+
+/* Analysis coaching lives in its own floating layer; no clipped text cards. */
+body[data-page] .analysis-coach-launch {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  width:100%; min-height:56px; margin:0; padding:10px 14px; border:1px solid #dededb;
+  border-radius:8px; background:#fff; color:#262a2f; text-align:left;
+}
+body[data-page] .review-panel>.analysis-coach-launch { margin-bottom:16px; }
+body[data-page] .coach-launch-copy { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; min-width:0; font-size:16px; }
+body[data-page] #coach-launch-move { font-size:14px; font-variant-numeric:tabular-nums; color:#5b626a; }
+body[data-page] .coach-launch-action { flex:none; color:#3d6388; font-size:14px; font-weight:600; }
+body[data-page] #board-coach-card.floating-analysis-coach {
+  position:fixed; inset:auto; z-index:110; display:grid; grid-template-rows:auto minmax(0,1fr) auto;
+  margin:0; width:min(460px,calc(100vw - 24px)); height:auto; min-height:0;
+  max-height:calc(100dvh - 24px); overflow:hidden; padding:0; border:1px solid #c9ccd0;
+  border-radius:12px; background:#fff; color:#262a2f; box-shadow:0 12px 36px #14181c24;
+}
+body[data-page] #board-coach-card.floating-analysis-coach[hidden] { display:none; }
+body[data-page] #board-coach-card .floating-coach-heading {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:8px 12px 8px 16px; min-height:60px; background:#fff; border-bottom:1px solid #e8e8e5;
+  cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none;
+}
+body[data-page] #board-coach-card .floating-coach-heading:active { cursor:grabbing; }
+body[data-page] #board-coach-card .floating-coach-heading strong { color:#5b626a; font-size:14px; }
+body[data-page] #board-coach-card #board-coach-close { width:44px; height:44px; min-height:44px; padding:0; border:0; border-radius:6px; background:#fff; color:#363b41; font-size:28px; text-decoration:none; }
+body[data-page] #board-coach-card.floating-analysis-coach #coach-panel { height:auto; min-height:0; max-height:none; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+body[data-page] #board-coach-card.floating-analysis-coach .move-insight { display:block; height:auto; min-height:0; padding:16px; margin:0; border:0; background:#fff; }
+body[data-page] #board-coach-card.floating-analysis-coach .insight-heading { position:static; display:flex; flex-wrap:wrap; height:auto; min-height:32px; margin:0 0 12px; padding:0; gap:8px; background:transparent; }
+body[data-page] #board-coach-card.floating-analysis-coach #insight-title { min-width:0; max-width:100%; font-size:18px; color:#262a2f; white-space:normal; overflow:visible; text-overflow:clip; }
+body[data-page] #board-coach-card.floating-analysis-coach #insight-move { margin-left:0; padding:4px 6px; background:#eeefef; color:#50555b; font-size:14px; white-space:normal; }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-brief { display:none; }
+body[data-page] #board-coach-card.floating-analysis-coach :is(p,#insight-text) { display:block; height:auto; min-height:0; max-height:none; overflow:visible; -webkit-line-clamp:unset; white-space:normal; overflow-wrap:anywhere; font-size:16px; line-height:1.55; color:#50555b; }
+body[data-page] #board-coach-card.floating-analysis-coach .best-line { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:16px 0; padding:12px 0; color:#5b626a; border-block:1px solid #e8e8e5; }
+body[data-page] #board-coach-card.floating-analysis-coach #recommended-move { min-height:44px; padding:8px 12px; font-size:16px; background:#eeefef; border-color:#dededb; color:#363b41; }
+body[data-page] #board-coach-card.floating-analysis-coach #engine-depth { display:block; margin-left:auto; font-size:14px; color:#666a70; }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-explanation strong { color:#363b41; font-size:16px; }
+body[data-page] #board-coach-card.floating-analysis-coach :is(.coach-lines,.coach-lesson) { background:#f4f3f1; border-color:#dededb; color:#363b41; }
+body[data-page] #board-coach-card.floating-analysis-coach :is(small,.coach-note) { display:block; color:#666a70; font-size:14px; line-height:1.5; }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-playback { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px 16px max(10px,env(safe-area-inset-bottom)); border-top:1px solid #e8e8e5; background:#fff; }
+body[data-page] #board-coach-card.floating-analysis-coach #coach-move-position { display:none; }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-playback button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px; border:1px solid #d1d3d4; border-radius:6px; background:#fff; color:#363b41; font-size:16px; }
+body[data-page] #board-coach-card.floating-analysis-coach #coach-next { color:white; background:#24272b; border-color:#24272b; }

@@ -1,72 +1,72 @@
-const $=id=>document.getElementById(id);
+export function coachPlacement(viewport,{x,y}={}){
+  const {left=0,top=0,width,height,headerBottom=top}=viewport,gap=12;
+  const w=Math.min(460,Math.max(0,width-gap*2));
+  const maxHeight=Math.max(120,Math.min(480,height-gap*2));
+  const defaultY=Math.max(top+gap,Math.min(headerBottom+gap,top+height-Math.min(maxHeight,240)-gap));
+  return {left:Math.max(left+gap,Math.min(x??left+width-w-gap,left+width-w-gap)),top:Math.max(top+gap,Math.min(y??defaultY,top+height-Math.min(maxHeight,240)-gap)),width:w,maxHeight:Math.min(maxHeight,top+height-(y===undefined?defaultY:Math.max(top+gap,Math.min(y,top+height-Math.min(maxHeight,240)-gap)))-gap)};
+}
 
-export function createBoardCoach({showBoard,navigate}) {
-  const panel=$('coach-panel'), card=$('board-coach-card');
-  const board=document.querySelector('.board-card');
-  const desktop=matchMedia('(min-width:861px)');
-  const sidePanel=document.querySelector('.review-panel');
-  const triggers=['board-coach-toggle','board-coach','coach-tab','mobile-coach-tab'].map($);
-  const players=document.createElement('div');
-  $('board-top').append($('line-toolbar'));
-  document.querySelector('.board-area').after(board.querySelector('.board-controls'));
-  players.className='board-players';
-  $('board-top').append(players);
+export function createBoardCoach({showBoard,navigate,doc=document,win=window}) {
+  const get=id=>doc.getElementById(id),panel=get('coach-panel'),card=get('board-coach-card');
+  const board=doc.querySelector('.board-card'),sidePanel=doc.querySelector('.review-panel'),desktop=win.matchMedia('(min-width:861px)');
+  const triggers=['board-coach-toggle','board-coach','coach-tab','mobile-coach-tab'].map(get);
+  const launcher=doc.createElement('button');launcher.id='analysis-coach-open';launcher.type='button';launcher.className='analysis-coach-launch';
+  launcher.innerHTML='<span class="coach-launch-copy"><strong id="coach-launch-verdict">Move coach</strong><span id="coach-launch-move"></span></span><span class="coach-launch-action">Coach ↗</span>';
+  launcher.setAttribute('aria-haspopup','dialog');launcher.setAttribute('aria-controls',card.id);launcher.setAttribute('aria-expanded','false');
+  const players=doc.createElement('div');players.className='board-players';
+  get('board-top').append(get('line-toolbar'),players);
+  doc.querySelector('.board-area').after(board.querySelector('.board-controls'));
   board.querySelector('.board-header-actions').append(board.querySelector('.board-actions'));
-  document.querySelector('.board-area').before(card);
   players.append(...board.querySelectorAll(':scope > .player-row'));
-  card.insertBefore(panel,$('coach-playback'));
-  panel.querySelector('.insight-heading').append($('board-coach-close'));
-  card.querySelector('.coach-card-heading').className='sr-only';
-  card.hidden=false; panel.hidden=false;
-  panel.setAttribute('role','region');
-  panel.setAttribute('aria-labelledby','board-coach-title');
-  for(const trigger of triggers)trigger.setAttribute('aria-expanded','true');
-  function adjacent(){return desktop.matches&&!board.closest('.focus-dialog');}
+  card.insertBefore(panel,get('coach-playback'));
+  const header=card.querySelector('.coach-card-heading'),closeButton=get('board-coach-close');header.className='coach-card-heading floating-coach-heading';header.title='Drag to move';header.append(closeButton);
+  closeButton.hidden=false;closeButton.textContent='×';closeButton.setAttribute('aria-label','Close move coach');closeButton.removeAttribute('aria-expanded');closeButton.removeAttribute('aria-controls');
+  card.classList.add('is-expanded','floating-analysis-coach');card.setAttribute('role','dialog');card.setAttribute('aria-modal','false');card.setAttribute('aria-labelledby','board-coach-title');
+  const layered=typeof card.showPopover==='function';if(layered)card.setAttribute('popover','manual');
+  panel.hidden=false;panel.removeAttribute('role');panel.removeAttribute('aria-labelledby');
+  get('coach-playback').hidden=false;
+  let opened=false,preferred=null,drag=null;
+  function placement(){
+    if(!opened)return;
+    const v=win.visualViewport,h=doc.querySelector('.topbar')?.getBoundingClientRect();
+    const rect=coachPlacement({left:v?.offsetLeft||0,top:v?.offsetTop||0,width:v?.width||win.innerWidth,height:v?.height||win.innerHeight,headerBottom:h?.bottom||0},preferred||{});
+    for(const [key,value]of Object.entries(rect))card.style[key]=value+'px';
+  }
+  function close(restoreFocus=false){
+    if(!opened){card.hidden=true;return;}
+    opened=false;if(layered&&card.matches(':popover-open'))card.hidePopover();card.hidden=true;
+    for(const trigger of [launcher,...triggers])trigger.setAttribute('aria-expanded','false');
+    if(restoreFocus&&launcher.getClientRects().length)launcher.focus({preventScroll:true});
+  }
+  function open(){
+    showBoard();if(opened)return;
+    const host=board.closest('dialog[open]')||doc.body;if(card.parentElement!==host)host.append(card);
+    for(const menu of doc.querySelectorAll('.compact-options[open]'))menu.open=false;
+    card.hidden=false;opened=true;if(layered)card.showPopover();
+    for(const trigger of [launcher,...triggers])trigger.setAttribute('aria-expanded','true');
+    preferred=null;placement();panel.scrollTop=0;closeButton.focus({preventScroll:true});
+  }
   function position(){
-    const focused=document.activeElement;
-    if(adjacent())sidePanel.prepend(card);
-    else board.querySelector('.board-area').before(card);
     close();
-    if(focused&&card.contains(focused))focused.focus({preventScroll:true});
+    if(desktop.matches&&!board.closest('.focus-dialog'))sidePanel.prepend(launcher);else board.querySelector('.board-area').before(launcher);
   }
-  desktop.addEventListener('change',position);
-  function close(restoreFocus=false) {
-    card.classList.remove('is-expanded');
-    $('board-coach-close').hidden=false;
-    $('board-coach-close').textContent='Details';
-    $('board-coach-close').setAttribute('aria-expanded','false');
-    $('board-coach-close').setAttribute('aria-label','Show coach details');
-    if(restoreFocus)$('board-coach-close').focus({preventScroll:true});
+  function update(){
+    get('coach-launch-verdict').textContent=card.dataset.reviewState==='ready'?get('insight-title').textContent:'Move coach';
+    get('coach-launch-move').textContent=get('insight-move').textContent;
+    launcher.setAttribute('aria-label',`${get('coach-launch-verdict').textContent}${get('insight-move').textContent?' · '+get('insight-move').textContent:''}. Open floating coach`);
   }
-  function open() {
-    showBoard(); close();
-    reveal();
-  }
-  function reveal({playback=false}={}) {
-    if(!matchMedia('(max-width:860px)').matches)return;
-    const area=board.querySelector('#board').getBoundingClientRect();
-    if(!area.height)return;
-    const focus=Boolean(board.closest('dialog[open]'));
-    if(playback&&!focus)return;
-    if(card.getBoundingClientRect().top<(focus?12:96)||area.bottom>innerHeight-(focus?12:64)){
-      $('board-top').scrollIntoView({block:'start',behavior:'instant'});
-    }
-  }
-  for(const trigger of triggers)trigger.onclick=open;
-  $('board-coach-close').onclick=()=>{
-    if(card.classList.contains('is-expanded')){close();reveal();return;}
-    card.classList.add('is-expanded');
-    $('board-coach-close').textContent='Less';
-    $('board-coach-close').setAttribute('aria-expanded','true');
-    $('board-coach-close').setAttribute('aria-label','Collapse coach details');
-  };
-  $('coach-previous').onclick=()=>navigate(-1);
-  $('coach-next').onclick=()=>navigate(1);
-  document.addEventListener('keydown',event=>{
-    if(card.classList.contains('is-expanded') && event.key==='Escape' && (!document.querySelector('dialog[open]')||board.closest('.focus-dialog'))){
-      event.preventDefault();event.stopImmediatePropagation();close(true);reveal();
-    }
+  for(const trigger of [launcher,...triggers])trigger.onclick=open;
+  closeButton.onclick=()=>close(true);
+  get('coach-previous').onclick=()=>navigate(-1);get('coach-next').onclick=()=>navigate(1);
+  doc.addEventListener('keydown',event=>{
+    if(doc.querySelector('.viewport-menu:not([hidden])'))return;
+    if(opened&&event.key==='Escape'&&(!doc.querySelector('dialog[open]')||board.closest('.focus-dialog'))){event.preventDefault();event.stopImmediatePropagation();close(true);}
   },true);
-  position();
-  return {open,close,reveal,position};
+  doc.addEventListener('click',event=>{if(opened&&!card.contains(event.target)&&!board.contains(event.target)&&!sidePanel.contains(event.target))close(false);});
+  header.addEventListener('pointerdown',event=>{if(event.button!==0||event.target.closest('button'))return;const r=card.getBoundingClientRect();drag={id:event.pointerId,x:event.clientX,y:event.clientY,left:r.left,top:r.top};header.setPointerCapture(event.pointerId);});
+  header.addEventListener('pointermove',event=>{if(!drag||event.pointerId!==drag.id)return;preferred={x:drag.left+event.clientX-drag.x,y:drag.top+event.clientY-drag.y};placement();});
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])header.addEventListener(name,()=>{drag=null;});
+  win.addEventListener('resize',placement);win.visualViewport?.addEventListener('resize',placement);win.visualViewport?.addEventListener('scroll',placement);
+  desktop.addEventListener('change',position);position();
+  return {open,close,update,reveal(){},position,get opened(){return opened;}};
 }

@@ -415,7 +415,7 @@ function render() {
 let coachContext = null, coachReport = null;
 function renderCoach(move, before, after) {
   if (!coachContext || coachContext[0] !== move || coachContext[1] !== before || coachContext[2] !== after) {
-    if (coachContext?.[0] !== move) { boardCoach.close(); $('coach-lines').open = false; $('coach-panel').scrollTop=0; }
+    if (coachContext?.[0] !== move) { $('coach-lines').open = false; $('coach-panel').scrollTop=0; }
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
@@ -450,6 +450,7 @@ function renderCoach(move, before, after) {
   $('recommended-move').setAttribute('aria-label',recommendation?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
   $('recommended-move').onclick=tryRecommendation;
   $('coach-note').textContent = ready ? `Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${before.depth}` : ''}. Deeper review can change the recommendation.` : 'The coach updates as each move is reviewed.';
+  boardCoach.update();
 }
 
 function renderChart() {
@@ -518,7 +519,6 @@ function updateMoveRatings(items) {
 }
 function goTo(ply,{automatic=false}={}) {
   if(!automatic)autoplay.stop();
-  boardCoach.close();
   const restart=inline.active?inline.exit(false):false;
   const previous = state.ply;
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
@@ -748,7 +748,7 @@ $('games-list').onclick = event => {
 document.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { state.filter = button.dataset.filter; state.libraryPage = 0; document.querySelectorAll('[data-filter]').forEach(element => { element.classList.toggle('selected', element === button); element.setAttribute('aria-pressed', String(element === button)); }); renderGames(); });
 for (const [id, change] of [['library-prev', -1], ['library-next', 1]]) $(id).onclick = () => { state.libraryPage += change; renderGames(); scrollToSection($('game-library')); };
 $('load-more').onclick = loadOlder;
-function stepMove(delta,{automatic=false}={}) { if(!automatic)autoplay.stop(); if(inline.active){boardCoach.close();inline.jump(inline.line.cursor+delta);boardCoach.reveal({playback:true});}else goTo(state.ply+delta,{automatic}); }
+function stepMove(delta,{automatic=false}={}) { if(!automatic)autoplay.stop(); if(inline.active){inline.jump(inline.line.cursor+delta);boardCoach.reveal({playback:true});}else goTo(state.ply+delta,{automatic}); }
 $('first-move').onclick = () => inline.active?inline.jump(-analysisNavigation(state.parsed,state.evaluations,state.ply,inline.line).base):goTo(0);
 $('previous-move').onclick = () => stepMove(-1);
 $('next-move').onclick = () => stepMove(1);
