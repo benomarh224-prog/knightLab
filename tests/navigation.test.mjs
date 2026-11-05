@@ -44,3 +44,10 @@ test('resize restores the live desktop navigation without a stale open modal or 
   assert.equal(toggle.attributes['aria-expanded'],'false');assert.equal(typeof nav.listeners.click.handler,'function');
   controller.close();assert.equal(nav.parent,desktopSlot);
 });
+
+test('backdrop clicks dismiss navigation while clicks on the sheet padding leave it open',()=>{
+ const {nav,dialog,toggle}=fixture();dialog.getBoundingClientRect=()=>({left:12,right:378,top:300,bottom:830});
+ toggle.onclick();dialog.listeners.click({target:dialog,clientX:24,clientY:310});assert.equal(dialog.open,true);
+ dialog.listeners.click({target:nav,clientX:50,clientY:350});assert.equal(dialog.open,true);
+ dialog.listeners.click({target:dialog,clientX:100,clientY:100});assert.equal(dialog.open,false);assert.equal(toggle.attributes['aria-expanded'],'false');
+});

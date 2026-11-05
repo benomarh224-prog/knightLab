@@ -23,6 +23,8 @@ export function createLessonViewport({doc=document,viewport=window}={}){
   }
   function arrange(next=stage){
     stage=next;doc.body.dataset.lessonStage=stage;
+    const tools=doc.querySelector('.lesson-options'),toolsHost=stage==='try'?get('lesson-controls'):doc.querySelector('.lesson-topline');
+    if(tools&&toolsHost&&tools.parentElement!==toolsHost)toolsHost.append(tools);
     const adjacent=stage==='try'&&desktop.matches&&doc.body.dataset.lessonFocus!=='true';
     const owner=adjacent?panel:heading;
     if(status.parentElement!==owner){if(owner===heading)owner.append(status,instruction);else owner.prepend(status,instruction);}

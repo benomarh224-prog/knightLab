@@ -60,10 +60,13 @@ test('selected Tal lines demonstrate the concrete board relationships described 
  c=end('deflect-the-f7-defender');assert.ok(c.attackers('e8','w').includes('f6'));assert.equal(c.get('d7').type,'r');
 });
 
-test('learning catalogue has a dedicated attacking section and a home entry without bundling the PDF',async()=>{
+test('learning catalogue keeps attacking courses discoverable through its topic selector without bundling the PDF',async()=>{
  const html=await readFile('src/index.html','utf8');
- assert.ok(html.includes('data-learn-filter="attacking"'));assert.ok(html.includes('id="attacking-course-cards"'));
- assert.ok(html.includes('data-home-category="attacking"'));assert.ok(html.includes('/learn/?category=attacking'));
+ const {courseTopics}=await import('../src/course-topics.js');
+ assert.ok(html.includes('id="learn-topic"'));assert.ok(html.includes('id="attacking-course-cards"'));
+ assert.equal(courseTopics(COURSES).find(topic=>topic.value==='attacking').count,3);
+ const home=html.slice(html.indexOf('class="home-page'),html.indexOf('class="entry-page'));
+ assert.ok(home.includes('data-route="learn"'));
  const source=await readFile('src/attacking-catalog.js','utf8');assert.ok(source.includes('data-course-progress='));
  assert.equal(html.includes('pdfcoffee.com'),false);
 });

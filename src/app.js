@@ -17,6 +17,7 @@ import { MoveSounds, navigationSoundMove } from './sound.js';
 import { createAudioSettings } from './audio-settings.js';
 import { createAutoplay } from './autoplay.js';
 import { createCoachDemo } from './coach-demo.js';
+import { courseTopics } from './course-topics.js';
 import {createViewportMenu} from './viewport-menu.js';
 import {evaluationLossText} from './accuracy.js';
 import {nextReviewPosition} from './review-schedule.js';
@@ -74,7 +75,6 @@ const compactLayout = matchMedia('(max-width: 860px)');
 let router;
 const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:$('workspace-menu'),desktopSlot:$('desktop-navigation'),mobileSlot:$('mobile-navigation'),dialog:$('navigation-dialog'),toggle:$('workspace-menu-toggle'),closeButton:$('navigation-close')});
 function closeWorkspaceMenu(){navigation.close();}
-$('nav-find-games').onclick=()=>{closeWorkspaceMenu();$('open-connect').click();};
 $('nav-import').onclick=()=>{closeWorkspaceMenu();$('sidebar-import').click();};
 $('nav-guide').onclick=()=>{closeWorkspaceMenu();$('how-it-works').click();};
 let reviewStorage;
@@ -231,12 +231,12 @@ $('focus-dialog').addEventListener('close', () => {
 let toastTimer;
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 3500); }
 function searchStatus(message, error = false) {
-  for(const id of ['search-status','home-search-status','games-search-status']){
+  for(const id of ['search-status','games-search-status']){
     $(id).hidden=!message; $(id).textContent=message; $(id).classList.toggle('error',error);
   }
 }
 function searchBusy(busy){
-  for(const id of ['connect-button','home-search-button']){
+  for(const id of ['connect-button']){
     $(id).disabled=busy; $(id).setAttribute('aria-busy',String(busy));
     $(id).innerHTML=busy?'Finding games…':`Find ${id==='connect-button'?'my ':''}games ${icon('arrow')}`;
   }
@@ -687,7 +687,6 @@ async function searchPlayer(event) {
     }
     if (controller.signal.aborted) return;
     state.username = username; state.profile = profile; state.archives = archives; state.archiveIndex = archiveIndex;
-    $('home-username').value=username;
     state.games = games; state.filter = 'all'; state.libraryPage = 0;
     $('profile').hidden = false;
     const avatar = typeof profile.avatar === 'string' && profile.avatar.startsWith('https://') ? `<img src="${escape(profile.avatar)}" alt="" referrerpolicy="no-referrer"/>` : `<span class="profile-fallback">${escape(profile.username?.[0]?.toUpperCase() || '♙')}</span>`;
@@ -736,29 +735,21 @@ function openConnect() { coachDemo.pause();$('connect-dialog').showModal(); $('u
 $('focus-username').onclick = openConnect;
 $('open-connect').onclick = openConnect;
 $('games-search').onclick=openConnect;
-$('home-search').addEventListener('submit',event=>{
-  event.preventDefault();$('username').value=$('home-username').value;searchPlayer();
-});
-$('home-demo').onclick=()=>{setGame({pgn:DEMO_PGN},{demo:true,analyze:false});router.go('analysis');};
 function homeAnalyze(){router.go('analyze');}
-for(const id of ['home-analyze','home-path-review'])$(id).onclick=homeAnalyze;
-for(const id of ['home-play','home-play-art','home-path-play'])$(id).onclick=()=>$('play-open').click();
+$('home-analyze').onclick=homeAnalyze;
 for(const id of ['home-tactics','home-tactics-art'])$(id).onclick=()=>{
   router.go('tactics');
 };
-document.querySelectorAll('[data-home-filter]').forEach(button=>button.onclick=()=>{
-  for(const option of document.querySelectorAll('[data-home-filter]'))option.setAttribute('aria-pressed',String(option===button));
-  for(const card of document.querySelectorAll('[data-home-category]'))card.hidden=button.dataset.homeFilter!=='all'&&card.dataset.homeCategory!==button.dataset.homeFilter;
-});
+$('learn-topic').innerHTML=courseTopics(COURSES).map(topic=>`<option value="${escape(topic.value)}">${escape(topic.label)}</option>`).join('');
 
 function selectLearningCategory(category){
   if(!Object.values(COURSES).some(course=>course.category===category))return;
-  for(const button of document.querySelectorAll('[data-learn-filter]'))button.setAttribute('aria-pressed',String(button.dataset.learnFilter===category));
+  $('learn-topic').value=category;
   for(const section of document.querySelectorAll('[data-learn-category]'))section.hidden=section.dataset.learnCategory!==category;
   try{reviewStorage?.setItem('knightlab-learning-category',category);}catch{}
   if(router?.page==='learn'){const query=new URLSearchParams(location.search);query.set('category',category);history.replaceState({},'',`/learn/?${query}`);}
 }
-document.querySelectorAll('[data-learn-filter]').forEach(button=>button.onclick=()=>selectLearningCategory(button.dataset.learnFilter));
+$('learn-topic').onchange=()=>selectLearningCategory($('learn-topic').value);
 document.addEventListener('click',event=>{
   const link=event.target.closest('[data-learn-category-link]');
   if(link&&event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey)selectLearningCategory(link.dataset.learnCategoryLink);
@@ -784,13 +775,15 @@ function renderTrain(){
 function updateTrainSelection(){
   const selected=trainSelection();selectedTrainPgn=selected?.entry.game.pgn||null;
   $('train-review').disabled=!selected;$('train-review-game').disabled=!selected;$('train-start').disabled=!selected?.exercises.length;
+  $('train-setup').hidden=!selected;$('train-start').hidden=!selected;$('train-review-game').hidden=!selected;
+  $('train-choose-game').textContent=selected?'Choose another game →':'Choose a game →';
   $('train-status').textContent=!selected?'Review or import a game to create personal exercises.':`${selected.exercises.length} mistake position${selected.exercises.length===1?'':'s'} available for ${$('train-side').value==='both'?'both players':$('train-side').value==='w'?'White':'Black'}. ${selected.evaluations.filter(Boolean).length<selected.parsed.fens.length?'Provisional: open the review to analyze more positions.':'From the reviewed game.'}`;
 }
 $('train-review').onchange=updateTrainSelection;$('train-side').onchange=updateTrainSelection;
 $('train-review-game').onclick=()=>{const selected=trainSelection();if(selected){setGame(selected.entry.game,{demo:selected.entry.demo,analyze:false});router.go('analysis');}};
 $('train-start').onclick=()=>{const selected=trainSelection();if(selected?.exercises.length){setGame(selected.entry.game,{demo:selected.entry.demo,analyze:false});training.startExercises(selected.exercises);}};
 $('library-nav').onclick = () => scrollToSection($('game-library'));
-for (const id of ['sidebar-import','hero-import','home-import']) $(id).onclick = openImport;
+for (const id of ['sidebar-import','hero-import']) $(id).onclick = openImport;
 $('how-it-works').onclick = () => showInfo('A better way to review', instructions);
 $('analysis-method').onclick = () => showInfo('How move ratings work', method);
 document.querySelectorAll('.close-dialog').forEach(button => button.onclick = () => button.closest('dialog').close());
@@ -930,7 +923,7 @@ document.addEventListener('keydown', event => {
   if (event.key.toLowerCase() === 'f') $('flip-board').onclick();
 });
 window.addEventListener('pagehide', () => { coachDemo.stop({notify:false});autoplay.stop(); saveReviewPosition(); inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
-try { $('username').value = $('home-username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
+try { $('username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
 const lastReview=reviewMemory.last();
 try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}

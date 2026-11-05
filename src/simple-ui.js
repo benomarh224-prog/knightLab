@@ -19,6 +19,8 @@ export function installSimpleUI(doc=document) {
   get('sidebar-import').textContent='Import PGN';get('how-it-works').textContent='Quick guide';
   const soundButton=()=>{const button=doc.createElement('button');button.type='button';button.dataset.audioOpen='';button.textContent='Sound settings';return button;};
   doc.querySelector('.header-options .compact-options-panel').append(soundButton());
+  const library=doc.createElement('button');library.type='button';library.textContent='My games';library.onclick=()=>get('library-nav').click();
+  doc.querySelector('.header-options .compact-options-panel').prepend(library);
   // The mobile navigation already contains Import and Guide.
   const boardMenu=get('board-actions-panel');
   boardMenu.append(get('focus-mode'),get('line-reply'),get('download-pgn'));
@@ -27,10 +29,9 @@ export function installSimpleUI(doc=document) {
   get('board-actions-toggle').setAttribute('aria-label','More board options');
   get('board-actions-toggle').firstElementChild.textContent='More';
   get('board-actions-toggle').title='More board options';
-  createCompactMenu({host:get('lesson-controls'),controls:['lesson-reset','lesson-flip','lesson-focus','lesson-explore-start','lesson-explore-resume','lesson-replay','lesson-challenge'].map(get),document:doc}).classList.add('lesson-options');
+  createCompactMenu({host:get('lesson-controls'),controls:['lesson-reset','lesson-flip','lesson-focus','lesson-explore-start','lesson-explore-resume','lesson-replay','lesson-challenge','lesson-stages','lesson-squares-open'].map(get),document:doc}).classList.add('lesson-options');
   doc.querySelector('.lesson-options .compact-options-panel').append(soundButton());
   // Stages remain available for review without occupying the lesson header.
-  createCompactMenu({host:doc.querySelector('.lesson-topline'),controls:[get('lesson-stages'),get('lesson-squares-open')],document:doc}).classList.add('lesson-stage-options');
   get('lesson-reset').textContent='Restart exercise';get('lesson-flip').textContent='Flip board';
   for(const menu of doc.querySelectorAll('.compact-options')) {
     menu.addEventListener('toggle',()=>{

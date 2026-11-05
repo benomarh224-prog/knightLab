@@ -15,6 +15,7 @@ export function renderLearningCompanion({memory,courses,storage}){
     $('home-course-progressbar').setAttribute('aria-valuenow',String(done.length));$('home-course-progressbar').setAttribute('aria-valuemax',String(total));$('home-course-progressbar').setAttribute('aria-label',`${last.course.title} lessons completed`);
   }
   $('learn-continue').hidden=!last;
+  $('home-learning-resume').hidden=!last;
   const pending=memory.review().map(entry=>({entry,link:learningLink(courses,entry,{review:true})})).filter(item=>item.link);
   $('learn-review').hidden=!pending.length;$('learn-review-count').textContent=String(pending.length);
   $('learn-review-list').innerHTML=pending.map(({entry,link})=>`<a href="${escape(link.href)}" data-route="${link.route}"><span><strong>${escape(title(link.course,link.lesson))}</strong><small>${escape(link.course.title)} · ${entry.kind==='question'?'Knowledge check':entry.reason==='hint'?'Practice after a hint':'Try the study line again'}</small></span><span aria-hidden="true">↗</span></a>`).join('');

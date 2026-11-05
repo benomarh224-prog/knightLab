@@ -153,6 +153,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     if(currentConcept){
       $('lesson-concept-position').textContent=`Idea ${player.conceptIndex+1} of ${player.plan.concepts.length}`;
       $('lesson-concept-title').textContent=currentConcept.title||study.coach||'Learn the idea';$('lesson-concept-text').textContent=currentConcept.text||'';
+      const heading=value=>value.toLowerCase().replace(/[^a-z0-9]/g,'');
+      $('lesson-concept-title').hidden=squareWarmup||heading($('lesson-concept-title').textContent)==='learntheidea'||heading($('lesson-concept-title').textContent)===heading($('lesson-title').textContent);
       $('lesson-concept-previous').hidden=player.conceptIndex===0;
       $('lesson-learn-next').textContent=player.conceptIndex<player.plan.concepts.length-1?'Next idea →':player.plan.stages.includes('try')?'Try on the board →':player.plan.stages.includes('check')?'Check understanding →':player.learned?'Reviewed ✓':'Finish reading ✓';
     }
@@ -188,6 +190,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     const next=continuation();
     $('lesson-course-previous').disabled=globalIndex===0;$('lesson-course-next').disabled=!next.enabled||motion.active;
     $('lesson-course-next').textContent=next.label;$('lesson-next-help').textContent=next.help;
+    $('lesson-next-help').hidden=stage==='learn'&&next.help===$('lesson-concept-position').textContent;
     $('lesson-after-board').hidden=stage!=='try'||!next.enabled||!['next-lesson','question','activity','stage'].includes(next.action);
     $('lesson-after-board').textContent=next.label;
     $('lesson-course-practice').hidden=!player.complete||globalIndex!==lessons.length-1||!coursePractice(course);

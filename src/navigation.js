@@ -17,6 +17,11 @@ export function createNavigation({compact,nav,desktopSlot,mobileSlot,dialog,togg
   // Close before destination handlers run, so the next dialog can take focus.
   nav.addEventListener('click',event=>{if(event.target.closest('a,button'))close();},true);
   dialog.addEventListener('close',sync);
+  dialog.addEventListener('click',event=>{
+    if(event.target!==dialog)return;
+    const rect=dialog.getBoundingClientRect();
+    if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)close();
+  });
   compact.addEventListener('change',arrange);
   arrange();
   return {close};
