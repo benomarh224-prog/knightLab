@@ -108,8 +108,14 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
     if(ply>=0)history={startFen:source.parsed.fens[0],moves:source.parsed.moves.slice(0,ply).map(coord)};
     else if(line){const index=[line.rootFen,...line.entries.map(move=>move.after)].indexOf(fen);if(index>=0)history=line.history(index);}
     if(!history)return false;
-    const replacement=new AnalysisLine(fen,null,history);
-    for(const move of moves){if(move.before!==replacement.fen||replacement.play(move.from,move.to,move.promotion).status!=='played')return false;}
+    const replacement=new AnalysisLine(fen,ply>=0?source.evaluations[ply]||null:null,history);
+    let shared=ply>=0;
+    for(const move of moves){
+      if(move.before!==replacement.fen||replacement.play(move.from,move.to,move.promotion).status!=='played')return false;
+      const index=ply+replacement.cursor;
+      shared=shared&&source.parsed.fens[index]===replacement.fen;
+      if(shared)replacement.scores[replacement.cursor]=source.evaluations[index]||null;
+    }
     replacement.jump(cursor);
     if(!line){restore=pause();savedGame=source.parsed;}else cancel();
     line=replacement;selected=null;promotion=null;message='Coach continuation · use the move buttons to step through it. Your game is saved.';

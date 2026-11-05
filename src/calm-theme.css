@@ -6,6 +6,7 @@
   --ui-text:#262a2f; --ui-muted:#666a70; --ui-action:#24272b;
   --ui-action-hover:#3d4249; --ui-on-action:#fff; --ui-link:#3d6388;
   --ui-radius:8px; --ui-card-radius:12px; --ui-control-height:44px;
+  --brilliant:#087f8c;
   color-scheme:light; --bg:#f4f3f1; --sidebar:#efeeeb; --panel:#fff;
   --panel-raised:#eeefef; --border:#dededb; --text:#262a2f; --muted:#666a70;
   --lime:#3d6388; --violet:#3d6388; --green:#397452; --surface:#fff;
@@ -285,6 +286,12 @@ body[data-page] #board-actions-panel :is(.opening-content p,.opening-line) { fon
 body[data-page] #board-actions-panel #opening-position { font-size:14px; color:var(--ui-link); }
 body[data-page] #board-actions-panel .opening-line { background:var(--ui-surface); border-color:var(--ui-border); }
 body[data-page] :is(#mobile-board-tab,#mobile-moves-tab,#mobile-overview-tab) { border-radius:0; }
+body[data-page] .piece-rating.brilliant { --rating-color:#35c9c1; color:#073b40; }
+body[data-page] .stat-dot.brilliant { background:var(--brilliant); }
+body[data-page] .board-coach-card[data-verdict="Brilliant"] .quality-icon { background:#d8f5f1; color:#08727e !important; border-color:#8dcac7; }
+body[data-page] #board-coach-card.floating-analysis-coach #coach-brief { display:none; }
+body[data-page] .review-stats { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(max-width:600px) { body[data-page] .review-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:860px) {
   body[data-page] .topbar { height:64px; min-height:64px; }
   body[data-page] :is(.entry-page,.learn-page) .page-heading { display:block; padding:0 0 20px; }

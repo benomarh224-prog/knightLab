@@ -11,7 +11,7 @@ export function collectTraining(parsed, evaluations, color = null) {
     return [{ ply: index + 1, move, rating, before: evaluations[index], after: evaluations[index + 1] }];
   });
   const swings = events.filter(event => ['Inaccuracy', 'Mistake', 'Blunder'].includes(event.rating.label)).sort((a, b) => b.rating.loss - a.rating.loss || a.ply - b.ply);
-  const standouts = events.filter(event => event.rating.label === 'Great' || event.move.san.endsWith('#'))
+  const standouts = events.filter(event => ['Brilliant','Great'].includes(event.rating.label) || event.move.san.endsWith('#'))
     .sort((a, b) => Number(b.move.san.endsWith('#')) - Number(a.move.san.endsWith('#')) || a.ply - b.ply);
   const moments = [...swings, ...standouts].filter((event, index, all) => all.findIndex(item => item.ply === event.ply) === index)
     .slice(0, 3).sort((a, b) => a.ply - b.ply);

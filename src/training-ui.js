@@ -29,7 +29,7 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
       $('moments-list').innerHTML = data.moments.length ? data.moments.map(event => {
         const owner = color ? event.move.color === color ? 'You' : 'Opponent' : event.move.color === 'w' ? 'White' : 'Black';
         const mate = event.before.mate != null || event.after.mate != null;
-        const detail = event.move.san.endsWith('#') ? 'The move that delivers checkmate' : event.rating.label === 'Great' ? 'A standout engine choice' : mate ? 'A change in the forced-mate evaluation' : `${(event.rating.loss / 100).toFixed(2)} pawns lost in evaluation`;
+        const detail = event.move.san.endsWith('#') ? 'The move that delivers checkmate' : event.rating.label === 'Brilliant' ? 'An engine-supported piece sacrifice' : event.rating.label === 'Great' ? 'A standout engine choice' : mate ? 'A change in the forced-mate evaluation' : `${(event.rating.loss / 100).toFixed(2)} pawns lost in evaluation`;
         return `<button class="moment-item" data-moment="${event.ply}"><span class="moment-number">${escape(moveLabel(event.move))}</span><span class="moment-copy"><strong>${owner} · ${event.rating.label}</strong><small>${detail}</small></span><span class="moment-arrow">${icon('arrow')}</span></button>`;
       }).join('') : `<p class="training-empty">${count < 2 ? 'Review the game to find its turning points.' : 'No major evaluation swings or standout moves in the reviewed positions.'}</p>`;
       const exercises = data.exercises.length;

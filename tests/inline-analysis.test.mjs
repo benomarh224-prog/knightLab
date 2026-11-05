@@ -118,3 +118,11 @@ test('navigation scores retain each player perspective and a custom-FEN root',()
  const nav=analysisNavigation(h.state.parsed,h.state.evaluations,1,c.line);
  assert.equal(nav.moves[0].san,'Kg8');assert.equal(nav.moves[1].san,'Kg1');assert.equal(nav.scores[0].cp,10);assert.equal(nav.scores[1].cp,20);assert.equal(nav.cursor,2);c.exit();
 });
+
+
+test('coach playback reuses exact shared-position evidence and stops reusing it after the line diverges',()=>{
+ const h=harness(),c=h.controller,parsed=h.state.parsed;
+ h.state.evaluations=parsed.fens.map((_,i)=>({cp:i*10,mate:null,depth:18,best:parsed.moves[i]?.from+parsed.moves[i]?.to,pv:[]}));
+ assert.equal(c.playback(parsed.fens[0],parsed.moves,2),true);assert.equal(c.line.scores[1],h.state.evaluations[1]);assert.equal(c.line.scores[2],h.state.evaluations[2]);assert.equal(h.engines.at(-1).requests.length,0);
+ c.exit();const alternative=parseGame('1. e4 c5 2. Nf3 *').moves;assert.equal(c.playback(parsed.fens[0],alternative,2),true);assert.equal(c.line.scores[1],h.state.evaluations[1]);assert.equal(c.line.scores[2],null);c.exit();
+});

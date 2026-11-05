@@ -1,4 +1,5 @@
 import { Chess } from 'chess.js';
+import { brilliantEvidence } from './brilliant.js';
 
 export const DEMO_PGN = `[Event "The Opera Game"]
 [Site "Paris, France"]
@@ -60,7 +61,7 @@ export function uciToSan(fen, uci) {
 
 export function classifyMove(move, before, after) {
   if (!before || !after) return null;
-  const signature=[move.before,move.from,move.to,move.promotion,move.color,before.cp,after.cp,before.best,before.depth,before.alternative?.cp,before.alternative?.depth].join('|');
+  const signature=JSON.stringify([move.before,move.after,move.from,move.to,move.promotion,move.color,move.piece,move.captured,move.flags,move.san,before.cp,after.cp,before.best,before.depth,before.mate,before.terminal,before.pv,after.depth,after.best,after.mate,after.terminal,after.pv,before.alternative?.cp,before.alternative?.depth]);
   const cached=ratingCache.get(move);if(cached?.signature===signature)return cached.result;
   const played = move.from + move.to + (move.promotion || '');
   const loss = Math.max(0, (before.cp - after.cp) * (move.color === 'w' ? 1 : -1));
@@ -68,8 +69,9 @@ export function classifyMove(move, before, after) {
   const alternative = before.alternative;
   const advantage = alternative ? (before.cp - alternative.cp) * (move.color === 'w' ? 1 : -1) : 0;
   const great = best && loss <= 30 && before.depth >= 8 && alternative?.depth === before.depth && advantage >= 100;
-  const label = great ? 'Great' : best ? 'Best' : loss >= 200 ? 'Blunder' : loss >= 100 ? 'Mistake' : loss >= 50 ? 'Inaccuracy' : 'Good';
-  const result={ label, loss, best: uciToSan(move.before, before.best) };ratingCache.set(move,{signature,result});return result;
+  const sacrifice=best?brilliantEvidence(move,before,after):null;
+  const label = sacrifice ? 'Brilliant' : great ? 'Great' : best ? 'Best' : loss >= 200 ? 'Blunder' : loss >= 100 ? 'Mistake' : loss >= 50 ? 'Inaccuracy' : 'Good';
+  const result={ label, loss, best: uciToSan(move.before, before.best),...(sacrifice?{sacrifice}:{}) };ratingCache.set(move,{signature,result});return result;
 }
 
 export function formatEvaluation(value) {
@@ -80,7 +82,7 @@ export function formatEvaluation(value) {
 }
 
 export function summarize(parsed, evaluations, color) {
-  const counts = { Best: 0, Great: 0, Good: 0, Inaccuracy: 0, Mistake: 0, Blunder: 0 };
+  const counts = { Brilliant: 0, Best: 0, Great: 0, Good: 0, Inaccuracy: 0, Mistake: 0, Blunder: 0 };
   let totalLoss = 0, count = 0;
   const items = parsed.moves.map((move, i) => classifyMove(move, evaluations[i], evaluations[i + 1]));
   items.forEach((item, i) => {

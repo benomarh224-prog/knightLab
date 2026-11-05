@@ -106,7 +106,15 @@ function computeCoachMove(move,before,after){
   }else if(reply?.captured){why+=' '+evidence.text+' A capture alone does not make your move wrong; the engine also considers compensation.';}
   else if(evidence.exchange)why+=' '+evidence.text;
   else if(reply)why+=` The opponent’s immediate reply in the engine line is ${reply.san}.`;
-  const summary=bad?`${move.san} is rated ${rating.label.toLowerCase()}. ${before.mate!=null||after.mate!=null?'The forced-mate assessment changes or remains decisive.':`It loses about ${(rating.loss/100).toFixed(2)} pawns in evaluation.`}`:`${move.san} ${sameBest?'matches Stockfish’s first choice':'stays close to the engine’s preferred evaluation'}.`;
+  let summary=bad?`${move.san} is rated ${rating.label.toLowerCase()}. ${before.mate!=null||after.mate!=null?'The forced-mate assessment changes or remains decisive.':`It loses about ${(rating.loss/100).toFixed(2)} pawns in evaluation.`}`:`${move.san} ${sameBest?'matches Stockfish’s first choice':'stays close to the engine’s preferred evaluation'}.`;
+  if(rating.sacrifice){
+    const sacrifice=rating.sacrifice;
+    brief=`${move.san} offers your ${pieceNames[sacrifice.piece]} on ${sacrifice.square}. The engine supports the sacrifice.`;
+    summary=`${move.san} offers your ${pieceNames[sacrifice.piece]} on ${sacrifice.square}; Stockfish rates it as the best move.`;
+    why=`${sacrifice.captureSan} is a legal way to capture the ${pieceNames[sacrifice.piece]} on ${sacrifice.square}. After local legal recaptures, you would still give up material; this is more than an equal trade. `+
+      (after.best===sacrifice.capture?new Chess(move.after).moves().length===1?`The opponent’s only legal reply is ${sacrifice.captureSan}, accepting the sacrifice. `:`The engine’s immediate reply accepts the sacrifice with ${sacrifice.captureSan}. `:reply?`The engine’s immediate reply is ${reply.san}; it does not accept this capture in its main line. `:'')+
+      `${move.san} matches Stockfish’s first choice. At the checked depth, the resulting position is evaluated ${formatEvaluation(after)} from White’s perspective. Follow the legal engine continuation below to see the compensation.`;
+  }
   const lesson=losingMate||reply?.san.includes('+')?'Before playing, check the opponent’s forcing moves: checks, captures, and immediate threats.':immediateCapture?'Before committing, check the full exchange and the resulting material balance.':['n','b'].includes(best[0]?.piece)&&best[0].from[1]===(move.color==='w'?'1':'8')?'Compare developing a minor piece with spending another tempo on an already active piece.':'Calculate the opponent’s reply and compare the resulting position.';
   const continuations=[];
   if(best.length)continuations.push({kind:'best',label:sameBest?'Your move · engine’s first choice':'Engine candidate · before your move',fen:move.before,moves:best});
