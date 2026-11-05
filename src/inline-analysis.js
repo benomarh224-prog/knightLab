@@ -102,7 +102,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
     else start(cursor,best);
     return true;
   }
-  function playback(fen,moves,cursor){
+  function playback(fen,moves,cursor,{analyze=true,resumeReview=false}={}){
     const source=context(),ply=source.parsed.fens.indexOf(fen);
     // The coach may be inspecting a position in the current explored line.
     let history;
@@ -118,9 +118,9 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
       if(shared)replacement.scores[replacement.cursor]=source.evaluations[index]||null;
     }
     replacement.jump(cursor);
-    if(!line){restore=pause();savedGame=source.parsed;}else cancel();
+    if(!line){const wasRunning=pause();restore=resumeReview||wasRunning;savedGame=source.parsed;}else cancel();
     line=replacement;selected=null;promotion=null;message='Coach continuation · use the move buttons to step through it. Your game is saved.';
-    $('line-controls').open=true;evaluate();return true;
+    $('line-controls').open=analyze;if(analyze)evaluate();else onChange();return true;
   }
   $('line-undo').onclick=()=>{if(line)jump(line.cursor-1);};
   $('line-reset').onclick=()=>{if(line){cancel();line.reset();selected=null;promotion=null;evaluate();}};
@@ -149,5 +149,5 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
     $('line-moves').innerHTML='<button data-line-ply="0" aria-current="'+(line.cursor===0?'step':'false')+'">Start</button>'+line.entries.map((move,i)=>`<button data-line-ply="${i+1}" aria-current="${line.cursor===i+1?'step':'false'}">${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${move.san}</button>`).join('');
   }
   return {get active(){return Boolean(line);},get busy(){return busy;},get line(){return line;},get selected(){return selected;},get targets(){return new Set(selected?line.legal(selected).map(move=>move.to):[]);},start,exit,reset,click,select,attempt,jump,paint,
-    refresh(){if(line&&!busy&&!depthReady(line.score,PRECISION_DEPTH))evaluate();else onChange();},tryBest,playback};
+    suspend(){cancel();},refresh(){if(line&&!busy&&!depthReady(line.score,PRECISION_DEPTH))evaluate();else onChange();},tryBest,playback};
 }

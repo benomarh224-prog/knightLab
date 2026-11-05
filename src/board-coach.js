@@ -68,5 +68,5 @@ export function createBoardCoach({showBoard,navigate,onInspect=()=>{},doc=docume
   for(const name of ['pointerup','pointercancel','lostpointercapture'])header.addEventListener(name,()=>{drag=null;});
   win.addEventListener('resize',placement);win.visualViewport?.addEventListener('resize',placement);win.visualViewport?.addEventListener('scroll',placement);
   desktop.addEventListener('change',position);position();
-  return {open,close,update,reveal(){},position,get opened(){return opened;}};
+  return {open,close,update,reveal(){},position,focusLauncher(){launcher.focus({preventScroll:true});},get opened(){return opened;}};
 }

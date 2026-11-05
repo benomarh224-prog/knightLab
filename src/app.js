@@ -16,6 +16,7 @@ import { createBoardCoach } from './board-coach.js';
 import { MoveSounds, navigationSoundMove } from './sound.js';
 import { createAudioSettings } from './audio-settings.js';
 import { createAutoplay } from './autoplay.js';
+import { createCoachDemo } from './coach-demo.js';
 import {createViewportMenu} from './viewport-menu.js';
 import {evaluationLossText} from './accuracy.js';
 import {nextReviewPosition} from './review-schedule.js';
@@ -87,13 +88,15 @@ let paintedPosition=null, stripPosition=null, stripSource=null, stripSignature='
 function saveReviewPosition() {
   if(state.selected&&reviewOpened)reviewMemory.save(state.selected,{ply:state.ply,flipped:state.flipped,demo:state.demo});
 }
-let boardDragging=false, inline, showThreats=true, selectedThreat=null, threatFen=null, threats=[];
+let boardDragging=false, inline, coachDemo, demoResume=false, showThreats=true, selectedThreat=null, threatFen=null, threats=[];
 function pauseWorkspace() {
+  const demoRunning=demoResume;coachDemo?.stop({notify:false});demoResume=false;
   autoplay.stop();
   const running=state.running, restoring=inline?.active ? inline.exit(false) : false;
-  stopAnalysis(); render(); return running || restoring;
+  stopAnalysis(); render(); return running || restoring || demoRunning;
 }
 function boardView() {
+  if(coachDemo?.active)return coachDemo.view();
   if (inline?.active) {
     const line=inline.line,base=line.origin.moves.length,sharedRoot=state.parsed.fens[base]===line.rootFen;
     return {fen:line.fen,last:line.last||(sharedRoot?state.parsed.moves[base-1]:null),before:line.cursor?line.scores[line.cursor-1]:sharedRoot?state.evaluations[base-1]:null,score:line.score};
@@ -132,7 +135,7 @@ const autoplay=createAutoplay({read:()=>inline?.active?{source:inline.line,curso
     if(active){toggle.removeAttribute('aria-expanded');toggle.removeAttribute('aria-controls');}
     else{toggle.setAttribute('aria-expanded',String(!$('board-actions-panel').hidden));toggle.setAttribute('aria-controls','board-actions-panel');}
   }});
-playbackButton.onclick=()=>autoplay.toggle();
+playbackButton.onclick=()=>coachDemo?.active?coachDemo.toggle():autoplay.toggle();
 const training = createTrainingUI({
   context: () => ({ parsed: state.parsed, evaluations: state.evaluations, color: playerColor(), running: state.running, ply: state.ply }),
   navigate: goTo,
@@ -151,6 +154,34 @@ const explorer = createExploreUI({
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound,navigate:goTo});
 const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove,onInspect:inspectSelectedMove});
+coachDemo=createCoachDemo({onChange:render,onMove:playSound});
+const demoBar=$('coach-demo');
+function positionCoachDemo(){if(!compactLayout.matches&&!boardCard.closest('dialog[open]'))document.querySelector('.review-panel').prepend(demoBar);else document.querySelector('.board-area').before(demoBar);}
+positionCoachDemo();compactLayout.addEventListener('change',positionCoachDemo);
+$('coach-extra-details').append($('coach-note'));
+$('coach-demo-toggle').onclick=()=>coachDemo.toggle();
+$('coach-demo-done').onclick=()=>{finishCoachDemo();boardCoach.focusLauncher();};
+demoBar.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();$('coach-demo-done').click();}});
+function finishCoachDemo({resume=true,paint=true}={}){
+  const restart=demoResume;demoResume=false;coachDemo.stop({notify:paint});
+  if(resume){if(inline.active)inline.refresh();else if(restart)startAnalysis();}
+  return restart;
+}
+function showCoachLine(line,{index=0,autoplay:play=true,limit=4}={}){
+  if(!line?.moves.length)return false;
+  const context=coachDemo.session?.context||{move:coachContext?.[0],before:coachContext?.[1],after:coachContext?.[2],report:coachReport};
+  // Validate before stopping a live review or an existing demonstration.
+  const accepted=coachDemo.start({...line,context,index,autoplay:play&&!matchMedia('(prefers-reduced-motion: reduce)').matches,limit});
+  if(!accepted)return false;
+  autoplay.stop();demoResume=demoResume||state.running;stopAnalysis();inline.suspend();boardCoach.close();selectWorkspaceView('board');render();
+  $('coach-demo-toggle').focus({preventScroll:true});return true;
+}
+function exploreCoachFrame(){
+  if(!coachDemo.active)return true;
+  const {fen,moves,index}=coachDemo.session;
+  if(!inline.playback(fen,moves,index,{analyze:false,resumeReview:demoResume}))return false;
+  coachDemo.stop({notify:false});demoResume=false;render();return true;
+}
 const liveProgress=document.querySelector('.engine-progress');
 function positionReviewProgress(){if(compactLayout.matches&&state.mobileView==='board')document.querySelector('.board-area').before(liveProgress);else document.querySelector('.review-controls').after(liveProgress);}
 compactLayout.addEventListener('change',positionReviewProgress);positionReviewProgress();
@@ -190,12 +221,12 @@ $('focus-mode').onclick = () => {
   closeBoardActions();
   boardCoach.close();
   $('focus-body').append(boardCard); document.body.classList.add('focus-active');
-  $('focus-dialog').showModal(); boardCoach.position(); positionOpeningCard();
+  $('focus-dialog').showModal(); boardCoach.position(); positionOpeningCard();positionCoachDemo();
 };
 $('exit-focus').onclick = () => $('focus-dialog').close();
 $('focus-dialog').addEventListener('close', () => {
   boardHome.after(boardCard); document.body.classList.remove('focus-active');
-  boardCoach.position(); positionOpeningCard(); $('focus-mode').focus({ preventScroll: true });
+  boardCoach.position(); positionOpeningCard();positionCoachDemo(); $('focus-mode').focus({ preventScroll: true });
 });
 let toastTimer;
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 3500); }
@@ -228,6 +259,7 @@ $('library-toggle').onclick=()=>setLibraryOpen($('library-body').hidden);
 function setGame(game, { demo = false, analyze = true,remember=true } = {}) {
   autoplay.stop();
   const parsed = parseGame(game.pgn);
+  coachDemo.stop({notify:false});demoResume=false;
   inline.reset(); selectedThreat=null; threatFen=null; boardCoach.close(false);
   closeBoardActions(); setLibraryOpen(router?.page==='games');
   training.reset();
@@ -293,13 +325,13 @@ function renderBoard() {
   const fadingHighlights=paintedPosition?.fen!==view.fen&&paintedPosition?.game===state.parsed&&paintedPosition.flipped===state.flipped
     ? [...$('board').querySelectorAll('.square.last')].map(tile=>({square:tile.dataset.square,color:getComputedStyle(tile).backgroundColor})) : [];
   if (threatFen!==view.fen) { threatFen=view.fen; const primary=primaryMoveThreat(view.fen,view.last); threats=primary?[primary]:[]; selectedThreat=null; }
-  const threatened=new Map((showThreats?threats:[]).map(item=>[item.square,item]));
-  const targets=inline.targets, selection=inline.selected;
+  const threatened=new Map((showThreats&&!coachDemo.active?threats:[]).map(item=>[item.square,item]));
+  const targets=coachDemo.active?new Set():inline.targets, selection=coachDemo.active?null:inline.selected;
   const focusedSquare=document.activeElement?.closest('#board [data-square]')?.dataset.square;
   const files = state.flipped ? 'hgfedcba' : 'abcdefgh';
   const ranks = state.flipped ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
   const last = view.last;
-  const classification = last ? classifyMove(last, view.before, view.score) : null;
+  const classification = last&&!coachDemo.active ? classifyMove(last, view.before, view.score) : null;
   const rating = pieceMoveVerdict(last, classification);
   const existingBadge = $('board').querySelector('.piece-rating');
   const showRating = existingBadge?.dataset.ply === String(state.ply) && existingBadge.getAttribute('aria-pressed') === 'true';
@@ -324,12 +356,12 @@ function renderBoard() {
   paintedPosition=nextPosition;
   if (focusedSquare && !restoreBadgeFocus) $('board').querySelector(`[data-square="${focusedSquare}"]`)?.focus({preventScroll:true});
   if (restoreBadgeFocus) $('board').querySelector('.piece-rating')?.focus({preventScroll: true});
-  $('board').setAttribute('aria-label', `${inline.active?'Explored continuation':'Chess position after '+state.ply+' half-moves'}. ${chess.turn() === 'w' ? 'White' : 'Black'} to move.${rating ? ' ' + rating.move + ': ' + rating.label + '.' : ''} ${chess.fen()}`);
+  $('board').setAttribute('aria-label', `${coachDemo.active?'Coach demonstration':inline.active?'Explored continuation':'Chess position after '+state.ply+' half-moves'}. ${chess.turn() === 'w' ? 'White' : 'Black'} to move.${rating ? ' ' + rating.move + ': ' + rating.label + '.' : ''} ${chess.fen()}`);
   const fullMove = Number(chess.fen().split(' ')[5]);
-  $('move-position').textContent = inline.active ? last?`Move ${last.san}`:'Starting position' : state.ply ? `Move ${state.parsed.moves[state.ply-1].san} · ${Math.ceil(state.ply / 2)}/${Math.ceil(state.parsed.moves.length / 2)}` : 'Starting position';
+  $('move-position').textContent = coachDemo.active?view.label:inline.active ? last?`Move ${last.san}`:'Starting position' : state.ply ? `Move ${state.parsed.moves[state.ply-1].san} · ${Math.ceil(state.ply / 2)}/${Math.ceil(state.parsed.moves.length / 2)}` : 'Starting position';
   $('review-move-label').textContent = $('move-position').textContent;
   $('coach-move-position').textContent = $('move-position').textContent;
-  const {cursor,end}=analysisNavigation(state.parsed,state.evaluations,state.ply,inline.line);
+  const {cursor,end}=coachDemo.active?{cursor:view.index,end:view.total}:analysisNavigation(state.parsed,state.evaluations,state.ply,inline.line);
   $('review-previous').disabled = cursor===0;
   $('review-next').disabled = cursor===end;
   $('coach-previous').disabled = cursor===0;
@@ -337,9 +369,9 @@ function renderBoard() {
   for (const id of ['first-move', 'previous-move']) $(id).disabled = cursor===0;
   for (const id of ['last-move', 'next-move']) $(id).disabled = cursor===end;
   const evaluation = view.score;
-  const best = evaluation?.best;
+  const best = coachDemo.active?view.arrow:evaluation?.best;
   const arrow = $('best-arrow');
-  const hideArrow = !state.showArrow || !best || best === '(none)' || !/^[a-h][1-8][a-h][1-8]/.test(best);
+  const hideArrow = (!state.showArrow&&!coachDemo.active) || !best || best === '(none)' || !/^[a-h][1-8][a-h][1-8]/.test(best);
   arrow.toggleAttribute('hidden', hideArrow);
   $('best-arrow-shadow').toggleAttribute('hidden',hideArrow);
   if (!hideArrow) {
@@ -351,12 +383,22 @@ function renderBoard() {
   $('threat-arrow').toggleAttribute('hidden',!detail);
   if(detail){$('threat-title').textContent=detail.label; $('threat-text').textContent=detail.explanation; $('threat-arrow').setAttribute('d',arrowPath(detail.attackers[0].from,detail.attackers[0].to,state.flipped));}
   inline.paint();
+  document.body.classList.toggle('coach-demo-active',coachDemo.active);
+  demoBar.hidden=!coachDemo.active;
+  if(coachDemo.active){
+    $('coach-demo-label').textContent=view.label;if($('coach-demo-text').textContent!==view.text)$('coach-demo-text').textContent=view.text;
+    $('coach-demo-toggle').textContent=view.playing?'Pause':view.index===view.total?'Replay':'Play';
+    $('coach-demo-toggle').setAttribute('aria-pressed',String(view.playing));
+    $('analysis-board-instruction').textContent=chess.isCheckmate()?'Checkmate · Replay or Done':`${chess.turn()==='w'?'White':'Black'} to move · Tap a piece to explore`;
+  }
+  if(!autoplay.active){playbackButton.textContent=coachDemo.active?(view.playing?'Pause demonstration':'Play demonstration'):'Play moves';playbackButton.setAttribute('aria-pressed',String(Boolean(coachDemo.active&&view.playing)));}
   renderMoveStrip();
   const percent = evaluation ? 50 + 45 * Math.tanh(evaluation.cp / 450) : 50;
   $('eval-fill').style.width = `${percent}%`;
   $('eval-fill').style.height = '100%';
   $('bar-score').textContent = formatEvaluation(evaluation);
   document.querySelector('.evaluation-bar').setAttribute('aria-label',`Position evaluation from White’s perspective: ${formatEvaluation(evaluation)}`);
+  document.querySelector('.evaluation-bar').classList.toggle('awaiting-evaluation',!evaluation);
   updatePlayers();
 }
 
@@ -370,7 +412,7 @@ function render() {
   renderBoard(); renderChart();
   const view=boardView(), score = view.score;
   $('evaluation').textContent = formatEvaluation(score);
-  $('position-verdict').textContent = !score ? 'Waiting for the engine' : score.terminal ? (score.cp ? 'Checkmate' : 'Drawn position') : score.mate !== null ? `${score.cp > 0 ? 'White' : 'Black'} has forced mate` : Math.abs(score.cp) < 50 ? 'A balanced position' : `${score.cp > 0 ? 'White' : 'Black'} ${Math.abs(score.cp) > 200 ? 'is winning' : 'has the advantage'}`;
+  $('position-verdict').textContent = coachDemo.active?'Coach demonstration · compare the moves on the board':!score ? 'Waiting for the engine' : score.terminal ? (score.cp ? 'Checkmate' : 'Drawn position') : score.mate !== null ? `${score.cp > 0 ? 'White' : 'Black'} has forced mate` : Math.abs(score.cp) < 50 ? 'A balanced position' : `${score.cp > 0 ? 'White' : 'Black'} ${Math.abs(score.cp) > 200 ? 'is winning' : 'has the advantage'}`;
   const summary = summarize(state.parsed, state.evaluations, playerColor());
   const stats=renderReviewStatistics(state.parsed,state.evaluations,state.mode),combined=stats.combined;
   $('best-count').textContent = combined.count ? combined.counts.Best + combined.counts.Great : '—';
@@ -379,8 +421,9 @@ function render() {
   $('blunder-count').textContent = combined.count ? combined.counts.Blunder : '—';
   $('loss-summary').textContent = combined.count ? `Combined White + Black · ${combined.count} moves rated${stats.provisional?' · Provisional':''}. Separate player accuracy is in Summary.` : 'Combined White + Black · Awaiting review';
   $('next-mistake').disabled = !summary.items.some((item, index) => item && ['Mistake', 'Blunder', 'Inaccuracy'].includes(item.label) && (!playerColor() || state.parsed.moves[index].color === playerColor()));
-  const move = view.last;
-  const item = move ? inline.active?classifyMove(move,view.before,score):summary.items[state.ply - 1] : null;
+  const teaching=coachDemo.session?.context||{move:view.last,before:view.before,after:score};
+  const move = teaching.move;
+  const item = move ? classifyMove(move,teaching.before,teaching.after) : null;
   const verdict = selectedMoveVerdict(move, item);
   const announcement = `${verdict.move === '—' ? '' : verdict.move + ': '}${verdict.label}`;
   if ($('move-rating-announcement').textContent !== announcement) $('move-rating-announcement').textContent = announcement;
@@ -390,10 +433,10 @@ function render() {
   $('board-coach-card').dataset.verdict = item?.label || 'Waiting';
   $('board-coach-card').style.setProperty('--coach-accent',item ? qualityColors[item.label] : '#8ca494');
   $('insight-title').textContent = item ? qualityLabels[item.label] : state.ply === 0 ? 'Every move starts here' : 'A closer look at this move';
-  const previous = move ? view.before : score;
+  const previous = move ? teaching.before : teaching.after;
   $('recommended-move').textContent = move ? uciToSan(move.before, previous?.best) : uciToSan(view.fen, score?.best);
   $('engine-depth').textContent = previous?.depth ? `Depth ${previous.depth}` : 'Stockfish 19';
-  renderCoach(move, move ? view.before : null, score);
+  renderCoach(move, move ? teaching.before : null, teaching.after);
   document.querySelector('.insight-kicker').textContent=inline.active?'YOUR EXPLORED CONTINUATION':'YOUR MOVE COACH';
   const analyzed = state.parsed.fens.filter((_, index) => evaluationReady(state.evaluations[index], state.mode)).length;
   const searched = state.parsed.fens.filter((_, index) => state.evaluations[index]).length;
@@ -413,8 +456,8 @@ function render() {
     $('analysis-percent').textContent=score?.depth?`Depth ${score.depth}`:'';
   }
   $('analyze-label').textContent = state.running ? 'Pause review' : analyzed === total ? 'Review complete' : searched === total ? 'Deepen remaining' : searched ? 'Resume review' : 'Review this game';
-  $('analyze-button').disabled = inline.active || analyzed === total && !state.running;
-  $('analysis-speed').disabled = inline.active;
+  $('analyze-button').disabled = coachDemo.active || inline.active || analyzed === total && !state.running;
+  $('analysis-speed').disabled = coachDemo.active || inline.active;
   if(inline.active) $('analyze-label').textContent='Exploring line';
   updateMoveRatings(summary.items);
   training.render();
@@ -423,7 +466,7 @@ function render() {
 let coachContext = null, coachReport = null;
 function renderCoach(move, before, after) {
   if (!coachContext || coachContext[0] !== move || coachContext[1] !== before || coachContext[2] !== after) {
-    if (coachContext?.[0] !== move) { $('coach-lines').open = false; $('coach-panel').scrollTop=0; }
+    if (coachContext?.[0] !== move) { $('coach-extra-details').open = false; $('coach-panel').scrollTop=0; }
     coachReport = coachMove(move, before, after); coachContext = [move, before, after];
   }
   const report = coachReport, ready = report.status === 'ready';
@@ -435,24 +478,31 @@ function renderCoach(move, before, after) {
   const played=move ? move.from+move.to+(move.promotion||'') : null;
   $('board-coach-card').classList.toggle('has-alternative',Boolean(ready&&report.bestMove&&report.bestMove!==played));
   $('insight-text').textContent = report.summary;
+  $('insight-text').hidden=ready;
   $('coach-details').hidden = !ready;
   $('coach-why-label').textContent = report.whyLabel||'What this move does';
-  $('coach-why').textContent = report.why;
-  $('coach-better').textContent = report.better;
+  $('coach-why').textContent = report.teaching?.reason||report.why;
+  $('coach-opponent').textContent=report.teaching?.reply||'';
+  $('coach-opponent-section').hidden=!report.replyLine;
+  $('coach-better').textContent = report.teaching?.alternative||report.better;
   $('coach-better-section').hidden=!report.hasImprovement;
   $('coach-lesson').textContent = report.lesson;
+  $('coach-full-explanation').textContent=report.summary+' '+report.why;
+  const demonstration=report.continuations?.find(line=>line.kind===report.teaching?.demonstration);
+  $('coach-show-me').disabled=!demonstration;
+  $('coach-show-me').onclick=()=>showCoachLine(demonstration);
   $('coach-comparison').textContent = report.comparison || '';
   const lineButtons=kind=>{const line=report.continuations?.find(line=>line.kind===kind);return line?`<span>${escape(line.label)}</span><nav aria-label="${escape(line.label)}"><button data-coach-line="${kind}" data-coach-step="0">Start</button>${line.moves.map((move,index)=>`<button data-coach-line="${kind}" data-coach-step="${index+1}">${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${escape(move.san)}</button>`).join('')}</nav>`:'';};
   $('coach-best-line').innerHTML=lineButtons('best');
   $('coach-reply-line').innerHTML=lineButtons('reply');
   $('coach-reply-context').textContent=report.replyEvidence||'';
-  $('coach-lines').onclick=event=>{const button=event.target.closest('[data-coach-line]');if(!button)return;const line=report.continuations?.find(line=>line.kind===button.dataset.coachLine);if(line){inline.playback(line.fen,line.moves,Number(button.dataset.coachStep));selectWorkspaceView('board');}};
+  $('coach-lines').onclick=event=>{const button=event.target.closest('[data-coach-line]');if(!button)return;const line=report.continuations?.find(line=>line.kind===button.dataset.coachLine);if(line)showCoachLine(line,{index:Number(button.dataset.coachStep),limit:6,autoplay:false});};
   $('coach-best-row').hidden = !report.bestLine;
   $('coach-reply-row').hidden = !report.replyLine;
   $('coach-lines').hidden = !report.bestLine && !report.replyLine;
   const recommendation=move?report.bestMove:after?.best;
   $('coach-try-idea').disabled = !recommendation;
-  const tryRecommendation=()=>{if(recommendation){boardCoach.close();inline.tryBest(recommendation,{replaceLast:Boolean(move)});selectWorkspaceView('board');boardCoach.reveal();}};
+  const tryRecommendation=()=>{if(recommendation){if(coachDemo.active)finishCoachDemo({resume:false,paint:false});boardCoach.close();inline.tryBest(recommendation,{replaceLast:Boolean(move)});selectWorkspaceView('board');boardCoach.reveal();}};
   $('coach-try-idea').onclick=tryRecommendation;
   $('recommended-move').disabled=!recommendation;
   $('recommended-move').setAttribute('aria-label',recommendation?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
@@ -527,6 +577,7 @@ function updateMoveRatings(items) {
 }
 function goTo(ply,{automatic=false}={}) {
   if(!automatic)autoplay.stop();
+  const demoRestart=coachDemo.active?finishCoachDemo({resume:false,paint:false}):false;
   const restart=inline.active?inline.exit(false):false;
   const previous = state.ply;
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
@@ -535,11 +586,12 @@ function goTo(ply,{automatic=false}={}) {
   const selectedCell=document.querySelector(`.move-cell[data-ply="${state.ply}"]`);
   if (state.tab === 'moves'&&selectedCell?.getClientRects().length) selectedCell.scrollIntoView({ block:'nearest', behavior:'instant' });
   boardCoach.reveal({playback:true});
-  if(restart) startAnalysis();
+  if(restart||demoRestart) startAnalysis();
   if(boardCoach.opened&&!automatic)inspectSelectedMove();
 }
 
 function inspectSelectedMove(){
+  if(coachDemo.active){coachDemo.pause();return;}
   if(!reviewOpened||inline.active)return;
   const indices=[Math.max(0,state.ply-1),state.ply];
   if(indices.every(index=>depthReady(state.evaluations[index],INSPECTION_DEPTH)))return;
@@ -665,8 +717,8 @@ async function loadOlder() {
   finally { button.disabled = false; button.innerHTML = 'Load older games <span>↓</span>'; }
 }
 
-function openImport() { if ($('connect-dialog').open) $('connect-dialog').close(); $('import-error').hidden = true; $('import-dialog').showModal(); }
-function showInfo(title, content) { $('info-title').textContent = title; $('info-body').innerHTML = content; $('info-dialog').showModal(); }
+function openImport() { coachDemo.pause();if ($('connect-dialog').open) $('connect-dialog').close(); $('import-error').hidden = true; $('import-dialog').showModal(); }
+function showInfo(title, content) { coachDemo.pause();$('info-title').textContent = title; $('info-body').innerHTML = content; $('info-dialog').showModal(); }
 const instructions = '<div class="info-step"><b>1</b><div><strong>Bring your games</strong><p>Enter your public Chess.com username. No sign-in or password is needed. You can also import a single PGN game.</p></div></div><div class="info-step"><b>2</b><div><strong>Choose a game</strong><p>Your most recent completed standard chess games appear in the library. Filter by time control or load older games.</p></div></div><div class="info-step"><b>3</b><div><strong>Find your turning points</strong><p>Stockfish reviews the positions on your device. Explore the board, click the evaluation chart, and jump to mistakes. The best-move arrow shows the recommended move from the position currently on the board.</p></div></div><p>The public Chess.com API may take up to 24 hours to refresh. Live games and chess variants are not supported.</p>';
 const method = `<p>Each position is evaluated by <a href="https://github.com/nmrugg/stockfish.js/tree/v19.0.1" target="_blank" rel="noopener noreferrer">Stockfish 19 Lite</a>. A positive score favors White; a negative score favors Black. One pawn equals 100 centipawns. “M” means a forced mate.</p>
 <table class="method-table"><tbody><tr><td>Brilliant</td><td>Engine-supported piece sacrifice · ROQVYN rule</td></tr><tr><td>Great</td><td>Top choice, clearly ahead of the alternative</td></tr><tr><td>Best</td><td>Matches the engine’s first choice</td></tr><tr><td>Good</td><td>Less than 0.50 pawn lost</td></tr><tr><td>Inaccuracy</td><td>0.50–0.99 pawn lost</td></tr><tr><td>Mistake</td><td>1.00–1.99 pawns lost</td></tr><tr><td>Blunder</td><td>2.00+ pawns lost</td></tr></tbody></table>
@@ -680,7 +732,7 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p><a href="/STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="/THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
 $('username-form').addEventListener('submit', searchPlayer);
-function openConnect() { $('connect-dialog').showModal(); $('username').focus({preventScroll:true}); }
+function openConnect() { coachDemo.pause();$('connect-dialog').showModal(); $('username').focus({preventScroll:true}); }
 $('focus-username').onclick = openConnect;
 $('open-connect').onclick = openConnect;
 $('games-search').onclick=openConnect;
@@ -768,27 +820,33 @@ $('games-list').onclick = event => {
 document.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { state.filter = button.dataset.filter; state.libraryPage = 0; document.querySelectorAll('[data-filter]').forEach(element => { element.classList.toggle('selected', element === button); element.setAttribute('aria-pressed', String(element === button)); }); renderGames(); });
 for (const [id, change] of [['library-prev', -1], ['library-next', 1]]) $(id).onclick = () => { state.libraryPage += change; renderGames(); scrollToSection($('game-library')); };
 $('load-more').onclick = loadOlder;
-function stepMove(delta,{automatic=false}={}) { if(!automatic)autoplay.stop(); if(inline.active){inline.jump(inline.line.cursor+delta);boardCoach.reveal({playback:true});}else goTo(state.ply+delta,{automatic}); }
-$('first-move').onclick = () => inline.active?inline.jump(-analysisNavigation(state.parsed,state.evaluations,state.ply,inline.line).base):goTo(0);
+function stepMove(delta,{automatic=false}={}) { if(coachDemo.active){coachDemo.jump(coachDemo.view().index+delta);return;}if(!automatic)autoplay.stop(); if(inline.active){inline.jump(inline.line.cursor+delta);boardCoach.reveal({playback:true});}else goTo(state.ply+delta,{automatic}); }
+$('first-move').onclick = () => coachDemo.active?coachDemo.jump(0):inline.active?inline.jump(-analysisNavigation(state.parsed,state.evaluations,state.ply,inline.line).base):goTo(0);
 $('previous-move').onclick = () => stepMove(-1);
 $('next-move').onclick = () => stepMove(1);
-$('last-move').onclick = () => inline.active?inline.jump(inline.line.entries.length):goTo(state.parsed.moves.length);
+$('last-move').onclick = () => coachDemo.active?coachDemo.jump(coachDemo.view().total):inline.active?inline.jump(inline.line.entries.length):goTo(state.parsed.moves.length);
 $('try-move').onclick=()=>{
   if(!inline.active) inline.start();
   selectWorkspaceView('board');scrollToSection(document.querySelector('.workspace'));
 };
 $('toggle-threats').onclick=()=>{showThreats=!showThreats;selectedThreat=null;$('toggle-threats').classList.toggle('toggled',showThreats);$('toggle-threats').setAttribute('aria-pressed',String(showThreats));renderBoard();};
 $('threat-close').onclick=()=>{selectedThreat=null;renderBoard();};
+function pauseCoachForBoard(){
+  if(!coachDemo.view()?.playing)return;
+  coachDemo.pause({notify:false});$('coach-demo-toggle').textContent='Play';$('coach-demo-toggle').setAttribute('aria-pressed','false');
+}
+$('board').addEventListener('pointerdown',pauseCoachForBoard,true);
 $('board').onclick = event => {
   const badge = event.target.closest('.piece-rating');
   if (badge) { badge.setAttribute('aria-pressed', String(badge.getAttribute('aria-pressed') !== 'true'));return; }
   const square=event.target.closest('[data-square]')?.dataset.square;
   if(!square) return;
-  autoplay.stop();inline.click(square);
+  autoplay.stop();if(!exploreCoachFrame())return;inline.click(square);
   if(showThreats && threats.some(item=>item.square===square)) {selectedThreat=square;renderBoard();}
 };
-enableBoardDrag($('board'),{read:()=>({chess:new Chess(boardView().fen)}),select:from=>inline.select(from),play:(from,to)=>{autoplay.stop();inline.attempt(from,to);}});
+enableBoardDrag($('board'),{read:()=>({chess:new Chess(boardView().fen)}),select:from=>{if(exploreCoachFrame())inline.select(from);},play:(from,to)=>{autoplay.stop();if(exploreCoachFrame())inline.attempt(from,to);}});
 $('board').addEventListener('keydown',event=>{
+  pauseCoachForBoard();
   const square=event.target.closest('[data-square]')?.dataset.square;if(!square||event.target.closest('.piece-rating'))return;
   if(event.key==='Enter'||event.key===' '){event.preventDefault();event.target.click();return;}
   const offsets={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
@@ -818,6 +876,7 @@ $('chart').onclick = event => { const rect = $('chart').getBoundingClientRect();
 $('move-list').onclick = event => { const button = event.target.closest('[data-ply]'); if (button) { goTo(Number(button.dataset.ply)); if (compactLayout.matches) { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); $('mobile-board-tab').focus({preventScroll:true}); } } };
 function selectWorkspaceView(view) {
   if(view==='coach'){boardCoach.open();return;}
+  if(view!=='board'&&coachDemo.active)finishCoachDemo();
   state.mobileView = view;
   positionReviewProgress();
   document.querySelector('.workspace').dataset.mobileView = view;
@@ -870,7 +929,7 @@ document.addEventListener('keydown', event => {
   if (event.key === 'End') { event.preventDefault(); $('last-move').onclick(); }
   if (event.key.toLowerCase() === 'f') $('flip-board').onclick();
 });
-window.addEventListener('pagehide', () => { autoplay.stop(); saveReviewPosition(); inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
+window.addEventListener('pagehide', () => { coachDemo.stop({notify:false});autoplay.stop(); saveReviewPosition(); inline.reset(); explorer.reset(); stopAnalysis(); state.request?.abort(); moveSounds.destroy(); });
 try { $('username').value = $('home-username').value = localStorage.getItem('knightlab-username') || ''; } catch {}
 const lastReview=reviewMemory.last();
 try {
@@ -891,8 +950,8 @@ for(const id of ['course-cover-board']){
   $(id).innerHTML=html;
 }
 installSimpleUI();$('board-actions-panel').append(playbackButton);
-createAudioSettings(moveSounds,{beforeOpen:()=>{autoplay.stop();closeWorkspaceMenu();closeBoardActions();for(const menu of document.querySelectorAll('.compact-options'))menu.open=false;}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){autoplay.stop();moveSounds.stop();}});
+createAudioSettings(moveSounds,{beforeOpen:()=>{coachDemo.pause();autoplay.stop();closeWorkspaceMenu();closeBoardActions();for(const menu of document.querySelectorAll('.compact-options'))menu.open=false;}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){coachDemo.pause();autoplay.stop();moveSounds.stop();}});
 document.addEventListener('click',event=>{if(autoplay.active&&!event.target.closest('#autoplay-moves,#board-actions-toggle'))autoplay.stop();},true);
 router=createPageRouter(page=>{
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
@@ -903,7 +962,7 @@ router=createPageRouter(page=>{
     if(active)$(id).setAttribute('aria-current','page');else $(id).removeAttribute('aria-current');
   }
   if(page==='analysis'){if(!state.running)startAnalysis();}
-  else {saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
+  else {if(coachDemo.active)finishCoachDemo({resume:false});saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
   if(page==='analyze'){
     $('analysis-resume').hidden=!reviewOpened;

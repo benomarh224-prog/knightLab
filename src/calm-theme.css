@@ -290,6 +290,30 @@ body[data-page] .piece-rating.brilliant { --rating-color:#35c9c1; color:#073b40;
 body[data-page] .stat-dot.brilliant { background:var(--brilliant); }
 body[data-page] .board-coach-card[data-verdict="Brilliant"] .quality-icon { background:#d8f5f1; color:#08727e !important; border-color:#8dcac7; }
 body[data-page] #board-coach-card.floating-analysis-coach #coach-brief { display:none; }
+
+/* The lesson is in the move: one short explanation, with deeper evidence on
+   demand. Show me temporarily uses the same board and existing Back / Next. */
+body[data-page] #board-coach-card.floating-analysis-coach .coach-playback { grid-template-columns:minmax(60px,1fr) minmax(110px,1.45fr) minmax(60px,1fr); }
+body[data-page] #board-coach-card.floating-analysis-coach #coach-show-me { background:var(--ui-action); border-color:var(--ui-action); color:#fff; }
+body[data-page] #board-coach-card.floating-analysis-coach #coach-next { background:#fff; border-color:var(--ui-control-border); color:var(--ui-text); }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-explanation { margin:0 0 14px; padding:0; }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-explanation p { margin:6px 0 0; }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-more { margin-top:12px; border-top:1px solid var(--ui-border); }
+body[data-page] #board-coach-card.floating-analysis-coach .coach-more>summary { min-height:44px; padding:12px 0; cursor:pointer; font-size:16px; font-weight:600; }
+body[data-page] #coach-demo { display:flex; align-items:center; justify-content:space-between; gap:12px; box-sizing:border-box; min-width:0; width:100%; height:132px; padding:10px 12px; margin:0 0 8px; border:1px solid var(--ui-border); border-radius:8px; background:#fff; color:var(--ui-text); }
+body[data-page] #coach-demo[hidden] { display:none; }
+body[data-page] .coach-demo-copy { min-width:0; flex:1; }
+body[data-page] #coach-demo-label { display:block; color:var(--ui-muted); font-size:14px; line-height:1.3; }
+body[data-page] #coach-demo-text { margin:4px 0 0; font-size:16px; line-height:1.4; overflow-wrap:anywhere; }
+body[data-page] .coach-demo-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; flex:0 0 110px; }
+body[data-page] .coach-demo-actions button { min-width:50px; min-height:44px; padding:8px; border:1px solid var(--ui-control-border); border-radius:6px; background:#fff; color:var(--ui-text); font:inherit; font-size:14px; }
+body[data-page] #coach-demo-toggle { background:var(--ui-action); color:#fff; border-color:var(--ui-action); }
+body[data-page].coach-demo-active :is(.analysis-coach-launch,.engine-progress,#line-controls,#move-strip) { display:none !important; }
+body[data-page] #coach-demo :focus-visible { outline:2px solid var(--ui-action); outline-offset:3px; }
+body[data-page] .evaluation-bar.awaiting-evaluation { background:var(--ui-soft); border-color:var(--ui-border); }
+body[data-page] .evaluation-bar.awaiting-evaluation #eval-fill { visibility:hidden; }
+body[data-page] .evaluation-bar.awaiting-evaluation #bar-score { color:var(--ui-muted); }
+@media(max-width:430px){body[data-page] .coach-demo-actions{flex-basis:58px;}body[data-page] .coach-demo-actions button{width:100%;}}
 body[data-page] .review-stats { grid-template-columns:repeat(4,minmax(0,1fr)); }
 @media(max-width:600px) { body[data-page] .review-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:860px) {

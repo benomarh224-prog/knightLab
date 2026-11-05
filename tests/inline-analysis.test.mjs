@@ -138,3 +138,11 @@ test('free analysis deepens shallow evidence, reuses an idle worker and never re
  c.jump(1);await tick();assert.equal(h.engines.length,1);assert.equal(engine.requests.length,3);
  c.exit();
 });
+
+test('taking over a demonstrated position is silent until a legal move, preserving review resume and the original PGN',()=>{
+ const h=harness(),c=h.controller,original=JSON.stringify(h.state.parsed),moves=h.state.parsed.moves;
+ assert.equal(c.playback(moves[0].before,moves,2,{analyze:false,resumeReview:true}),true);
+ assert.equal(c.line.fen,moves[1].after);assert.equal(h.engines.length,0);c.click('g1');assert.equal(h.engines.length,0);
+ c.click('f3');assert.equal(c.line.last.san,'Nf3');assert.equal(h.engines.length,1);
+ assert.equal(JSON.stringify(h.state.parsed),original);c.exit();assert.equal(h.resumes,1);
+});
