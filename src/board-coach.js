@@ -11,7 +11,7 @@ export function createBoardCoach({showBoard,navigate,doc=document,win=window}) {
   const board=doc.querySelector('.board-card'),sidePanel=doc.querySelector('.review-panel'),desktop=win.matchMedia('(min-width:861px)');
   const triggers=['board-coach-toggle','board-coach','coach-tab','mobile-coach-tab'].map(get);
   const launcher=doc.createElement('button');launcher.id='analysis-coach-open';launcher.type='button';launcher.className='analysis-coach-launch';
-  launcher.innerHTML='<span class="coach-launch-copy"><strong id="coach-launch-verdict">Move coach</strong><span id="coach-launch-move"></span></span><span class="coach-launch-action">Coach ↗</span>';
+  launcher.innerHTML='<span class="coach-launch-copy"><strong id="coach-launch-verdict">Move coach</strong><span id="coach-launch-move"></span></span><span class="coach-launch-action">Coach <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></span>';
   launcher.setAttribute('aria-haspopup','dialog');launcher.setAttribute('aria-controls',card.id);launcher.setAttribute('aria-expanded','false');
   const players=doc.createElement('div');players.className='board-players';
   get('board-top').append(get('line-toolbar'),players);

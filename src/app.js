@@ -103,6 +103,13 @@ function boardView() {
 function positionOpeningCard() {
   const card = $('opening-card');
   document.querySelector('.board-card').prepend($('board-top'));
+  $('board-actions-panel').prepend(card);
+  const summary=card.querySelector('summary'),title=summary.querySelector('.opening-summary-content');
+  if(title){
+    $('opening-detail').before(title);
+    summary.prepend(document.createTextNode('Opening details'));
+    summary.setAttribute('aria-label','Opening details');
+  }
   card.open = false;
 }
 $('opening-card').addEventListener('toggle', () => {

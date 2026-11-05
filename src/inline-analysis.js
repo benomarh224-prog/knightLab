@@ -128,7 +128,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
     $('try-move').setAttribute('aria-pressed',String(Boolean(line)));
     $('try-move').classList.toggle('toggled',Boolean(line));
     const source=context(),chess=line?.chess||new Chess(source.parsed.fens[source.ply]),score=line?line.score:source.evaluations[source.ply];
-    $('analysis-board-instruction').textContent=chess.isCheckmate()?'Checkmate':chess.isStalemate()?'Stalemate':`${chess.turn()==='w'?'White':'Black'} to move · Drag or tap a piece`;
+    $('analysis-board-instruction').textContent=chess.isCheckmate()?'Checkmate':chess.isStalemate()?'Stalemate':`${chess.turn()==='w'?'White':'Black'} to move`;
     $('line-undo').hidden=!line;
     $('line-undo').disabled=!line?.cursor||Boolean(promotion);
     $('line-reply').disabled=busy||!score?.best||!chess.moves().length||Boolean(promotion);

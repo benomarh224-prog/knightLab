@@ -22,6 +22,7 @@ export function installSimpleUI(doc=document) {
   // The mobile navigation already contains Import and Guide.
   const boardMenu=get('board-actions-panel');
   boardMenu.append(get('focus-mode'),get('line-reply'),get('download-pgn'));
+  get('download-pgn').textContent='Export PGN';
   boardMenu.append(soundButton());
   get('board-actions-toggle').setAttribute('aria-label','More board options');
   get('board-actions-toggle').firstElementChild.textContent='More';

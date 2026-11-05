@@ -36,7 +36,7 @@ test('the review board accepts direct selection and both sides can move during e
  c.click('e4');c.click('e7');c.click('e5');
  assert.deepEqual(h.sounds,['e4','e5']);assert.equal(c.line.cursor,2);
  assert.equal(JSON.stringify(h.state.parsed),original);assert.equal(h.state.ply,0);
- assert.match(h.nodes.get('analysis-board-instruction').textContent,/White.*Drag or tap/);
+ assert.equal(h.nodes.get('analysis-board-instruction').textContent,'White to move');
  c.exit();assert.equal(c.active,false);assert.equal(h.resumes,1);assert.equal(h.pauses,1);
 });
 
