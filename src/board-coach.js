@@ -6,7 +6,7 @@ export function coachPlacement(viewport,{x,y}={}){
   return {left:Math.max(left+gap,Math.min(x??left+width-w-gap,left+width-w-gap)),top:Math.max(top+gap,Math.min(y??defaultY,top+height-Math.min(maxHeight,240)-gap)),width:w,maxHeight:Math.min(maxHeight,top+height-(y===undefined?defaultY:Math.max(top+gap,Math.min(y,top+height-Math.min(maxHeight,240)-gap)))-gap)};
 }
 
-export function createBoardCoach({showBoard,navigate,doc=document,win=window}) {
+export function createBoardCoach({showBoard,navigate,onInspect=()=>{},doc=document,win=window}) {
   const get=id=>doc.getElementById(id),panel=get('coach-panel'),card=get('board-coach-card');
   const board=doc.querySelector('.board-card'),sidePanel=doc.querySelector('.review-panel'),desktop=win.matchMedia('(min-width:861px)');
   const triggers=['board-coach-toggle','board-coach','coach-tab','mobile-coach-tab'].map(get);
@@ -44,7 +44,7 @@ export function createBoardCoach({showBoard,navigate,doc=document,win=window}) {
     for(const menu of doc.querySelectorAll('.compact-options[open]'))menu.open=false;
     card.hidden=false;opened=true;if(layered)card.showPopover();
     for(const trigger of [launcher,...triggers])trigger.setAttribute('aria-expanded','true');
-    preferred=null;placement();panel.scrollTop=0;closeButton.focus({preventScroll:true});
+    preferred=null;placement();panel.scrollTop=0;closeButton.focus({preventScroll:true});onInspect();
   }
   function position(){
     close();

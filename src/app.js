@@ -5,7 +5,7 @@ import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
 import { pageGames } from './library.js';
 import { identifyOpening } from './opening.js';
-import { evaluationReady, reviewSearch } from './review-quality.js';
+import { evaluationReady, reviewSearch, depthReady, positionSearch, strongerScore, DEFAULT_REVIEW_MODE, INSPECTION_DEPTH } from './review-quality.js';
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
@@ -68,7 +68,7 @@ const iconPaths = {
 function icon(name) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || ''}</svg>`; }
 document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = icon(element.dataset.icon));
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
-const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: 'quick', tab: 'moves', mobileView: 'board', demo: true };
+const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, inspection: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: DEFAULT_REVIEW_MODE, tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
 let router;
 const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:$('workspace-menu'),desktopSlot:$('desktop-navigation'),mobileSlot:$('mobile-navigation'),dialog:$('navigation-dialog'),toggle:$('workspace-menu-toggle'),closeButton:$('navigation-close')});
@@ -150,7 +150,7 @@ const explorer = createExploreUI({
 });
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound,navigate:goTo});
 const boardCard = document.querySelector('.board-card');
-const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove});
+const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove,onInspect:inspectSelectedMove});
 const liveProgress=document.querySelector('.engine-progress');
 function positionReviewProgress(){if(compactLayout.matches&&state.mobileView==='board')document.querySelector('.board-area').before(liveProgress);else document.querySelector('.review-controls').after(liveProgress);}
 compactLayout.addEventListener('change',positionReviewProgress);positionReviewProgress();
@@ -403,13 +403,13 @@ function render() {
   document.querySelector('.progress-track').setAttribute('aria-valuenow',String(percent));
   document.querySelector('.engine-progress').setAttribute('aria-busy',String(state.running));
   $('progress-fill').style.width = `${percent}%`;
-  $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? `${state.mode==='quick'?'Fast review':'Reviewing'} · ${analyzed}/${total} positions${state.mode === 'precise' ? ' · depth 18' : ''}` : analyzed === total ? 'Review complete'+(state.mode==='quick'?' · Fast estimate':'') : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
+  $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? state.inspection?'Deepening selected move · depth 20':`${state.mode==='quick'?'Fast preview':'Reviewing'} · ${analyzed}/${total} positions${state.mode !== 'quick' ? ` · depth ${state.mode==='precise'?18:16}` : ''}` : analyzed === total ? (state.mode==='quick'?'Preview complete · preliminary':'Review complete') : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
   document.querySelector('.engine-progress').classList.toggle('running', state.running);
   liveProgress.dataset.scope=inline.active?'position':'game';
   document.querySelector('.progress-track').setAttribute('aria-label',inline.active?'Current position analysis':'Game review progress');
   if(inline.active){
     liveProgress.setAttribute('aria-busy',String(inline.busy));
-    $('analysis-status').textContent=inline.busy?'Analysing this position…':score?'Position analysed':'Move a piece to explore';
+    $('analysis-status').textContent=inline.busy?'Analysing this position · depth 18…':depthReady(score,18)?'Position analysed':score?'Preliminary · deepen in Variation tools':'Move a piece to explore';
     $('analysis-percent').textContent=score?.depth?`Depth ${score.depth}`:'';
   }
   $('analyze-label').textContent = state.running ? 'Pause review' : analyzed === total ? 'Review complete' : searched === total ? 'Deepen remaining' : searched ? 'Resume review' : 'Review this game';
@@ -457,7 +457,7 @@ function renderCoach(move, before, after) {
   $('recommended-move').disabled=!recommendation;
   $('recommended-move').setAttribute('aria-label',recommendation?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
   $('recommended-move').onclick=tryRecommendation;
-  $('coach-note').textContent = ready ? `${report.rating==='Brilliant'?'Brilliant is ROQVYN’s independent sacrifice classification. ':''}Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${before.depth}` : ''}. Deeper review can change the recommendation.` : 'The coach updates as each move is reviewed.';
+  $('coach-note').textContent = ready ? `${!depthReady(before,18)||!depthReady(after,18)?'Preliminary evidence. ':''}${report.rating==='Brilliant'?'Brilliant is ROQVYN’s independent sacrifice classification. ':''}Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${Math.min(before.depth,after?.terminal?before.depth:after?.depth||0)}` : ''}. ${state.inspection?'Deepening this decision to depth 20.':'Deeper review can change the recommendation.'}` : 'The coach updates as each move is reviewed.';
   boardCoach.update();
 }
 
@@ -536,11 +536,19 @@ function goTo(ply,{automatic=false}={}) {
   if (state.tab === 'moves'&&selectedCell?.getClientRects().length) selectedCell.scrollIntoView({ block:'nearest', behavior:'instant' });
   boardCoach.reveal({playback:true});
   if(restart) startAnalysis();
+  if(boardCoach.opened&&!automatic)inspectSelectedMove();
 }
 
+function inspectSelectedMove(){
+  if(!reviewOpened||inline.active)return;
+  const indices=[Math.max(0,state.ply-1),state.ply];
+  if(indices.every(index=>depthReady(state.evaluations[index],INSPECTION_DEPTH)))return;
+  state.inspection={ply:state.ply};
+  if(!state.running)startAnalysis();else render();
+}
 function stopAnalysis() {
   if(state.selected&&reviewOpened)reviewCache.save(state.selected.pgn,state.mode,state.evaluations);
-  state.run++; state.running = false; state.engine?.destroy(); state.engine = null;
+  state.run++; state.running = false; state.engine?.destroy(); state.engine = null;state.inspection=null;
 }
 async function startAnalysis() {
   if (state.running) return;
@@ -553,15 +561,18 @@ async function startAnalysis() {
   try {
     const engine = state.engine;
     const parsed = state.parsed;
-    const attempted=new Set();
+    const attempted=new Set(),inspected=new Set();
     while(true) {
       if (run !== state.run) return;
-      const index=nextReviewPosition(parsed.fens.length,state.ply,state.evaluations,state.mode,attempted);if(index===null)break;
-      attempted.add(index);state.reviewIndex = index;
+      const request=state.inspection;
+      const focus=request?[Math.max(0,request.ply-1),request.ply].find(index=>!inspected.has(request.ply+':'+index)&&!depthReady(state.evaluations[index],INSPECTION_DEPTH)):undefined;
+      if(request&&focus===undefined)state.inspection=null;
+      const index=focus??nextReviewPosition(parsed.fens.length,state.ply,state.evaluations,state.mode,attempted);if(index===null)break;
+      if(focus!==undefined)inspected.add(request.ply+':'+index);else attempted.add(index);state.reviewIndex = index;
       const history = { startFen: parsed.fens[0], moves: parsed.moves.slice(0, index).map(move => move.from + move.to + (move.promotion || '')) };
-      const score = await engine.evaluate(parsed.fens[index], reviewSearch(state.mode, state.evaluations[index]), history);
+      const score = await engine.evaluate(parsed.fens[index], focus!==undefined?positionSearch(INSPECTION_DEPTH,state.evaluations[index]):reviewSearch(state.mode, state.evaluations[index]), history);
       if (run !== state.run) return;
-      state.evaluations[index] = score;
+      state.evaluations[index] = strongerScore(state.evaluations[index],score);
       render();
       if(attempted.size%8===0)reviewCache.save(parsed.pgn,state.mode,state.evaluations);
       await new Promise(resolve => setTimeout(resolve, 0));
@@ -569,7 +580,7 @@ async function startAnalysis() {
     if (run === state.run) { state.running = false; state.engine?.destroy(); state.engine = null; reviewCache.save(parsed.pgn,state.mode,state.evaluations);render(); }
   } catch (error) {
     if (run !== state.run) return;
-    state.running = false; state.engine?.destroy(); state.engine = null;
+    state.running = false; state.engine?.destroy(); state.engine = null;state.inspection=null;
     $('analysis-error').hidden = false; $('analysis-error').textContent = error.message;
     render();
   }
@@ -662,10 +673,10 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>Brilliant (!!) is an independent ROQVYN classification: the engine’s first choice, no more than 0.30 pawn of evaluation loss, a non-losing result, and a legal capture that concedes at least one pawn of material after local recaptures. Both positions need depth 16 or more, legal continuations, and a same-depth alternative that is not already completely winning. Equal trades, free-piece captures, pawn moves, promotions and immediate checkmates do not qualify. Use Deep review for sufficient evidence; Fast and Standard may not reach the required depth. This is not Chess.com’s proprietary rating-dependent algorithm. Deeper analysis may change it.</p>
 <p>Great moves match the engine’s top choice, beat its next candidate by at least one pawn at the same search depth of at least 8, and lose no more than 0.30 pawn in the resulting position. Best / Great counts combine both categories.</p>
 <p>Move ratings are based on evaluation loss from the player’s perspective. They can change with deeper analysis. Mate scores use a large capped value for the chart and loss calculation.</p>
-<p>Standard review uses 650 ms per position to give you a quick first pass. Deep review targets depth 18 with two candidate moves. If a position needs more time, Deepen remaining searches it again, allowing up to 80 seconds. You can pause and resume either review. The chart is capped at ±5 pawns.</p>
+<p>Deep review is the default and targets depth 18 with two candidate moves. Standard targets depth 16. Fast preview is preliminary. Opening the coach deepens the selected decision to depth 20; free analysis targets depth 18. Time limits protect slower devices, so positions that do not reach the required depth stay provisional. Deepen remaining retries them with more time, up to 80 seconds. You can pause and resume. The chart is capped at ±5 pawns.</p>
 <p>Summary statistics show White and Black separately, with explicitly labelled combined totals. Incomplete reviews remain provisional. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
 <p>Threats highlights only the leading new attack from the current move. The old highlight clears on the next move. Red means check or no immediate legal recapture; amber means a defended attack or risky exchange. Tap the square to see why. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
-<p>The compact coach stays above the board and updates with each move. Coach opens the full explanation in a movable floating panel. It describes legal Stockfish continuations and observable features such as captures, checks, castling, and development. Use Deep review to investigate critical decisions.</p>
+<p>Coach opens the explanation in a movable floating panel and requests deeper evidence for that decision. The chosen move, score and continuation come from the same search iteration. The coach describes validated legal continuations and observable features such as captures, checks, castling, and development. Search depth improves the evidence, but does not guarantee perfect play or the same accuracy as Chess.com.</p>
 <p><a href="/STOCKFISH-LICENSE.txt" target="_blank">Stockfish license</a> · <a href="/THIRD-PARTY-NOTICES.txt" target="_blank">Third-party notices</a></p>`;
 
 $('username-form').addEventListener('submit', searchPlayer);

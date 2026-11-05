@@ -1,4 +1,19 @@
 import { scoreFromInfo, terminalEvaluation } from './game.js';
+import { Chess } from 'chess.js';
+
+// UCI can stop halfway through a MultiPV iteration. Never attach the last
+// score seen to a different bestmove (or to an alternative from another depth).
+export function completedSearch(frames, best, fen) {
+  const iterations=[...frames.values()].sort((a,b)=>[...b.values()][0].depth-[...a.values()][0].depth);
+  const complete=iterations.filter(frame=>frame.get(1)?.pv[0]===best&&frame.has(2));
+  const frame=complete[0]||iterations.find(frame=>[...frame.values()].some(score=>score.pv[0]===best));
+  const primary=frame&&[...frame.values()].find(score=>score.pv[0]===best);
+  if(!primary)throw new Error('The engine did not return matching evidence for its move. Retry this position.');
+  const chess=new Chess(fen);
+  for(const uci of primary.pv)chess.move({from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]});
+  const alternative=[...frame.values()].find(score=>score.pv[0]!==best)||null;
+  return {...primary,best,alternative,rootFen:fen,searchVersion:2};
+}
 
 export class Engine {
   constructor() { this.worker = null; this.pending = null; this.initializing = null; }
@@ -37,23 +52,26 @@ export class Engine {
     await this.init();
     if (this.pending) throw new Error('The engine is already evaluating a position.');
     return new Promise((resolve, reject) => {
-      let info = null;
-      let alternative = null;
+      const frames=new Map();
       const timeout = setTimeout(() => { this.destroy(new Error('Engine analysis timed out. Please try again.')); }, Math.max(15000, milliseconds + 15000));
       this.rejectPending = error => { clearTimeout(timeout); reject(error); };
       this.pending = line => {
         if (line.startsWith('info ')) {
           const score = scoreFromInfo(line, fen.split(' ')[1]);
-          if (score?.multipv === 1) info = score;
-          if (score?.multipv === 2) alternative = score;
+          if(score?.pv.length&&score.multipv>=1&&score.multipv<=(skill<20?4:2)){
+            if(!frames.has(score.depth))frames.set(score.depth,new Map());
+            frames.get(score.depth).set(score.multipv,score);
+          }
         }
         if (line.startsWith('bestmove ')) {
           clearTimeout(timeout); this.pending = null; this.rejectPending = null;
-          if (!info) { reject(new Error('The engine did not return a score for this position.')); return; }
-          resolve({ ...info, searchTime: milliseconds, best: line.split(' ')[1], alternative: alternative?.depth === info.depth ? alternative : null });
+          try { resolve({...completedSearch(frames,line.split(' ')[1],fen),searchTime:milliseconds}); }
+          catch(error){reject(error);}
         }
       };
       if (clearHash) this.worker.postMessage('setoption name Clear Hash');
+      // Reduced-skill play may deliberately choose outside the first two PVs.
+      this.worker.postMessage(`setoption name MultiPV value ${skill<20?4:2}`);
       this.worker.postMessage(`setoption name Skill Level value ${skill}`);
       this.worker.postMessage(history ? `position fen ${history.startFen}${history.moves.length ? ` moves ${history.moves.join(' ')}` : ''}` : `position fen ${fen}`);
       this.worker.postMessage(`go ${depth ? `depth ${depth} ` : ''}movetime ${milliseconds}`);

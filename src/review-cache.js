@@ -4,7 +4,8 @@ const KEY='knightlab-review-evidence-v1';
 function score(value){
   if(!value||!Number.isFinite(value.cp)||!Number.isInteger(value.depth)||value.depth<0)return null;
   const clean={cp:value.cp,mate:Number.isFinite(value.mate)?value.mate:null,depth:value.depth,best:/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(value.best||'')?value.best:null,
-    pv:Array.isArray(value.pv)?value.pv.filter(move=>typeof move==='string').slice(0,16):[],terminal:value.terminal===true,searchTime:Number.isFinite(value.searchTime)?value.searchTime:0};
+    pv:Array.isArray(value.pv)?value.pv.filter(move=>typeof move==='string').slice(0,24):[],terminal:value.terminal===true,searchTime:Number.isFinite(value.searchTime)?value.searchTime:0,
+    ...(value.searchVersion===2?{searchVersion:2,rootFen:value.rootFen}:{legacy:true})};
   if(value.alternative&&Number.isFinite(value.alternative.cp))clean.alternative={cp:value.alternative.cp,depth:value.alternative.depth};
   return clean;
 }

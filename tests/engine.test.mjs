@@ -25,6 +25,7 @@ test('real Stockfish accepts reduced and full skill settings, and both return le
    const options=playSearch(level),result=await engine.evaluate(fen,{...options,clearHash:true});
    assert.ok(commands.includes(`setoption name Skill Level value ${options.skill}`));assert.ok(commands.includes(`go depth ${options.depth} movetime ${options.milliseconds}`));
    assert.doesNotThrow(()=>new Chess(fen).move({from:result.best.slice(0,2),to:result.best.slice(2,4),promotion:result.best[4]}));
+   assert.equal(result.pv[0],result.best);assert.equal(result.rootFen,fen);
   }
   await assert.rejects(engine.evaluate(fen,{milliseconds:100,skill:21}),/Invalid/);
  }finally{engine.destroy();globalThis.Worker=original;}
@@ -39,6 +40,7 @@ test('real Stockfish handshake, forced mate, terminal state, and cancellation', 
     assert.equal(result.best,'d8h4');
     assert.equal(result.cp,-10000);
     assert.equal(result.mate,-1);
+    assert.equal(result.best,result.pv[0]);
     const terminal = await engine.evaluate(parseGame(DEMO_PGN).fens.at(-1),140);
     assert.equal(terminal.terminal,true);
     assert.equal(terminal.cp,10000);

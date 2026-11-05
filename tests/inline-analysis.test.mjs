@@ -126,3 +126,15 @@ test('coach playback reuses exact shared-position evidence and stops reusing it 
  assert.equal(c.playback(parsed.fens[0],parsed.moves,2),true);assert.equal(c.line.scores[1],h.state.evaluations[1]);assert.equal(c.line.scores[2],h.state.evaluations[2]);assert.equal(h.engines.at(-1).requests.length,0);
  c.exit();const alternative=parseGame('1. e4 c5 2. Nf3 *').moves;assert.equal(c.playback(parsed.fens[0],alternative,2),true);assert.equal(c.line.scores[1],h.state.evaluations[1]);assert.equal(c.line.scores[2],null);c.exit();
 });
+
+test('free analysis deepens shallow evidence, reuses an idle worker and never reboots for board selection',async()=>{
+ const h=harness(),c=h.controller;h.state.evaluations[0]={cp:20,depth:12};
+ c.click('e2');assert.equal(h.engines.length,0);c.click('e4');
+ const engine=h.engines[0];assert.equal(engine.requests[0].fen,h.state.parsed.fens[0]);
+ engine.requests[0].resolve({cp:25,depth:18});await tick();
+ engine.requests[1].resolve({cp:25,depth:18});await tick();assert.equal(c.busy,false);
+ c.click('e7');c.click('e5');assert.equal(h.engines.length,1);assert.equal(engine.requests.length,3);
+ engine.requests[2].resolve({cp:30,depth:18});await tick();assert.equal(c.busy,false);
+ c.jump(1);await tick();assert.equal(h.engines.length,1);assert.equal(engine.requests.length,3);
+ c.exit();
+});

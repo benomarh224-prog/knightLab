@@ -3,32 +3,33 @@ import { AnalysisLine } from './analysis-line.js';
 import { Chess } from 'chess.js';
 import { Engine } from './engine.js';
 import { formatEvaluation } from './game.js';
+import { depthReady, positionSearch, strongerScore, PRECISION_DEPTH } from './review-quality.js';
 const $=id=>document.getElementById(id);
 const coord=move=>move.from+move.to+(move.promotion||'');
 
 export function createInlineAnalysis({context,pause,resume,onChange,playSound,navigate=()=>{},createEngine=()=>new Engine()}) {
   let navigationAudio=0;
-  let line=null, selected=null, promotion=null, engine=null, run=0, busy=false, restore=false, savedGame=null, message='';
-  function cancel() { run++; engine?.destroy(); engine=null; busy=false; }
-  function reset() { cancel(); line=null; selected=null; promotion=null; restore=false; $('line-controls').open=false; }
+  let line=null, selected=null, promotion=null, engine=null, run=0, busy=false, restore=false, savedGame=null, message='', failed=false;
+  function cancel(dispose=false) { run++; if(busy||dispose){engine?.destroy();engine=null;} busy=false; }
+  function reset() { cancel(true); line=null; selected=null; promotion=null; restore=false; $('line-controls').open=false; }
   function exit(shouldResume=true) {
     const restart=restore && savedGame===context().parsed;
     reset(); onChange(); if (restart && shouldResume) resume(); return restart;
   }
   async function evaluate() {
     cancel(); if (!line) return;
-    const current=run, activeLine=line, snapshot=line.snapshot(), active=createEngine();
-    engine=active; busy=true; onChange();
+    const current=run, activeLine=line, snapshot=line.snapshot(), active=engine||createEngine();
+    engine=active; busy=true; failed=false; onChange();
     try {
       for (const index of [...new Set([Math.max(0,line.cursor-1),line.cursor])]) {
-        if (line.scores[index]) continue;
-        const score=await active.evaluate(line.fenAt(index),650,line.history(index));
+        if (depthReady(line.scores[index],PRECISION_DEPTH)) continue;
+        const score=await active.evaluate(line.fenAt(index),positionSearch(PRECISION_DEPTH,line.scores[index]),line.history(index));
         if (current!==run || line!==activeLine || !line.matches(snapshot)) return;
-        line.scores[index]=score; onChange();
+        line.scores[index]=strongerScore(line.scores[index],score); onChange();
       }
       message=line.chess.isCheckmate()?'Checkmate. Undo to explore a different continuation.':line.chess.isStalemate()?'Stalemate. Undo to try another idea.':line.chess.isDraw()?'Drawn position. You can still explore legal moves.':`${line.chess.turn()==='w'?'White':'Black'} to move. You control both sides.`;
-    } catch(error) { if(current===run){message=error.message;$('line-controls').open=true;} }
-    finally { active.destroy(); if(current===run) {engine=null;busy=false;onChange();} }
+    } catch(error) { if(current===run){active.destroy();engine=null;failed=true;message=error.message;$('line-controls').open=true;} }
+    finally { if(current===run) {busy=false;onChange();} }
   }
   function start(ply=context().ply, best=null, {silent=false}={}) {
     if (line) exit(false);
@@ -140,13 +141,13 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
     $('line-reply').disabled=busy||!score?.best||!chess.moves().length||Boolean(promotion);
     if (!line) return;
     if(promotion)$('line-controls').open=true;
-    $('line-message').textContent=busy?'Stockfish is checking this continuation…':message;
+    $('line-message').textContent=busy?'Stockfish is checking this continuation…':!failed&&line.score&&!depthReady(line.score,PRECISION_DEPTH)?'Preliminary evaluation · retry to deepen this position.':message;
     $('line-score').textContent=line.score?formatEvaluation(line.score):'…';
     $('line-reset').disabled=!line.entries.length;
-    $('line-retry').hidden=busy||Boolean(line.score);
+    $('line-retry').hidden=busy||depthReady(line.score,PRECISION_DEPTH);
     $('line-promotion').hidden=!promotion;
     $('line-moves').innerHTML='<button data-line-ply="0" aria-current="'+(line.cursor===0?'step':'false')+'">Start</button>'+line.entries.map((move,i)=>`<button data-line-ply="${i+1}" aria-current="${line.cursor===i+1?'step':'false'}">${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${move.san}</button>`).join('');
   }
   return {get active(){return Boolean(line);},get busy(){return busy;},get line(){return line;},get selected(){return selected;},get targets(){return new Set(selected?line.legal(selected).map(move=>move.to):[]);},start,exit,reset,click,select,attempt,jump,paint,
-    refresh(){if(line&&!busy&&!line.score)evaluate();else onChange();},tryBest,playback};
+    refresh(){if(line&&!busy&&!depthReady(line.score,PRECISION_DEPTH))evaluate();else onChange();},tryBest,playback};
 }

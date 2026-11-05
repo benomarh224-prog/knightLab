@@ -16,13 +16,14 @@ function fixture(wide=false){
  const desktop={matches:wide,addEventListener(_e,fn){this.change=fn;}};
  const doc={getElementById:node,createElement:()=>node('created-'+(++created)),body:node('body'),querySelector:s=>s==='dialog[open]'?otherDialog:s.includes('viewport-menu')?null:node(s),querySelectorAll:()=>[],addEventListener(k,fn){listeners[k]=fn;}};
  const win={matchMedia:()=>desktop,innerWidth:390,innerHeight:844,addEventListener(){}};
- let moved=0;const controller=createBoardCoach({doc,win,showBoard(){},navigate(delta){moved+=delta;}});
- return{controller,node,card,panel,board,side,desktop,listeners,get active(){return active;},get moved(){return moved;},set focusMode(v){focusMode=v;},set otherDialog(v){otherDialog=v;}};
+ let moved=0,inspections=0;const controller=createBoardCoach({doc,win,showBoard(){},navigate(delta){moved+=delta;},onInspect(){inspections++;}});
+ return{controller,node,card,panel,board,side,desktop,listeners,get inspections(){return inspections;},get active(){return active;},get moved(){return moved;},set focusMode(v){focusMode=v;},set otherDialog(v){otherDialog=v;}};
 }
 test('analysis coach floats in a top layer with one live explanation and a compact launcher in the workspace',()=>{
  const h=fixture(true),launcher=h.node('analysis-coach-open');assert.equal(launcher.parent,h.side);assert.equal(h.card.hidden,true);
  h.controller.open();assert.equal(h.card.parent,h.node('body'));assert.equal(h.card.popover,true);assert.equal(h.card.contains(h.panel),true);assert.equal(h.card.attributes['aria-modal'],'false');assert.equal(h.active.id,'board-coach-close');
  h.card.dataset.reviewState='ready';h.node('insight-title').textContent='Inaccuracy';h.node('insight-move').textContent='24... Qe1';h.controller.update();assert.equal(h.controller.opened,true);assert.equal(h.node('coach-launch-verdict').textContent,'Inaccuracy');
+ assert.equal(h.inspections,1);h.controller.open();h.controller.update();assert.equal(h.inspections,1);
  h.node('coach-next').onclick();assert.equal(h.moved,1);assert.equal(h.controller.opened,true);
  h.node('board-coach-close').onclick();assert.equal(h.card.hidden,true);assert.equal(h.active,launcher);h.desktop.matches=false;h.desktop.change();assert.equal(launcher.parent,h.board);
 });

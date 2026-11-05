@@ -90,9 +90,10 @@ test('review evidence survives reload by exact PGN and mode, and training can ch
 });
 
 test('White and Black statistics add up to labelled combined totals while incomplete or shallow work stays provisional',()=>{
- const parsed=parseGame('1. e4 e5 2. Nf3 Nc6 *'),evaluations=parsed.fens.map((_,i)=>score(i*60,['d2d4','c7c5','f1c4','d7d6','f1b5'][i]));
+ const parsed=parseGame('1. e4 e5 2. Nf3 Nc6 *'),evaluations=parsed.fens.map((_,i)=>({...score(i*60,['d2d4','c7c5','f1c4','d7d6','f1b5'][i]),depth:16}));
  const report=reviewStatistics(parsed,evaluations);assert.equal(report.provisional,false);assert.equal(report.combined.count,4);assert.equal(report.sides[0].count+report.sides[1].count,4);
  assert.deepEqual(report.combined,summarize(parsed,evaluations,null));
  assert.equal(reviewStatistics(parsed,evaluations.slice(0,2)).provisional,true);assert.equal(reviewStatistics(parsed,evaluations,'precise').provisional,true);
  assert.equal(reviewStatistics(parsed,[]).combined.count,0);
+ assert.equal(reviewStatistics(parsed,evaluations,'quick').provisional,true);
 });
