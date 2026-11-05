@@ -1,0 +1,88 @@
+/* The same surfaces and controls in both themes. Board squares, piece SVGs,
+   photos and move-quality meanings keep their own palettes. */
+html[data-theme="dark"] {
+  color-scheme:dark;
+  --ui-page:#11161c; --ui-surface:#1a222d; --ui-soft:#252f3c;
+  --ui-border:#354151; --ui-control-border:#526175;
+  --ui-text:#e8edf4; --ui-text-secondary:#d4dce7;
+  --ui-muted:#b1bdcd; --ui-muted-secondary:#c0cbd9; --ui-muted-tertiary:#b5c1d0;
+  --ui-action:#dce6f1; --ui-action-hover:#f1f5f9; --ui-on-action:#111923;
+  --ui-link:#9dc7ef; --ui-header:#141920; --ui-header-text:#edf1f7;
+  --ui-rule:#34404f; --ui-hover:#283544; --ui-disabled-text:#a9b4c3;
+  --ui-disabled-bg:#303c4c; --ui-border-active:#91a4ba; --ui-progress:#9dc7ef;
+  --ui-correct-text:#b4e8c9; --ui-correct-bg:#1b392c;
+  --bg:var(--ui-page); --sidebar:#171e27; --panel:var(--ui-surface);
+  --panel-raised:var(--ui-soft); --border:var(--ui-border); --text:var(--ui-text);
+  --muted:var(--ui-muted); --lime:var(--ui-link); --violet:var(--ui-link);
+  --green:#a4dab6; --surface:var(--ui-surface); --surface-soft:var(--ui-soft);
+  --academy-forest:var(--ui-header); --academy-accent:#b8c5d5;
+  --control-ink:var(--ui-text); --study-blue:var(--ui-link);
+}
+html[data-theme="dark"] body,
+html[data-theme="dark"] :is(dialog,.course-drawer,.lesson-coach-dialog,.lesson-result-dialog) { color-scheme:dark; }
+html[data-theme="dark"] ::selection { color:#f5f8fc; background:#3a5877; }
+html[data-theme="dark"] body[data-page] .academy-hero { background:var(--ui-header); }
+html[data-theme="dark"] body[data-page] .academy-hero h1 { color:#f5f5ee; }
+html[data-theme="dark"] body[data-page] :is(.academy-course p,#home-beginner-progress,.footer>span,.footer-dot,.training-page>header p,.train-page>header p) { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] :is(.home-learning-resume .academy-progress>strong,.learning-disclosure>summary,.learning-resume strong,#learn-review-list strong,#learn-review-list a,#learn-course-map a,#learn-course-map h3) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(#learn-course-map small,#learn-review-list small,.learning-disclosure>p,.learning-resume #learn-continue-course,.learning-kicker) { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] .lesson-player { --text:var(--ui-text); --muted:var(--ui-muted); color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(#course-progress-label,#lesson-page-position,.lesson-status,.lesson-number,.lesson-list-name small) { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] :is(.course-lessons .lesson-list-name strong,#lesson-controls #lesson-current-move) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(dialog p,.input-label,.connect-card>label,.lesson-coach-body p) { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] .page-heading p { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] #workspace-title { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] #analysis-status { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] :is(#analysis-percent,.move-number,.move-legend,.summary-footer>span,.review-navigation strong,.chart-labels,.chart-labels>span,.combined-statistics-label,.training-heading>span,.training-description,.review-player-stats dt) { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] :is(.eval-value strong,.eval-value span,.review-player-stats h4,.review-player-stats dd) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] .move-row:nth-child(even) { background:var(--ui-soft); }
+html[data-theme="dark"] body[data-page] :is(.review-stats>div,.review-stats>div:first-child,.moment-item,.training-empty) { background:var(--ui-soft); color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.review-stats span,.moment-copy small,.moment-number,.moment-arrow) { color:var(--ui-muted); }
+html[data-theme="dark"] body[data-page] .review-stats strong { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] #brilliant-count { color:#87ded7; }
+html[data-theme="dark"] body[data-page] #best-count { color:#aacdf1; }
+html[data-theme="dark"] body[data-page] #mistake-count { color:#f2bc88; }
+html[data-theme="dark"] body[data-page] #blunder-count { color:#f5a2aa; }
+html[data-theme="dark"] body[data-page] :is(.moment-item:hover,.moment-item.selected) { background:#35475b; border-color:#7d9cbe; }
+html[data-theme="dark"] body[data-page] .method-table :is(th,td) { color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] .topbar .main-nav .nav-item { color:#d4dce8; }
+html[data-theme="dark"] body[data-page] .topbar .main-nav .nav-item.active { background:#303c4c; color:var(--ui-header-text); }
+html[data-theme="dark"] body[data-page] :is(.dialog-header,.navigation-dialog-header,.course-drawer-header,.focus-header) { background:var(--ui-surface); color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.dialog-header h2,.course-drawer-header h2,.lesson-coach-body h2,.focus-header h2) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] dialog { background:var(--ui-surface); color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] dialog::backdrop { background:#05090db8; backdrop-filter:none; }
+html[data-theme="dark"] body[data-page] .focus-dialog { background:var(--ui-page); }
+html[data-theme="dark"] body[data-page] :is(.mobile-nav-more>summary,.navigation-dialog-header h2,.lesson-mobile-toolbar a,.course-back,.lesson-more-content,.lesson-practice-panel,.lesson-activities,.lesson-current-note,.play-note,.explore-origin,.dialog-header .eyebrow) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(.navigation-dialog .main-nav .nav-item:hover,.viewport-menu button:hover,.course-lessons button:hover) { background:var(--ui-hover); color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(.lesson-topline,.lesson-page-heading,.lesson-stage-panel,.course-sidebar-heading,.lesson-course-footer,.lesson-mobile-toolbar) { background:transparent; border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.course-sidebar h2,.course-sidebar p,.course-outline,.lesson-quiz-question,.lesson-check h3,.lesson-check>p,.lesson-recap h3,.lesson-more summary) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(.lesson-answers button,.practice-answer,.lesson-guided-example,.lesson-result-dialog,.course-practice-dialog,.explore-course-practice,.lesson-recap,.file-picker,.audio-settings label) { background:var(--ui-surface); color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.lesson-answers button[data-state="correct"],.practice-answer[data-state="correct"],#lesson-coach-response) { background:var(--ui-correct-bg); color:var(--ui-correct-text); border-color:#527b62; }
+html[data-theme="dark"] body[data-page] :is(.lesson-answers button[data-state="retry"],.practice-answer[data-state="wrong"],.analysis-error,.error-text) { background:#3d272b; color:#ffc0c8; border-color:#975c67; }
+html[data-theme="dark"] body[data-page] :is(.audio-settings,.audio-settings header,.audio-settings footer) { background:var(--ui-surface); color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.audio-settings h2,.audio-settings p,.audio-settings label,.audio-settings small) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(.training-card h3,.practice-player,.practice-feedback,.training-feedback,.train-mistakes h2,.play-sidebar,.explore-score,.board-controls,.review-navigation,.line-moves) { color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.play-settings,.play-settings summary,.line-controls,.practice-feedback,.explore-score,.training-card,.practice-card) { background:var(--ui-surface); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.review-panel,.board-card,.board-top,.board-players,.player-row,.player-identity strong) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] :is(.result-pill,.perspective-badge,.opening-eco,.player-color,.line-toolbar,.lesson-kicker,.course-progress-label,.profile small,.profile p) { color:var(--ui-muted); background:var(--ui-soft); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.board-coach-card[data-verdict="Brilliant"] .quality-icon,.brilliant-key-moment) { color:#9de9e4 !important; background:#153b40; border-color:#467c81; }
+html[data-theme="dark"] body[data-page] :is(.lesson-board-frame,.practice-board-frame) { border-color:#4a5c4b; }
+html[data-theme="dark"] body[data-page] :is(.course-drawer,.lesson-coach-dialog) button:not(.square):not(.lesson-primary):not(.primary-button),
+html[data-theme="dark"] body[data-page] :is(.close-dialog,.icon-button,#lesson-coach-close,#navigation-close) { background:var(--ui-soft); color:var(--ui-text); border-color:var(--ui-control-border); }
+html[data-theme="dark"] body[data-page] :is(.academy-course-link,.academy-section-heading>a,.subtle-link,.library-heading h2,.library-toggle,.game-item) { color:var(--ui-text); }
+html[data-theme="dark"] body[data-page] .move-cell { color:var(--ui-text); background:transparent; border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] .move-cell:hover { background:var(--ui-hover); }
+html[data-theme="dark"] body[data-page] :is(.move-cell.selected,#move-strip button[aria-current="step"],.line-moves button[aria-current="step"]) { color:var(--ui-text); background:#35475b; border-color:#7d9cbe; }
+html[data-theme="dark"] body[data-page] .moves-table-heading { color:var(--ui-muted); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] :is(.toast,.game-item:hover,.lesson-options .lesson-stages button) { background:var(--ui-soft); color:var(--ui-text); border-color:var(--ui-border); }
+html[data-theme="dark"] body[data-page] .lesson-stages button[aria-pressed="true"] { background:var(--ui-action); color:var(--ui-on-action); }
+
+/* Two synchronized switches, each inside its existing More menu. */
+body[data-page] button.theme-toggle { display:flex; align-items:center; gap:10px; min-height:44px; width:100%; text-align:left; }
+body[data-page] .theme-toggle>span:first-child { flex:1; }
+body[data-page] .theme-toggle>[data-theme-state] { min-width:24px; color:var(--ui-muted); font-size:14px; text-align:right; }
+.theme-switch { display:inline-flex; align-items:center; width:34px; height:20px; flex:0 0 34px; padding:2px; border:1px solid var(--ui-control-border); border-radius:20px; background:var(--ui-soft); }
+.theme-switch i { display:block; width:14px; height:14px; border-radius:50%; background:var(--ui-muted); transition:transform 120ms ease; }
+[aria-checked="true"]>.theme-switch { background:#416486; border-color:#9dc7ef; }
+[aria-checked="true"]>.theme-switch i { background:#f5f8fc; transform:translateX(14px); }
+@media(prefers-reduced-motion:reduce){.theme-switch i{transition:none;}}

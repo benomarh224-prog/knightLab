@@ -21,6 +21,9 @@ export function installSimpleUI(doc=document) {
   doc.querySelector('.header-options .compact-options-panel').append(soundButton());
   const library=doc.createElement('button');library.type='button';library.textContent='My games';library.onclick=()=>get('library-nav').click();
   doc.querySelector('.header-options .compact-options-panel').prepend(library);
+  const appearance=doc.createElement('button');appearance.type='button';appearance.className='theme-toggle';appearance.dataset.themeToggle='';
+  appearance.innerHTML='<span>Dark mode</span><span class="theme-switch" aria-hidden="true"><i></i></span><span data-theme-state aria-hidden="true">Off</span>';
+  doc.querySelector('.header-options .compact-options-panel').append(appearance);
   // The mobile navigation already contains Import and Guide.
   const boardMenu=get('board-actions-panel');
   boardMenu.append(get('focus-mode'),get('line-reply'),get('download-pgn'));

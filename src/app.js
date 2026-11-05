@@ -18,6 +18,7 @@ import { createAudioSettings } from './audio-settings.js';
 import { createAutoplay } from './autoplay.js';
 import { createCoachDemo } from './coach-demo.js';
 import { courseTopics } from './course-topics.js';
+import { createAppearance } from './theme.js';
 import {createViewportMenu} from './viewport-menu.js';
 import {evaluationLossText} from './accuracy.js';
 import {nextReviewPosition} from './review-schedule.js';
@@ -942,7 +943,7 @@ for(const id of ['course-cover-board']){
   }
   $(id).innerHTML=html;
 }
-installSimpleUI();$('board-actions-panel').append(playbackButton);
+installSimpleUI();createAppearance({storage:reviewStorage});$('board-actions-panel').append(playbackButton);
 createAudioSettings(moveSounds,{beforeOpen:()=>{coachDemo.pause();autoplay.stop();closeWorkspaceMenu();closeBoardActions();for(const menu of document.querySelectorAll('.compact-options'))menu.open=false;}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){coachDemo.pause();autoplay.stop();moveSounds.stop();}});
 document.addEventListener('click',event=>{if(autoplay.active&&!event.target.closest('#autoplay-moves,#board-actions-toggle'))autoplay.stop();},true);
