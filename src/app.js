@@ -37,6 +37,8 @@ import { COURSES } from './courses.js';
 import { createReviewCache } from './review-cache.js';
 import { collectTraining } from './training.js';
 import { renderReviewStatistics } from './review-statistics.js';
+import {createDailyTrainingUI} from './daily-training-ui.js';
+import {reviewedDailyMistakes} from './daily-training.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -942,7 +944,11 @@ try {
   if(lastReview){parseGame(lastReview.game.pgn);if(!lastReview.demo)state.games=[lastReview.game];setGame(lastReview.game,{demo:lastReview.demo,analyze:false});}
   else setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});
 } catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});}
-const learning=createLearningUI({storage:reviewStorage,playSound,feedbackSound,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
+function dailyMistakes(){
+  return reviewedDailyMistakes(reviewMemory.list(),(pgn,total)=>state.cache.get(pgn+'precise')||reviewCache.load(pgn,'precise',total));
+}
+const daily=createDailyTrainingUI({storage:reviewStorage,courses:COURSES,mistakes:dailyMistakes,go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options)});
+const learning=createLearningUI({storage:reviewStorage,playSound,feedbackSound,daily,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
 const preview=new Chess();for(const san of ['e4','e6','d4','d5'])preview.move(san);
@@ -975,8 +981,8 @@ router=createPageRouter(page=>{
     $('analysis-resume').textContent=`Resume ${state.demo?'sample review':$('workspace-title').textContent} · Move ${Math.ceil(state.ply/2)}`;
     $('analysis-entry-title').focus({preventScroll:true});
   }
-  if(page==='train'){renderTrain();$('train-title').focus({preventScroll:true});}
-  if(page==='learn'||page==='home')learning.refresh();
+  if(page==='train'){renderTrain();daily.render();$('train-title').focus({preventScroll:true});}
+  if(page==='learn'||page==='home'){learning.refresh();daily.render();}
   if(page==='learn'){
     let saved;try{saved=reviewStorage?.getItem('knightlab-learning-category');}catch{}
     selectLearningCategory(learningCategory(COURSES,new URLSearchParams(location.search).get('category'),saved));

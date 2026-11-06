@@ -1,0 +1,40 @@
+/* Each task is a status, flexible copy, and 64px action; one column on phones. */
+body[data-page] .daily-training { margin:0 0 28px; padding:24px; background:var(--ui-surface); color:var(--ui-text); border:1px solid var(--ui-border); border-radius:var(--ui-card-radius); }
+body[data-page] .daily-heading { display:flex; justify-content:space-between; align-items:baseline; gap:16px; }
+body[data-page] .daily-heading h2 { margin:0; font:600 24px/1.25 'DM Sans',sans-serif; letter-spacing:-.5px; color:var(--ui-text); }
+body[data-page] :is(#daily-date,#daily-count,#daily-level-help,#daily-description,.daily-task-copy small) { color:var(--ui-muted); font-size:14px; line-height:1.5; }
+body[data-page] #daily-description { margin:12px 0 16px; }
+body[data-page] .daily-progress-row { display:flex; align-items:center; gap:16px; }
+body[data-page] #daily-progress { flex:1; min-width:48px; max-width:220px; height:8px; accent-color:var(--ui-progress); border:0; border-radius:4px; overflow:hidden; background:var(--ui-soft); }
+#daily-progress::-webkit-progress-bar { background:var(--ui-soft); }
+#daily-progress::-webkit-progress-value { background:var(--ui-progress); }
+body[data-page] .daily-level-row { display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; margin-top:16px; }
+body[data-page] .daily-level-row label { color:var(--ui-text); font-size:14px; }
+body[data-page] #daily-level { min-height:44px; max-width:100%; padding:8px 32px 8px 12px; border:1px solid var(--ui-control-border); border-radius:var(--ui-radius); background:var(--ui-surface); color:var(--ui-text); font:inherit; }
+body[data-page] #daily-level:disabled { opacity:1; color:var(--ui-muted); background:var(--ui-soft); }
+body[data-page] #daily-level-help { margin:6px 0 0; }
+body[data-page] #daily-tasks { list-style:none; margin:16px 0; padding:0; }
+body[data-page] #daily-tasks li { display:grid; grid-template-columns:28px minmax(0,1fr) 64px; gap:10px; align-items:center; padding:16px 0; border-top:1px solid var(--ui-border); }
+body[data-page] .daily-task-status { color:var(--ui-muted); font-size:16px; text-align:center; font-variant-numeric:tabular-nums; }
+body[data-page] .daily-done .daily-task-status { color:var(--ui-correct-text); }
+body[data-page] .daily-task-copy strong { display:block; color:var(--ui-text); font-size:16px; line-height:1.45; font-weight:600; overflow-wrap:anywhere; }
+body[data-page] .daily-task-copy small { display:block; margin-top:4px; }
+body[data-page] .daily-task-open { min-width:64px; min-height:44px; padding:8px 4px; border:0; border-radius:var(--ui-radius); color:var(--ui-link); background:transparent; font-family:inherit; font-size:14px; font-weight:600; }
+body[data-page] .daily-task-open:hover { background:var(--ui-soft); }
+body[data-page] #daily-start { width:100%; min-height:44px; margin-top:16px; padding:12px; border:1px solid var(--ui-action); border-radius:var(--ui-radius); background:var(--ui-action); color:var(--ui-on-action); font:600 16px/1.4 'DM Sans',sans-serif; }
+body[data-page] .daily-options>summary { display:flex; align-items:center; min-height:44px; padding:8px 0; color:var(--ui-muted); cursor:pointer; font-size:14px; }
+body[data-page] .daily-options>summary::after { content:'+'; margin-left:auto; }
+body[data-page] .daily-options[open]>summary::after { content:'−'; }
+body[data-page] .daily-storage-note { margin:12px 0 0; font-size:14px; line-height:1.5; color:var(--ui-muted); }
+body[data-page] .daily-shortcut { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 20px; padding:16px; margin:16px 0; background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:var(--ui-radius); color:var(--ui-text); text-decoration:none; min-height:60px; }
+body[data-page] .daily-shortcut strong { color:var(--ui-text); font-size:16px; }
+body[data-page] .daily-shortcut span { color:var(--ui-link); font-size:14px; }
+body[data-page] #lesson-daily-context { display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--ui-text); font-size:14px; margin:0 0 12px; padding:0; }
+body[data-page] #lesson-daily-plan { min-height:44px; padding:8px 12px; background:var(--ui-soft); border:1px solid var(--ui-control-border); border-radius:var(--ui-radius); color:var(--ui-text); font:inherit; }
+body[data-page] #daily-heading:focus { outline:none; }
+body[data-page] :is(.daily-task-open,#daily-start,#daily-level,.daily-shortcut,#lesson-daily-plan):focus-visible { outline:3px solid var(--ui-link); outline-offset:3px; }
+@media(max-width:600px){
+  body[data-page] .daily-training { padding:16px; }
+  body[data-page] .daily-progress-row { flex-wrap:wrap; gap:8px 16px; }
+  body[data-page] #daily-progress { max-width:none; }
+}

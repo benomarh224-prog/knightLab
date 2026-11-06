@@ -522,3 +522,20 @@ body[data-page] .lesson-topline>.lesson-options { margin-left:auto; }
   body[data-page] .entry-page .entry-card { min-height:92px; padding:16px; }
   body[data-page] .entry-page .entry-card strong { font-size:20px; }
 }
+
+/* Card descendants use theme tokens instead of legacy light-only colors. */
+body[data-page] .entry-page .page-heading p { color:var(--ui-muted); }
+body[data-page] .profile { background:var(--ui-surface); border-color:var(--ui-border); color:var(--ui-text); }
+html[data-theme] body[data-page] .profile strong { color:var(--ui-text); }
+html[data-theme] body[data-page] .profile small { color:var(--ui-muted); background:transparent; font-size:14px; line-height:1.5; }
+body[data-page] .profile-fallback { color:var(--ui-text); background:var(--ui-soft); border-color:var(--ui-border); }
+body[data-page] :is(.library-results,.library-note) { color:var(--ui-muted); font-size:14px; line-height:1.5; }
+body[data-page] .game-item .opponent-identity strong { color:var(--ui-text); font-size:16px; }
+body[data-page] .game-item :is(.game-time,.opponent-identity small,.game-card-bottom) { color:var(--ui-muted); font-size:14px; line-height:1.5; }
+body[data-page] .game-item .game-card-bottom { border-color:var(--ui-border); }
+body[data-page] .game-item .game-review-link { color:var(--ui-link); font-size:14px; font-weight:600; }
+body[data-page] .game-item.selected { background:var(--ui-soft); border-color:var(--ui-border-active); box-shadow:none; }
+body[data-page] .game-item.selected .game-review-link { color:var(--ui-link); }
+html[data-theme="dark"] body[data-page] .game-outcome.win { color:#bde8cd; background:#234332; }
+html[data-theme="dark"] body[data-page] .game-outcome.loss { color:#ffc5cb; background:#472c34; }
+html[data-theme="dark"] body[data-page] .game-outcome.draw { color:var(--ui-text-secondary); background:var(--ui-soft); }

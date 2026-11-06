@@ -36,12 +36,12 @@ export function lessonPlan(lesson,study={}){
 }
 
 export class LessonPlayer {
-  constructor({lesson,study,storage,progressKey,lessonIds,memory,courseId,orientation}){
+  constructor({lesson,study,storage,progressKey,lessonIds,memory,courseId,orientation,draftKey}){
     this.lesson=lesson;this.plan=lessonPlan(lesson,study);this.storage=storage;
     this.memory=memory;this.courseId=courseId;this.challengeMode=false;this.questionReviewIndex=null;this.reviewSource=null;this.exploring=false;
     this.progress=createCourseProgress(storage,lessonIds||[lesson.id],progressKey);
     // Keep the existing v1 completion arrays unchanged. Partial work lives separately.
-    this.storageKey=`${progressKey}:lesson-player-v1:${lesson.id}`;
+    this.storageKey=draftKey||`${progressKey}:lesson-player-v1:${lesson.id}`;
     this.stage=initialLessonStage(this.plan,lesson);this.conceptIndex=0;this.activityIndex=0;this.questionIndex=0;this.seen=[];this.answers=[];this.flipped=false;this.reviewing=false;
     this.activities=this.plan.activities.map(data=>{
       const session=new OpeningLesson(data),review=new OpeningLesson(data);

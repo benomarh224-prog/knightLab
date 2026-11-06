@@ -11,6 +11,7 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
   let painted=null;
   let data = { moments: [], exercises: [] }, session = null, savedContext = null, resumeReview = false;
   let previousEvaluations = null, previousCount = -1,previousColor=null;
+  let practiceOptions={};
   const dialog = $('practice-dialog');
 
   function reset() {
@@ -44,9 +45,10 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     });
   }
 
-  function start(exercises=data.exercises) {
+  function start(exercises=data.exercises,options={}) {
     const tasks=Array.isArray(exercises)?exercises:data.exercises;
     if (!tasks.length) return;
+    practiceOptions=options;
     session = new PracticeSession(tasks);
     savedContext = context().parsed;
     resumeReview = pause();
@@ -110,7 +112,7 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     }
     session.promotion = null;
     const accepted=result.status==='correct'?chess.move({from,to,promotion}):null;
-    if (result.status === 'correct') { session.feedback = 'Correct! You found Stockfish’s first choice.'; session.selected = null; }
+    if (result.status === 'correct') { session.feedback = 'Correct! You found Stockfish’s first choice.'; session.selected = null; practiceOptions.onSolved?.(session.exercise); }
     else if (result.status === 'retry') { session.feedback = `${result.san} is legal, but it is not Stockfish’s first choice. Try another move.`; session.selected = null; }
     else session.feedback = 'That move is not legal. Choose a highlighted destination.';
     renderPractice(to);if(accepted)playSound(accepted);else if(['retry','illegal'].includes(result.status))feedbackSound('incorrect');
@@ -159,6 +161,6 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
   $('practice-next').onclick = () => { if (!session) return; session.next();renderPractice();if(session.finished)feedbackSound('complete'); if (!session.finished) $('practice-board').querySelector('[tabindex="0"]').focus(); };
   $('practice-again').onclick = () => { session = new PracticeSession(session.exercises); renderPractice(); $('practice-board').querySelector('[tabindex="0"]').focus(); };
   $('practice-back').onclick = () => dialog.close();
-  dialog.addEventListener('close', () => { if (resumeReview && savedContext === context().parsed) resume(); resumeReview = false; session = null; });
+  dialog.addEventListener('close', () => { if (resumeReview && savedContext === context().parsed) resume(); resumeReview = false; session = null;const callback=practiceOptions.onClose;practiceOptions={};callback?.(); });
   return { render, reset,startExercises:start };
 }
