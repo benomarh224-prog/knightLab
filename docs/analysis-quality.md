@@ -1,21 +1,39 @@
 # Analysis quality and coherent engine evidence
 
 Deep review is now the default: full-strength Stockfish 19 Lite, two principal
-variations, target depth 18. An explicitly saved quality preference is retained.
+variations, target depth 19. Existing saved modes are upgraded once to the
+requested depth-19 default; later explicit quality choices remain saved.
 Standard targets depth 16. Fast preview remains available, visibly provisional.
 The Lichess accuracy formula and move-classification thresholds are unchanged.
 
-Opening the floating coach requests depth 20 for the positions immediately
+Opening the floating coach requests depth 19 for the positions immediately
 before and after the selected move. Navigation while the coach is open updates
 that request. The same serial review queue handles these searches; it does not
 start a second worker. Pausing cancels both review and inspection. A run attempts
 each request once, so an underpowered device cannot enter an infinite retry.
 
 Searches have time ceilings (initially 6 seconds for depth 16 and 20 seconds for
-depths 18/20).
+depth 19).
 Reaching the time limit does not count as reaching the depth. Resume doubles the
 budget, capped at 80 seconds. Deeper existing evidence is never downgraded.
 The transposition table is reused between positions in the same game.
+
+## Depth-19 update
+
+Review, selected-move coaching and free analysis share the target of 19. Cached
+depth-18 evidence is retained but stays provisional and is scheduled for more
+search; already deeper evidence and proven terminal positions remain valid.
+No accuracy formula, classification threshold, lesson progress or PGN changes.
+Optional Standard/preview modes and Play opponent difficulties remain available.
+
+320 Node checks pass. Browser verification recorded three real
+`go depth 19 movetime 20000` searches completing the imported game at observed
+depth 19–19, followed by a real free-analysis search at depth 19. The coach reused
+matching depth-19 evidence without requesting depth 20. The old saved preview
+preference upgraded once, lesson progress survived, reload retained depth 19,
+and Back/Next resumed the original game. Desktop and mobile Chromium emulation
+were tested; a physical iPhone and Safari were unavailable. Artifacts are under
+ignored `.sites-local/verification/depth-19/`.
 
 ## Matching move, score and continuation
 
@@ -33,7 +51,7 @@ Reference: [official Stockfish UCI documentation](https://official-stockfish.git
 
 ## Exploration and persistence
 
-Free analysis targets depth 18 for the selected move's before/after positions.
+Free analysis targets depth 19 for the selected move's before/after positions.
 It deepens shallow scores rather than treating any finite result as sufficient.
 An idle initialized worker survives accepted moves and navigation. A new move
 interrupting an active search disposes of that search; run and snapshot checks

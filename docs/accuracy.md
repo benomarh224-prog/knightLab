@@ -12,7 +12,7 @@ The calculation follows [Lichess's documentation](https://lichess.org/page/accur
 
 This is a local mathematical implementation of the documented method, using ROQVYN's evaluated initial position rather than inventing a 50% starting value for imported positions. It does not promise identical results to Lichess's server analysis or Chess.com. Engine version, search time/depth and platform formulas differ. The UI names the method, engine, selected search quality and observed depths.
 
-Incomplete, sparse or insufficient-depth evidence never yields a final percentage: both percentages remain Pending until every required position has a usable evaluation. A side with no moves is Unavailable. Precise mode retains its existing depth-18 requirement. Terminal positions count without requiring an artificial search depth.
+Incomplete, sparse or insufficient-depth evidence never yields a final percentage: both percentages remain Pending until every required position has a usable evaluation. A side with no moves is Unavailable. Precise mode requires depth 19; older depth-18 evidence is retained as provisional. Terminal positions count without requiring an artificial search depth.
 
 Move-classification thresholds are unchanged. The legacy `summarize` model remains compatible with saved reviews and training. Visible pawn-loss averages now exclude any move touching a mate evaluation and state the denominator. Mate transitions have their own count; move tooltips use explicit forced-mate language. Combined totals are labelled separately. Accuracy is whole-game performance; the board's evaluation is the current position.
 

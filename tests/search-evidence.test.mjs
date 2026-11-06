@@ -26,7 +26,10 @@ test('stored evidence is migrated without deleting it; only coherent new evidenc
  cache.save('game','precise',[s(22,0,['e2e4'])]);
  const old=createReviewCache(storage).load('game','precise',1)[0];
  assert.equal(old.cp,0);assert.equal(old.legacy,true);assert.equal(evaluationReady(old,'precise'),false);
- const current={...s(18,15,['e2e4']),searchVersion:2,rootFen:new Chess().fen(),best:'e2e4'};
+ const belowTarget={...s(18,15,['e2e4']),searchVersion:2,rootFen:new Chess().fen(),best:'e2e4'};
+ cache.save('game','precise',[belowTarget]);const retained=createReviewCache(storage).load('game','precise',1)[0];
+ assert.equal(retained.depth,18);assert.equal(retained.cp,15);assert.equal(retained.legacy,undefined);assert.equal(evaluationReady(retained,'precise'),false);
+ const current={...belowTarget,depth:19};
  cache.save('game','precise',[current]);const restored=createReviewCache(storage).load('game','precise',1)[0];
  assert.equal(restored.rootFen,current.rootFen);assert.equal(evaluationReady(restored,'precise'),true);
 });

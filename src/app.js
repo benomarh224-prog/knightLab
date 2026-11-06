@@ -5,7 +5,7 @@ import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
 import { pageGames } from './library.js';
 import { identifyOpening } from './opening.js';
-import { evaluationReady, reviewSearch, depthReady, positionSearch, strongerScore, DEFAULT_REVIEW_MODE, INSPECTION_DEPTH } from './review-quality.js';
+import { evaluationReady, reviewSearch, depthReady, positionSearch, strongerScore, DEFAULT_REVIEW_MODE, INSPECTION_DEPTH,PRECISION_DEPTH,STANDARD_DEPTH,loadReviewMode } from './review-quality.js';
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
@@ -81,7 +81,7 @@ $('nav-import').onclick=()=>{closeWorkspaceMenu();$('sidebar-import').click();};
 $('nav-guide').onclick=()=>{closeWorkspaceMenu();$('how-it-works').click();};
 let reviewStorage;
 try { reviewStorage=localStorage; } catch {}
-try{const savedMode=reviewStorage?.getItem('roqvyn-review-mode');if(['quick','deep','precise'].includes(savedMode))state.mode=savedMode;}catch{}
+state.mode=loadReviewMode(reviewStorage);
 $('analysis-speed').value=state.mode;
 const reviewMemory=createReviewMemory(reviewStorage);
 const reviewCache=createReviewCache(reviewStorage);
@@ -455,13 +455,13 @@ function render() {
   document.querySelector('.progress-track').setAttribute('aria-valuenow',String(percent));
   document.querySelector('.engine-progress').setAttribute('aria-busy',String(state.running));
   $('progress-fill').style.width = `${percent}%`;
-  $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? state.inspection?'Deepening selected move · depth 20':`${state.mode==='quick'?'Fast preview':'Reviewing'} · ${analyzed}/${total} positions${state.mode !== 'quick' ? ` · depth ${state.mode==='precise'?18:16}` : ''}` : analyzed === total ? (state.mode==='quick'?'Preview complete · preliminary':'Review complete') : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
+  $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? state.inspection?`Deepening selected move · depth ${INSPECTION_DEPTH}`:`${state.mode==='quick'?'Fast preview':'Reviewing'} · ${analyzed}/${total} positions${state.mode !== 'quick' ? ` · depth ${state.mode==='precise'?PRECISION_DEPTH:STANDARD_DEPTH}` : ''}` : analyzed === total ? (state.mode==='quick'?'Preview complete · preliminary':'Review complete') : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
   document.querySelector('.engine-progress').classList.toggle('running', state.running);
   liveProgress.dataset.scope=inline.active?'position':'game';
   document.querySelector('.progress-track').setAttribute('aria-label',inline.active?'Current position analysis':'Game review progress');
   if(inline.active){
     liveProgress.setAttribute('aria-busy',String(inline.busy));
-    $('analysis-status').textContent=inline.busy?'Analysing this position · depth 18…':depthReady(score,18)?'Position analysed':score?'Preliminary · deepen in Variation tools':'Move a piece to explore';
+    $('analysis-status').textContent=inline.busy?`Analysing this position · depth ${PRECISION_DEPTH}…`:depthReady(score,PRECISION_DEPTH)?'Position analysed':score?'Preliminary · deepen in Variation tools':'Move a piece to explore';
     $('analysis-percent').textContent=score?.depth?`Depth ${score.depth}`:'';
   }
   $('analysis-status').title=$('analysis-status').textContent.trim();
@@ -517,7 +517,7 @@ function renderCoach(move, before, after) {
   $('recommended-move').disabled=!recommendation;
   $('recommended-move').setAttribute('aria-label',recommendation?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
   $('recommended-move').onclick=tryRecommendation;
-  $('coach-note').textContent = ready ? `${!depthReady(before,18)||!depthReady(after,18)?'Preliminary evidence. ':''}${report.rating==='Brilliant'?'Brilliant is ROQVYN’s independent sacrifice classification. ':''}Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${Math.min(before.depth,after?.terminal?before.depth:after?.depth||0)}` : ''}. ${state.inspection?'Deepening this decision to depth 20.':'Deeper review can change the recommendation.'}` : 'The coach updates as each move is reviewed.';
+  $('coach-note').textContent = ready ? `${!depthReady(before,PRECISION_DEPTH)||!depthReady(after,PRECISION_DEPTH)?'Preliminary evidence. ':''}${report.rating==='Brilliant'?'Brilliant is ROQVYN’s independent sacrifice classification. ':''}Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${Math.min(before.depth,after?.terminal?before.depth:after?.depth||0)}` : ''}. ${state.inspection?`Deepening this decision to depth ${INSPECTION_DEPTH}.`:'Deeper review can change the recommendation.'}` : 'The coach updates as each move is reviewed.';
   boardCoach.update(report);
 }
 
@@ -734,7 +734,7 @@ const method = `<p>Each position is evaluated by <a href="https://github.com/nmr
 <p>Brilliant (!!) is an independent ROQVYN classification: the engine’s first choice, no more than 0.30 pawn of evaluation loss, a non-losing result, and a legal capture that concedes at least one pawn of material after local recaptures. Both positions need depth 16 or more, legal continuations, and a same-depth alternative that is not already completely winning. Equal trades, free-piece captures, pawn moves, promotions and immediate checkmates do not qualify. Use Deep review for sufficient evidence; Fast and Standard may not reach the required depth. This is not Chess.com’s proprietary rating-dependent algorithm. Deeper analysis may change it.</p>
 <p>Great moves match the engine’s top choice, beat its next candidate by at least one pawn at the same search depth of at least 8, and lose no more than 0.30 pawn in the resulting position. Best / Great counts combine both categories.</p>
 <p>Move ratings are based on evaluation loss from the player’s perspective. They can change with deeper analysis. Mate scores use a large capped value for the chart and loss calculation.</p>
-<p>Deep review is the default and targets depth 18 with two candidate moves. Standard targets depth 16. Fast preview is preliminary. Opening the coach deepens the selected decision to depth 20; free analysis targets depth 18. Time limits protect slower devices, so positions that do not reach the required depth stay provisional. Deepen remaining retries them with more time, up to 80 seconds. You can pause and resume. The chart is capped at ±5 pawns.</p>
+<p>Deep review is the default and targets depth ${PRECISION_DEPTH} with two candidate moves. Standard targets depth ${STANDARD_DEPTH}. Fast preview is preliminary. Opening the coach deepens the selected decision to depth ${INSPECTION_DEPTH}; free analysis targets depth ${PRECISION_DEPTH}. Time limits protect slower devices, so positions that do not reach the required depth stay provisional. Deepen remaining retries them with more time, up to 80 seconds. You can pause and resume. The chart is capped at ±5 pawns.</p>
 <p>Summary statistics show White and Black separately, with explicitly labelled combined totals. Incomplete reviews remain provisional. A colored badge on the moved piece rates the selected move; tap it to see the full label. The arrow recommends the next move in the current position; the insight card reviews the move just played.</p>
 <p>Threats highlights only the leading new attack from the current move. The old highlight clears on the next move. Red means check or no immediate legal recapture; amber means a defended attack or risky exchange. Tap the square to see why. Explore moves lets you try legal continuations on the same board and return to the original game.</p>
 <p>Coach opens the explanation in a movable floating panel and requests deeper evidence for that decision. The chosen move, score and continuation come from the same search iteration. The coach describes validated legal continuations and observable features such as captures, checks, castling, and development. Search depth improves the evidence, but does not guarantee perfect play or the same accuracy as Chess.com.</p>

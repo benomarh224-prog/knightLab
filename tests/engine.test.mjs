@@ -44,9 +44,9 @@ test('real Stockfish handshake, forced mate, terminal state, and cancellation', 
     const terminal = await engine.evaluate(parseGame(DEMO_PGN).fens.at(-1),140);
     assert.equal(terminal.terminal,true);
     assert.equal(terminal.cp,10000);
-    const precise = await engine.evaluate(beforeMate,{depth:18,milliseconds:10000,clearHash:true});
+    const precise = await engine.evaluate(beforeMate,{depth:19,milliseconds:10000,clearHash:true});
     assert.equal(precise.best,'d8h4');
-    assert.ok(precise.depth >= 18);
+    assert.ok(precise.depth >= 19);
     assert.equal(precise.searchTime,10000);
     await assert.rejects(engine.evaluate(beforeMate,{depth:NaN,milliseconds:100}),/Invalid/);
     const repeated = parseGame('1. Nf3 Nf6 2. Ng1 Ng8 3. Nf3 Nf6 4. Ng1 Ng8 1/2-1/2');

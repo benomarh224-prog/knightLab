@@ -1,20 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evaluationReady, reviewSearch,depthReady,positionSearch,strongerScore,DEFAULT_REVIEW_MODE } from '../src/review-quality.js';
+import { evaluationReady, reviewSearch,depthReady,positionSearch,strongerScore,DEFAULT_REVIEW_MODE,PRECISION_DEPTH,INSPECTION_DEPTH,loadReviewMode } from '../src/review-quality.js';
 
 test('deep review requires the target depth and only retries unfinished positions', () => {
   assert.equal(evaluationReady({cp:0,depth:17},'precise'),false);
   assert.equal(evaluationReady({cp:NaN,depth:18},'precise'),false);
-  assert.equal(evaluationReady({cp:0,depth:18},'precise'),true);
+  assert.equal(evaluationReady({cp:0,depth:18},'precise'),false);
+  assert.equal(evaluationReady({cp:0,depth:19},'precise'),true);
   assert.equal(evaluationReady({cp:0,terminal:true,depth:0},'precise'),true);
-  assert.deepEqual(reviewSearch('precise'),{depth:18,milliseconds:20000});
+  assert.deepEqual(reviewSearch('precise'),{depth:19,milliseconds:20000});
   assert.equal(reviewSearch('precise',{searchTime:20000}).milliseconds,40000);
   assert.equal(reviewSearch('precise',{searchTime:80000}).milliseconds,80000);
   assert.deepEqual(reviewSearch('deep'),{depth:16,milliseconds:6000});
 });
 
 test('default review and free analysis have real depth floors; cached legacy evidence stays provisional',()=>{
-  assert.equal(DEFAULT_REVIEW_MODE,'precise');assert.equal(positionSearch().depth,18);
+  assert.equal(DEFAULT_REVIEW_MODE,'precise');assert.equal(positionSearch().depth,19);
+  assert.equal(PRECISION_DEPTH,19);assert.equal(INSPECTION_DEPTH,19);
   assert.equal(positionSearch(20).milliseconds,20000);
   assert.equal(evaluationReady({cp:0,depth:15},'deep'),false);
   assert.equal(evaluationReady({cp:0,depth:16},'deep'),true);
@@ -24,4 +26,19 @@ test('default review and free analysis have real depth floors; cached legacy evi
   assert.equal(strongerScore(stronger,weaker),stronger);
   assert.equal(strongerScore({...stronger,legacy:true},weaker),weaker);
   assert.equal(strongerScore({cp:0},weaker),weaker);
+});
+
+test('the depth-19 preference upgrades older saved modes once without touching game or lesson data',()=>{
+  for(const saved of ['quick','deep','precise',null]){
+    const data=new Map([['roqvyn-review-mode',saved],['knightlab-course','saved lesson'],['knightlab-review-evidence-v1','cached scores']]);
+    const storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)};
+    assert.equal(loadReviewMode(storage),'precise');assert.equal(data.get('roqvyn-review-mode'),'precise');
+    assert.equal(data.get('knightlab-course'),'saved lesson');assert.equal(data.get('knightlab-review-evidence-v1'),'cached scores');
+    storage.setItem('roqvyn-review-mode','quick');assert.equal(loadReviewMode(storage),'quick');
+  }
+});
+test('depth-19 review still starts with unavailable or blocked preference storage',()=>{
+  assert.equal(loadReviewMode(undefined),'precise');
+  assert.equal(loadReviewMode({getItem(){throw Error('Blocked');}}),'precise');
+  assert.equal(loadReviewMode({getItem(){return null;},setItem(){throw Error('Full');}}),'precise');
 });

@@ -1,7 +1,21 @@
-export const PRECISION_DEPTH = 18;
+export const PRECISION_DEPTH = 19;
 export const STANDARD_DEPTH = 16;
-export const INSPECTION_DEPTH = 20;
+export const INSPECTION_DEPTH = PRECISION_DEPTH;
 export const DEFAULT_REVIEW_MODE = 'precise';
+
+export function loadReviewMode(storage){
+  try{
+    // Apply the requested target once, including browsers with an older saved
+    // preview setting. Later explicit choices remain the learner's preference.
+    if(storage?.getItem('roqvyn-review-settings-version')!=='depth-19'){
+      storage?.setItem('roqvyn-review-mode',DEFAULT_REVIEW_MODE);
+      storage?.setItem('roqvyn-review-settings-version','depth-19');
+      return DEFAULT_REVIEW_MODE;
+    }
+    const saved=storage.getItem('roqvyn-review-mode');
+    return ['quick','deep','precise'].includes(saved)?saved:DEFAULT_REVIEW_MODE;
+  }catch{return DEFAULT_REVIEW_MODE;}
+}
 
 export function depthReady(score, depth) {
   return Boolean(score && Number.isFinite(score.cp) &&

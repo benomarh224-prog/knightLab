@@ -17,7 +17,7 @@ test('review starts around a late selected move, adapts to navigation, and cover
  assert.equal(new Set(picked).size,100);assert.equal(nextReviewPosition(100,0,scores,'quick',attempted),null);
 });
 test('precise searches cannot loop forever on an unfinished depth; resume retries those positions',()=>{
- const scores=[score(0,null,12),score(0,null,18)],tried=new Set();
+ const scores=[score(0,null,18),score(0,null,19)],tried=new Set();
  assert.equal(nextReviewPosition(2,1,scores,'precise',tried),0);tried.add(0);
  assert.equal(nextReviewPosition(2,1,scores,'precise',tried),null);
  assert.equal(nextReviewPosition(2,1,scores,'precise',new Set()),0);

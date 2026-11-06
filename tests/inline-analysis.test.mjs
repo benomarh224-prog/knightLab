@@ -22,7 +22,7 @@ function harness(pgn='1. e4 e5 2. Nf3 Nc6 *',ply=0){
  const engines=[],sounds=[],navigations=[];let paints=0,resumes=0,pauses=0,controller;
  const createEngine=()=>{
   const requests=[];
-  const engine={requests,destroy(){},evaluate(fen){return new Promise((resolve,reject)=>requests.push({fen,resolve,reject}));}};
+  const engine={requests,destroy(){},evaluate(fen,options,history){return new Promise((resolve,reject)=>requests.push({fen,options,history,resolve,reject}));}};
   engines.push(engine);return engine;
  };
  controller=createInlineAnalysis({context:()=>state,pause:()=>{pauses++;return true;},resume:()=>resumes++,navigate:ply=>{state.ply=Math.max(0,Math.min(state.parsed.moves.length,ply));navigations.push(state.ply);},onChange:()=>{paints++;controller.paint();},playSound:move=>sounds.push(move.san),createEngine});
@@ -141,7 +141,7 @@ test('navigation scores retain each player perspective and a custom-FEN root',()
 
 test('coach playback reuses exact shared-position evidence and stops reusing it after the line diverges',()=>{
  const h=harness(),c=h.controller,parsed=h.state.parsed;
- h.state.evaluations=parsed.fens.map((_,i)=>({cp:i*10,mate:null,depth:18,best:parsed.moves[i]?.from+parsed.moves[i]?.to,pv:[]}));
+ h.state.evaluations=parsed.fens.map((_,i)=>({cp:i*10,mate:null,depth:19,best:parsed.moves[i]?.from+parsed.moves[i]?.to,pv:[]}));
  assert.equal(c.playback(parsed.fens[0],parsed.moves,2),true);assert.equal(c.line.scores[1],h.state.evaluations[1]);assert.equal(c.line.scores[2],h.state.evaluations[2]);assert.equal(h.engines.at(-1).requests.length,0);
  c.exit();const alternative=parseGame('1. e4 c5 2. Nf3 *').moves;assert.equal(c.playback(parsed.fens[0],alternative,2),true);assert.equal(c.line.scores[1],h.state.evaluations[1]);assert.equal(c.line.scores[2],null);c.exit();
 });
@@ -149,11 +149,11 @@ test('coach playback reuses exact shared-position evidence and stops reusing it 
 test('free analysis deepens shallow evidence, reuses an idle worker and never reboots for board selection',async()=>{
  const h=harness(),c=h.controller;h.state.evaluations[0]={cp:20,depth:12};
  c.click('e2');assert.equal(h.engines.length,0);c.click('e4');
- const engine=h.engines[0];assert.equal(engine.requests[0].fen,h.state.parsed.fens[0]);
- engine.requests[0].resolve({cp:25,depth:18});await tick();
- engine.requests[1].resolve({cp:25,depth:18});await tick();assert.equal(c.busy,false);
+ const engine=h.engines[0];assert.equal(engine.requests[0].fen,h.state.parsed.fens[0]);assert.equal(engine.requests[0].options.depth,19);
+ engine.requests[0].resolve({cp:25,depth:19});await tick();
+ engine.requests[1].resolve({cp:25,depth:19});await tick();assert.equal(c.busy,false);
  c.click('e7');c.click('e5');assert.equal(h.engines.length,1);assert.equal(engine.requests.length,3);
- engine.requests[2].resolve({cp:30,depth:18});await tick();assert.equal(c.busy,false);
+ engine.requests[2].resolve({cp:30,depth:19});await tick();assert.equal(c.busy,false);
  c.jump(1);await tick();assert.equal(h.engines.length,1);assert.equal(engine.requests.length,3);
  c.exit();
 });
