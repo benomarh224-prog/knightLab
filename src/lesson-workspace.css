@@ -64,23 +64,42 @@ body[data-page] .lesson-player .lesson-course-footer>button,body[data-page] .les
   body[data-page] .lesson-coach-dialog .lesson-coach-footer { padding:8px 16px max(8px,env(safe-area-inset-bottom)); }
   body[data-page] .lesson-coach-dialog #lesson-coach-board { min-height:44px; }
   /* The summary owns 170px in every practice state. Text never resizes it. */
-  body[data-page] .lesson-player .lesson-coach-summary { display:grid; grid-template-rows:44px 44px 44px; gap:6px; box-sizing:border-box; height:170px; min-height:170px; max-height:170px; margin:0 0 12px; padding:12px; overflow:hidden; border:1px solid #d5ddd2; border-radius:12px; background:#faf9f3; color:#23372d; box-shadow:0 2px 8px #10271c0a; }
+  body[data-page] .lesson-player .lesson-coach-summary { --lesson-state:var(--ui-border-active); display:grid; grid-template-rows:44px 44px 44px; gap:6px; box-sizing:border-box; height:170px; min-height:170px; max-height:170px; margin:0 0 12px; padding:12px; overflow:hidden; border:1px solid var(--ui-border); border-left:3px solid var(--lesson-state); border-radius:12px; background:var(--ui-surface); color:var(--ui-text); box-shadow:none; }
   body[data-page] .lesson-coach-summary[hidden] { display:none; }
   body[data-page] .lesson-summary-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
-  body[data-page] .lesson-coach-summary #lesson-summary-title { font:650 16px/1.3 'DM Sans',sans-serif; margin:0; color:#23372d; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  body[data-page] .lesson-coach-summary #lesson-summary-text { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; height:44px; margin:0; overflow:hidden; font-size:16px; line-height:22px; color:#455449; }
-  body[data-page] .lesson-coach-summary #lesson-coach-open { min-height:44px; height:44px; padding:8px 12px; border:1px solid #d2d9ce; border-radius:7px; background:#fff; color:#344b3b; font-size:14px; }
+  body[data-page] .lesson-summary-heading::before { content:''; flex:none; width:7px; height:7px; border-radius:50%; background:var(--lesson-state); }
+  body[data-page] .lesson-coach-summary #lesson-summary-title { flex:1; font:650 16px/1.3 'DM Sans',sans-serif; margin:0; color:var(--ui-text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  body[data-page] .lesson-coach-summary #lesson-summary-text { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; height:44px; margin:0; overflow:hidden; font-size:16px; line-height:22px; color:var(--ui-muted-secondary); }
+  body[data-page] .lesson-coach-summary #lesson-coach-open { min-height:44px; height:44px; padding:8px 12px; border:1px solid var(--ui-control-border); border-radius:7px; background:transparent; color:var(--ui-text); font-size:14px; }
   body[data-page] .lesson-coach-summary .lesson-course-footer { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:stretch; height:44px; gap:8px; margin:0; padding:0; border:0; background:transparent; box-shadow:none; }
   body[data-page] .lesson-coach-summary .lesson-course-footer :is(button,.lesson-next-course) { min-width:0; width:100%; height:44px; min-height:44px; max-height:44px; margin:0; }
   body[data-page] .lesson-coach-summary .lesson-course-footer button { padding:8px; font-size:14px; line-height:20px; border-radius:7px; white-space:nowrap; }
-  body[data-page] .lesson-coach-summary .lesson-course-footer #lesson-course-previous { color:#344b3b; background:#fff; border-color:#d2d9ce; }
-  body[data-page] .lesson-coach-summary .lesson-course-footer #lesson-course-next { color:#fff; background:#193d2c; border-color:#193d2c; }
-  body[data-page] .lesson-coach-summary .lesson-course-footer :is(#lesson-course-previous,#lesson-course-next):disabled { color:#647062; background:#edf0e7; border-color:#d6ddcf; opacity:1; }
+  body[data-page] .lesson-coach-summary .lesson-course-footer #lesson-course-previous { color:var(--ui-text); background:var(--ui-soft); border-color:var(--ui-control-border); }
+  body[data-page] .lesson-coach-summary .lesson-course-footer #lesson-course-next { color:var(--ui-on-action); background:var(--ui-action); border-color:var(--ui-action); }
+  body[data-page] .lesson-coach-summary .lesson-course-footer :is(#lesson-course-previous,#lesson-course-next):disabled { color:var(--ui-disabled-text); background:var(--ui-disabled-bg); border-color:var(--ui-border); opacity:1; }
   body[data-page] .lesson-coach-summary .lesson-previous-full { display:none; }
   body[data-page] .lesson-coach-summary .lesson-previous-short { display:inline; }
   body[data-page] .lesson-coach-summary #lesson-next-help { position:absolute; width:1px; height:1px; min-height:0; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
   body[data-page] .lesson-player #lesson-controls :is(#lesson-hint,#lesson-explore-toggle) { width:88px; min-width:88px; height:44px; min-height:44px; max-height:44px; padding:8px; font-size:14px; white-space:nowrap; }
 }
+/* Feedback never transforms the board: one pointer-transparent square cue. */
+body[data-page] .lesson-board-frame { position:relative; }
+body[data-page] .lesson-attempt-effect { position:absolute; inset:1px; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr)); z-index:9; pointer-events:none; overflow:hidden; border-radius:inherit; --attempt-color:#C55353; --attempt-tint:#C5535326; }
+body[data-page] .lesson-attempt-effect[data-kind="objective"] { --attempt-color:#B48339; --attempt-tint:#B4833926; }
+body[data-page] .lesson-attempt-target { position:relative; min-width:0; min-height:0; border-radius:3px; background:var(--attempt-tint); box-shadow:inset 0 0 0 3px var(--attempt-color); pointer-events:none; }
+body[data-page] .lesson-attempt-target::after { content:attr(data-symbol); position:absolute; right:3px; bottom:3px; display:grid; place-items:center; width:clamp(14px,3vw,20px); height:clamp(14px,3vw,20px); border-radius:50%; color:white; background:var(--attempt-color); font:750 14px/1 'DM Sans',sans-serif; }
+body[data-page] :is(.lesson-coach-summary,#lesson-coach-inline)[data-kind="illegal"] { --lesson-state:#CB7777; border-left:3px solid var(--lesson-state); }
+body[data-page] :is(.lesson-coach-summary,#lesson-coach-inline)[data-kind="objective"] { --lesson-state:#B48A4C; border-left:3px solid var(--lesson-state); }
+body[data-page] :is(.lesson-coach-summary,#lesson-coach-inline)[data-kind="complete"] { --lesson-state:#70A98C; border-left:3px solid var(--lesson-state); }
+/* The same compact row in practice, free play, and after completion. */
+body[data-page] .lesson-player #lesson-controls,body[data-page] .lesson-player #lesson-controls[data-practice="true"]:has(#lesson-hint[hidden]):has(#lesson-explore-toggle[hidden]) { display:grid; grid-template-columns:44px minmax(0,1fr) 88px 44px; grid-template-rows:44px; align-items:stretch; gap:6px; width:100%; min-width:0; height:44px; min-height:44px; padding:0; }
+body[data-page] .lesson-player #lesson-controls[data-practice="false"] { grid-template-columns:44px minmax(0,1fr) 44px 44px; }
+body[data-page] .lesson-player #lesson-controls #lesson-undo { display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:44px; min-width:44px; height:44px; padding:0; font-size:14px; line-height:20px; white-space:nowrap; }
+body[data-page] .lesson-player #lesson-current-move { align-self:center; min-width:0; padding-inline:4px; font-size:14px; font-variant-numeric:tabular-nums; }
+body[data-page] .lesson-player #lesson-controls :is(#lesson-hint,#lesson-explore-toggle) { width:88px; min-width:88px; height:44px; min-height:44px; padding:8px; font-size:14px; line-height:20px; white-space:nowrap; }
+body[data-page] .lesson-player #lesson-controls .lesson-options { min-width:0; }
+body[data-page] .lesson-player #lesson-controls .lesson-options>summary { display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:44px; min-width:44px; height:44px; min-height:44px; padding:0; font-size:24px; }
+body[data-page] .lesson-player #lesson-controls .lesson-options>summary::after { display:none; }
 body[data-layout="lesson"][data-lesson-focus="true"] #lesson-coach-inline { display:none; }
 body[data-layout="lesson"][data-lesson-focus="true"] #lesson-coach-open { display:inline-flex; }
 @media(prefers-reduced-motion:reduce){body[data-page] .lesson-coach-dialog { scroll-behavior:auto; }}

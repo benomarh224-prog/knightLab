@@ -32,7 +32,8 @@ export function installSimpleUI(doc=document) {
   get('board-actions-toggle').setAttribute('aria-label','More board options');
   get('board-actions-toggle').firstElementChild.textContent='More';
   get('board-actions-toggle').title='More board options';
-  createCompactMenu({host:get('lesson-controls'),controls:['lesson-reset','lesson-flip','lesson-focus','lesson-explore-start','lesson-explore-resume','lesson-replay','lesson-challenge','lesson-stages','lesson-squares-open'].map(get),document:doc}).classList.add('lesson-options');
+  const lessonMenu=createCompactMenu({host:get('lesson-controls'),controls:['lesson-reset','lesson-flip','lesson-focus','lesson-explore-start','lesson-explore-resume','lesson-replay','lesson-challenge','lesson-stages','lesson-squares-open'].map(get),document:doc});
+  lessonMenu.classList.add('lesson-options');lessonMenu.querySelector('summary').textContent='⋯';lessonMenu.querySelector('summary').setAttribute('aria-label','More lesson tools');
   doc.querySelector('.lesson-options .compact-options-panel').append(soundButton());
   // Stages remain available for review without occupying the lesson header.
   get('lesson-reset').textContent='Restart exercise';get('lesson-flip').textContent='Flip board';

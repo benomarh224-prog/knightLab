@@ -36,3 +36,9 @@ test('unchanged summaries are not re-announced on selection-only renders',()=>{
   const data={doc:{getElementById:node},summary:{title:'Your coach',text:'Choose a move.',kind:'practice'},next:{action:'blocked',label:'Continue →'}};
   paintLessonSummary(data);paintLessonSummary(data);assert.equal(writes,2);
 });
+
+test('coach labels distinguish illegal moves, objective attempts and free-play stalemate',()=>{
+ const illegal=lessonCoachSummary({attempt:{kind:'illegal'},feedback:'A pawn cannot move there.'});assert.equal(illegal.title,'Not a legal move');assert.equal(illegal.kind,'illegal');
+ const different=lessonCoachSummary({attempt:{kind:'objective'},feedback:'c5 is legal, but it does not capture.'});assert.equal(different.kind,'objective');assert.doesNotMatch(different.title,/mistake|blunder|illegal/i);
+ const ended=lessonCoachSummary({guidance:{mode:'explore',status:'Stalemate'},feedback:'Kxf1 played. Stalemate'});assert.equal(ended.title,'Stalemate');assert.match(ended.text,/not in check.*Undo/);assert.equal(ended.kind,'explore');
+});

@@ -25,6 +25,7 @@ import { createLessonCoach } from './lesson-coach.js';
 import {createLessonAnalysis} from './lesson-analysis.js';
 import {solutionRecap} from './lesson-experience.js';
 import {lessonCoachSummary,paintLessonSummary} from './lesson-coach-summary.js';
+import {lessonAttemptFeedback,createLessonAttemptEffect} from './lesson-attempt-feedback.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -37,7 +38,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   const squarePractice=createSquarePracticeUI({storage,feedbackSound});
   const guidedExample=createGuidedExample({storage,playSound});
   let course=COURSES.french,lessons=course.lessons,progress=memoryFor(course),player;
-  let selected=null,hint=null,message='',promotion=null,alternative=null,alternativeText='';
+  let selected=null,hint=null,message='',promotion=null,alternative=null,alternativeText='',attempt=null;
+  const attemptEffect=createLessonAttemptEffect({overlay:$('lesson-attempt-effect'),target:$('lesson-attempt-target')});
   const alternativeAnalysis=createLessonAnalysis();
   let focus=false,painted=null;
   let audioSequence=0;
@@ -78,7 +80,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     onExplore:()=>{exploreBeforeCheckmate(player);clearTurn();render();focusBoard();},focusBoard});
   function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor});renderLearningCompanion({memory,courses:COURSES,storage});}
   function clearAlternative(){alternativeAnalysis.cancel();alternative=null;alternativeText='';}
-  function clearTurn(){motion.cancel();clearAlternative();selected=null;hint=null;message='';promotion=null;}
+  function clearAttempt(){attempt=null;attemptEffect.clear();}
+  function clearTurn(){motion.cancel();clearAlternative();clearAttempt();selected=null;hint=null;message='';promotion=null;}
   function focusStage(){
     coach.close();
     $('lesson-stage-heading').focus({preventScroll:true});
@@ -123,7 +126,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       $('lesson-promotion').hidden=!promotion;
       $('lesson-hint').hidden=player.challengeMode||exploring||session.completed||!practice;
       $('lesson-explore-toggle').hidden=!exploring&&!(session.mode==='practice'&&session.completed);
-      $('lesson-explore-toggle').textContent=exploring?'Back to lesson':'Explore';$('lesson-explore-toggle').setAttribute('aria-label',exploring?'Return to study position':'Start free play from the current position');
+      $('lesson-explore-toggle').textContent=exploring?'Lesson':'Explore';$('lesson-explore-toggle').setAttribute('aria-label',exploring?'Return to study position':'Start free play from the current position');
       $('lesson-explore-toggle').disabled=motion.active;
       $('lesson-explore-start').hidden=exploring||player.challengeMode||session.completed;
       $('lesson-explore-resume').hidden=exploring||player.challengeMode||!player.resumableExploration;
@@ -204,7 +207,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-after-board').hidden=stage!=='try'||!next.enabled||!['next-lesson','question','activity','stage'].includes(next.action);
     $('lesson-after-board').textContent=next.label;
     $('lesson-course-practice').hidden=!player.complete||globalIndex!==lessons.length-1||!coursePractice(course);
-    const summary=lessonCoachSummary({guidance:activity?lessonGuidance(player,{session,busy:motion.active}):null,hint,feedback:message,recap,alternative:Boolean(alternative)});
+    const summary=lessonCoachSummary({guidance:activity?lessonGuidance(player,{session,busy:motion.active}):null,hint,feedback:message,recap,alternative:Boolean(alternative),attempt});
     paintLessonSummary({summary,next});
     lessonViewport.arrange(stage);
     dock.measure();
@@ -225,6 +228,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-board').innerHTML=html;finishBoard($('lesson-board'),chess,selected);$('lesson-board').setAttribute('aria-label',`${player.lesson.title}. ${chess.turn()==='w'?'White':'Black'} to move. ${player.flipped?'Black':'White'} view. ${session.fen}`);
     const nextPaint={game:player.exploration||player.session,fen:session.fen,last:session.last,flipped:player.flipped};
     animatePieces($('lesson-board'),moveTransitions(painted,nextPaint));painted=nextPaint;
+    attemptEffect.position(player.flipped);
     $('lesson-counter').tabIndex=-1;
     if(focusSquare){const tile=$('lesson-board').querySelector(`[data-square="${focusSquare}"]`);if(tile?.tagName==='BUTTON')tile.focus({preventScroll:true});else $('lesson-counter').focus({preventScroll:true});}
     const focusedPly=document.activeElement?.closest('[data-lesson-ply]')?.dataset.lessonPly;
@@ -276,8 +280,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   }
   $('lesson-previous').onclick=()=>jumpStudy(player.session.cursor-1);$('lesson-next').onclick=()=>jumpStudy(player.session.cursor+1);
   $('lesson-replay').onclick=()=>{player.stopExploring();player.reviewing=!player.reviewing;player.save();clearTurn();render();};
-  $('lesson-flip').onclick=()=>{motion.cancel();player.flipped=!player.flipped;player.save();render();};
-  $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();};
+  $('lesson-flip').onclick=()=>{motion.cancel();clearAttempt();player.flipped=!player.flipped;player.save();render();};
+  $('lesson-hint').onclick=()=>{clearAttempt();hint=player.requestHint();message=hint?.text||'';render();};
   $('lesson-alternative-play').onclick=()=>{
     if(!alternative)return;const move=alternative;coach.close();clearTurn();
     if(player.startExploring({fresh:true})){player.exploreMove(move.from,move.to,move.promotion);message=`${move.san} played in free exploration. Your exercise is saved.`;render();playSound(move);focusBoard();}
@@ -299,24 +303,26 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     }
     if(player.exploration){
       const fen=player.exploration.fen,result=player.exploreMove(from,to,promote);clearTurn();
+      attempt=lessonAttemptFeedback(result,from,to);
       message=result.status==='played'?`${result.move.san} played. ${player.exploration.ending||`${player.exploration.chess.turn()==='w'?'White':'Black'} to move.`}`:result.status==='finished'?`${result.ending}. Undo to try another continuation.`:illegalMoveReason(fen,from,to,promote);
-      render();if(result.status==='played')playSound(result.move);return;
+      render();attemptEffect.show(attempt,player.flipped);if(result.status==='played')playSound(result.move);else if(result.status==='illegal')feedbackSound('incorrect');return;
     }
     const session=player.session,cursor=session.cursor,fen=session.fen;
     const result=player.attempt(from,to,promote);
     if(result.status==='correct'){clearTurn();message=`${result.move.san} fits this study line.${result.completed?' Exercise complete.':''}`;motion.play(lessonFrames(session,cursor));return;}
     else{promotion=null;message=result.status==='different'?result.feedback:illegalMoveReason(fen,from,to,promote);}
+    attempt=lessonAttemptFeedback(result,from,to);
     clearAlternative();
     if(result.status==='different'){
       alternative=result.move;alternativeText='Checking this alternative with Stockfish…';
       const owner=player,root=player.session.fen,move=alternative;
       alternativeAnalysis.explain(move,text=>{if(player===owner&&player.session.fen===root&&alternative===move){alternativeText=text;render();}});
     }
-    render();if(result.status==='illegal')feedbackSound('incorrect');
+    render();attemptEffect.show(attempt,player.flipped);if(result.status==='illegal')feedbackSound('incorrect');
   }
   enableBoardDrag($('lesson-board'),{
     read:()=>{const session=player.exploration||player.session;return {chess:session?new Chess(session.fen):null,disabled:motion.active||!session||session.mode==='watch'||Boolean(promotion)};},
-    select:from=>{if(!player.exploring&&player.session.completed)player.startExploring({fresh:true});selected=from;render();},play:attemptMove
+    select:from=>{clearAttempt();message='';if(!player.exploring&&player.session.completed)player.startExploring({fresh:true});selected=from;render();},play:attemptMove
   });
   $('lesson-board').onclick=event=>{
     let session=player.exploration||player.session;if(motion.active||!session||session.mode==='watch'||promotion)return;
@@ -328,7 +334,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     if(selected&&square!==selected&&piece?.color!==color){
       if(chess.moves({square:selected,verbose:true}).some(move=>move.to===square&&move.promotion)){promotion={from:selected,to:square};message='Choose the promotion piece.';render();$('lesson-promotion').querySelector('button').focus();return;}
       attemptMove(selected,square);
-    }else{clearAlternative();selected=piece?.color===color?(selected===square?null:square):null;message='';render();}
+    }else{clearAlternative();clearAttempt();selected=piece?.color===color?(selected===square?null:square):null;message='';render();}
   };
   for(const button of document.querySelectorAll('[data-lesson-promotion]'))button.onclick=()=>{if(promotion){const target=promotion.to;attemptMove(promotion.from,target,button.dataset.lessonPromotion);const square=$('lesson-board').querySelector(`button[data-square="${target}"]`);(square||$('lesson-counter')).focus({preventScroll:true});}};
   $('lesson-promotion-cancel').onclick=()=>{const from=promotion?.from;promotion=null;selected=null;message='Promotion cancelled. Choose another move.';render();$('lesson-board').querySelector(`button[data-square="${from}"]`)?.focus({preventScroll:true});};

@@ -1,6 +1,6 @@
 # Board-first lesson workspace
 
-All registered courses share `LessonPlayer`, `lesson-ui.js`, `lesson-coach.js` and `lesson-workspace.css`. This extends the existing ROQVYN mark, typography, light/dark palettes, rules and saved progress rather than creating separate course pages.
+All registered courses share `LessonPlayer`, `lesson-ui.js`, `lesson-coach.js`, `lesson-attempt-feedback.js` and `lesson-workspace.css`. This extends the existing ROQVYN mark, typography, light/dark palettes, rules and saved progress rather than creating separate course pages.
 
 ## Entry and progression
 
@@ -32,7 +32,7 @@ Kadagaden’s BW adaptation is CC BY 4.0, while the original Maestro artwork by 
 
 ## Verification
 
-- 309 Node regression checks, including every current lesson’s legal completion, restored progress, board-first migration, beginner recaps, future demonstration/text-only data, White/Black engine perspective, invalid PV/root/depth rejection, mate handling, cancellation and isolated SVG gradients. New coach checks cover feedback taking precedence over an old hint, recap without bypassing Check, accessible compact labels, unchanged live regions and Details without scrolling/resizing.
+- 326 Node regression checks, including every current lesson’s legal completion, restored progress, board-first migration, beginner recaps, future demonstration/text-only data, White/Black engine perspective, invalid PV/root/depth rejection, mate handling, cancellation and isolated SVG gradients. New coach checks cover feedback taking precedence over an old hint, recap without bypassing Check, accessible compact labels, unchanged live regions and Details without scrolling/resizing.
 - Browser: all eight course families plus a beginner endgame at 360×740, 390×844, 430×844, 844×390, 1280×720 and 1440×900 (54 combinations). Square boards, all 64 lesson squares, no horizontal overflow, adjacent desktop coach and no duplicate gradient IDs.
 - The reported bishop-capture completion originally moved the board down 34px at 390×844. The above-board card reduces that measured movement to 0px, including the board’s document coordinates, dimensions and scroll offset. Solve/undo, all three hint levels and Details opening/closing are checked at the six viewports. Long text is disclosed explicitly instead of resizing the workspace.
 - Actual board moves with coaching visible, coordinate practice, complete beginner board → Check → saved completion/reload, French Black sequence, a tactics puzzle and king-and-pawn ending.

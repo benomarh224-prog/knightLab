@@ -1,6 +1,10 @@
 // Short presentation of existing, validated lesson feedback. It never changes
 // moves, progress or continuation requirements, and never invents a judgement.
-export function lessonCoachSummary({guidance,hint,feedback,recap,alternative=false}={}){
+export function lessonCoachSummary({guidance,hint,feedback,recap,alternative=false,attempt}={}){
+  if(attempt?.kind==='illegal')return {title:'Not a legal move',text:feedback,kind:'illegal'};
+  if(attempt?.kind==='objective')return {title:'Try the lesson goal',text:feedback,kind:'objective'};
+  if(guidance?.mode==='explore'&&guidance.status==='Stalemate')return {title:'Stalemate',text:'No legal moves, and the king is not in check. Use Undo to try another line.',kind:'explore'};
+  if(guidance?.mode==='explore')return {title:guidance.status,text:feedback||guidance.instruction,kind:'explore'};
   if(recap)return {title:'Idea applied',text:recap.shortText||recap.text,kind:'complete'};
   if(feedback&&feedback!==hint?.text)return {title:alternative?'Your move':'Your coach',text:feedback,kind:'feedback'};
   if(hint)return {title:`Hint ${hint.level} of 3`,text:hint.text,kind:'hint'};
@@ -16,6 +20,7 @@ export function compactLessonAction(next){
 }
 export function paintLessonSummary({doc=document,summary,next}={}){
   const card=doc.getElementById('lesson-coach-summary');card.dataset.kind=summary.kind;
+  doc.getElementById('lesson-coach-inline').dataset.kind=summary.kind;
   for(const [id,value]of [['lesson-summary-title',summary.title],['lesson-summary-text',summary.text]]){
     const node=doc.getElementById(id);if(node.textContent!==value)node.textContent=value;
   }
