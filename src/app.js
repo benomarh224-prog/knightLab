@@ -39,6 +39,7 @@ import { collectTraining } from './training.js';
 import { renderReviewStatistics } from './review-statistics.js';
 import {createDailyTrainingUI} from './daily-training-ui.js';
 import {reviewedDailyMistakes} from './daily-training.js';
+import{createBoardLabUI}from'./board-lab-ui.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -948,6 +949,7 @@ function dailyMistakes(){
   return reviewedDailyMistakes(reviewMemory.list(),(pgn,total)=>state.cache.get(pgn+'precise')||reviewCache.load(pgn,'precise',total));
 }
 const daily=createDailyTrainingUI({storage:reviewStorage,courses:COURSES,mistakes:dailyMistakes,go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options)});
+const boardLab=createBoardLabUI({storage:reviewStorage,playSound,feedbackSound});
 const learning=createLearningUI({storage:reviewStorage,playSound,feedbackSound,daily,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
@@ -966,6 +968,7 @@ createAudioSettings(moveSounds,{beforeOpen:()=>{coachDemo.pause();autoplay.stop(
 document.addEventListener('visibilitychange',()=>{if(document.hidden){coachDemo.pause();autoplay.stop();moveSounds.stop();}});
 document.addEventListener('click',event=>{if(autoplay.active&&!event.target.closest('#autoplay-moves,#board-actions-toggle'))autoplay.stop();},true);
 router=createPageRouter(page=>{
+  boardLab.setActive(page==='boardlab');
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   closeWorkspaceMenu();
   $('library-nav').classList.toggle('active',page==='games');
