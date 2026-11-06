@@ -1,6 +1,6 @@
 # Shared lesson experience
 
-All 190 current lessons use `LessonPlayer` (`src/lesson-player.js`), rendered by `src/lesson-ui.js`. The existing `learning-ui.js` entry point re-exports the shared UI. Course progress/catalog rendering is separate in `learning-progress.js`. No course ID selects stages or completion rules.
+All registered lessons use `LessonPlayer` (`src/lesson-player.js`), rendered by `src/lesson-ui.js`. The existing `learning-ui.js` entry point re-exports the shared UI. Course progress/catalog rendering is separate in `learning-progress.js`. No course ID selects stages or completion rules. See [the current workspace update](lesson-workspace.md) for board-first entry, shared coaching and Maestro BW artwork.
 
 ## Existing lessons
 
@@ -47,7 +47,7 @@ Stage/concept/question changes focus the named stage heading and bring the stage
 
 ## Responsive layout
 
-Mobile practice is title → short instruction → square board → board controls → optional practice tools. Detailed content follows under Learn more. The board depends only on available width. There is no viewport-height cap, CSS zoom, page scale, browser-zoom restriction or height-based board shrinking. Short screens scroll normally. On mobile, a compact fixed continuation dock stays accessible above the device safe area. ResizeObserver measures its actual height, including wrapped text and safe-area padding; the document reserves that height plus breathing room, with matching scroll-padding and focus margins so the final content remains reachable. Desktop uses a separate course-navigation column with a prominent board and adjacent practice panel.
+Practice opens directly at title → short instruction → square board → board controls and continuation in normal flow. The board has a stable viewport-height cap and available-width limit; changing coach text does not resize it. No CSS zoom or browser-zoom restriction is used. Desktop has course navigation and an adjacent coach. Mobile keeps Lessons in a drawer and opens a modeless, dismissible coach sheet without blocking the board. Short landscape screens use normal document flow. More retains reading, replay, exploration, hints and source references.
 
 ## Verification, 15 October 2026
 

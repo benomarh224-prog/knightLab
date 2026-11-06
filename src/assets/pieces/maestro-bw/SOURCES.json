@@ -1,0 +1,69 @@
+{
+  "revision": "b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0",
+  "upstreamLicense": "CC-BY-NC-SA-4.0",
+  "upstreamAuthor": "sadsnake1",
+  "adaptationAuthor": "Kadagaden (Ka-hu)",
+  "adaptationLicense": "CC-BY-4.0",
+  "assets": [
+    {
+      "sha256": "149562d45329b4f53245fd7e9c8fa5e41a2d70643c6f009a17effa2aa7896a5f",
+      "file": "wK.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/wK.svg"
+    },
+    {
+      "sha256": "f6756acf4937d6b2a63bef55344b1fe1143797d5859ed09b08186a4029542372",
+      "file": "wQ.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/wQ.svg"
+    },
+    {
+      "sha256": "8748fe43f5e2e5146db2032685f3261dbd86e611bcded34a77332aa8a9030eff",
+      "file": "wR.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/wR.svg"
+    },
+    {
+      "sha256": "fbfce6aba7f09e146f9c0462609a836b086bf8f36b2955d744ae79f3b2abcf69",
+      "file": "wB.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/wB.svg"
+    },
+    {
+      "sha256": "448deffd65e3f188a4e25652d4f7f21eb3d56b391472f144c9d411723f994313",
+      "file": "wN.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/wN.svg"
+    },
+    {
+      "sha256": "fabe06b530576312648331c5ab5287bad5ec595ab1064bc3f0805918ae3f9b42",
+      "file": "wP.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/wP.svg"
+    },
+    {
+      "sha256": "dfb961d42225441b2af9aa7fe9e1d4e96cb3e8766571f8ae013764e8bf9cb817",
+      "file": "bK.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/bK.svg"
+    },
+    {
+      "sha256": "3be9ce186e0a3419faaa63670bd03a6ae1d4c47976f46e4cab4051fb8b29b984",
+      "file": "bQ.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/bQ.svg"
+    },
+    {
+      "sha256": "b3d5ecaf860bcb09facb95811624ab5f325f5a34fcc370a4a2b13787f7b58c7a",
+      "file": "bR.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/bR.svg"
+    },
+    {
+      "sha256": "d46f42482f4d5d6e2595f407b4005619788d3a66d0250597faf53413ba38430b",
+      "file": "bB.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/bB.svg"
+    },
+    {
+      "sha256": "d7e0cdc7993ee37d2602a3a0e63afb5b1b3f8d2d6b8cec21d5169e3f9e5cb4ff",
+      "file": "bN.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/bN.svg"
+    },
+    {
+      "sha256": "a21914230c23018e1c1658241e0f356cd16a39befc8dc6864b4b71283f5adad9",
+      "file": "bP.svg",
+      "url": "https://raw.githubusercontent.com/Kadagaden/chess-pieces/b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0/chess_maestro_bw/bP.svg"
+    }
+  ]
+}

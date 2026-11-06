@@ -3,6 +3,7 @@ import { progressiveHint } from './lesson-hints.js';
 import { LessonExploration } from './lesson-exploration.js';
 import { offTargetFeedback } from './lesson-objectives.js';
 import { Chess } from 'chess.js';
+import {initialLessonStage} from './lesson-experience.js';
 
 const bounded=(value,max)=>Number.isInteger(value)?Math.max(0,Math.min(max,value)):0;
 const list=value=>Array.isArray(value)?value:[];
@@ -41,7 +42,7 @@ export class LessonPlayer {
     this.progress=createCourseProgress(storage,lessonIds||[lesson.id],progressKey);
     // Keep the existing v1 completion arrays unchanged. Partial work lives separately.
     this.storageKey=`${progressKey}:lesson-player-v1:${lesson.id}`;
-    this.stage=this.plan.stages[0];this.conceptIndex=0;this.activityIndex=0;this.questionIndex=0;this.seen=[];this.answers=[];this.flipped=false;this.reviewing=false;
+    this.stage=initialLessonStage(this.plan,lesson);this.conceptIndex=0;this.activityIndex=0;this.questionIndex=0;this.seen=[];this.answers=[];this.flipped=false;this.reviewing=false;
     this.activities=this.plan.activities.map(data=>{
       const session=new OpeningLesson(data),review=new OpeningLesson(data);
       if(data.kind==='practice')session.practice({startPly:data.startPly});
@@ -115,7 +116,10 @@ export class LessonPlayer {
   attempt(from,to,promotion){
     if(this.exploring||this.reviewing||this.activity?.data.kind!=='practice')return {status:'inactive'};
     const result=this.session.attempt(from,to,promotion);
-    if(result.status==='different')result.feedback=offTargetFeedback(this.activity.data,new Chess(this.session.fen).move({from,to,promotion}));
+    if(result.status==='different'){
+      result.move=new Chess(this.session.fen).move({from,to,promotion});
+      result.feedback=offTargetFeedback(this.activity.data,result.move,this.session.expected);
+    }
     if(result.status==='illegal'||result.status==='different'){
       if(this.challengeMode)this.activity.challengeMistakes++;else this.activity.mistakes++;
       this.memory?.add({...this.reviewEntry(),reason:'retry'});
@@ -157,7 +161,7 @@ export class LessonPlayer {
   }
   save(){
     if(this.boardComplete&&this.checksComplete&&(!this.plan.learnRequired||this.learned))this.progress.complete(this.lesson.id);
-    try{this.storage?.setItem(this.storageKey,JSON.stringify({version:1,signature:this.plan.signature,stage:this.stage,conceptIndex:this.conceptIndex,activityIndex:this.activityIndex,questionIndex:this.questionIndex,seen:this.seen,answers:this.answers,flipped:this.flipped,reviewing:this.reviewing,challengeMode:this.challengeMode,questionReviewIndex:this.questionReviewIndex,reviewSource:this.reviewSource,exploring:this.exploring,
+    try{this.storage?.setItem(this.storageKey,JSON.stringify({version:1,presentationRevision:1,signature:this.plan.signature,stage:this.stage,conceptIndex:this.conceptIndex,activityIndex:this.activityIndex,questionIndex:this.questionIndex,seen:this.seen,answers:this.answers,flipped:this.flipped,reviewing:this.reviewing,challengeMode:this.challengeMode,questionReviewIndex:this.questionReviewIndex,reviewSource:this.reviewSource,exploring:this.exploring,
       orientationRevision:this.orientationRevision,activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,hintCursor:a.hintCursor,hintLevel:a.hintLevel,exploration:a.exploration?.snapshotMoves()||null,savedExploration:a.savedExploration?.snapshotMoves()||null,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
   }
   restore(){
@@ -192,6 +196,9 @@ export class LessonPlayer {
       this.challengeMode=data.challengeMode===true&&Boolean(this.activity?.challenge);this.questionReviewIndex=Number.isInteger(data.questionReviewIndex)&&this.plan.questions[data.questionReviewIndex]?data.questionReviewIndex:null;
       this.reviewSource=typeof data.reviewSource==='string'?data.reviewSource:null;
       if(this.plan.stages.includes(data.stage)&&(data.stage!=='check'||this.checkUnlocked))this.stage=data.stage;
+      // Migrate only the old introductory landing state. Explicitly reviewed
+      // reading in this presentation keeps its stage and all its partial work.
+      if(data.presentationRevision!==1&&this.stage==='learn')this.stage=initialLessonStage(this.plan,this.lesson);
       this.orientationRevision=bounded(data.orientationRevision,10000);
       return true;
     }catch{/* Corrupt or obsolete partial work must not damage legacy completion. */}

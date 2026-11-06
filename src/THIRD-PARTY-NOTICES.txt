@@ -19,9 +19,16 @@ Source: https://github.com/LexLuengas/chessnut-pieces
 Unmodified SVGs from the Lichess Chessnut asset set.
 See assets/pieces/chessnut/LICENSE.txt, NOTICE.txt and SOURCES.json.
 
-Classic default piece set: Colin M. L. Burnett, GPL-2.0-or-later.
+Retained classic piece set: Colin M. L. Burnett, GPL-2.0-or-later.
 Source: https://github.com/lichess-org/lila/tree/master/public/piece/cburnett
 See assets/pieces/classic/LICENSE.txt, NOTICE.txt and SOURCES.json.
+
+Default Maestro BW pieces: original Maestro by sadsnake1 (CC BY-NC-SA 4.0),
+black and white adaptation by Kadagaden / Ka-hu (CC BY 4.0).
+Source: https://github.com/Kadagaden/chess-pieces/tree/master/chess_maestro_bw
+The original artwork's noncommercial and share-alike restrictions remain.
+Used by the current free, noncommercial educational ROQVYN site.
+See assets/pieces/maestro-bw/NOTICE.txt, license texts and SOURCES.json.
 
 Default chess audio: original ROQVYN dry taps, dedicated to CC0 1.0.
 See assets/audio/NOTICE.txt and scripts/prepare-classic-audio.mjs.

@@ -194,3 +194,13 @@ export const BEGINNER_LESSONS=[
     question:'What is the goal of a standard chess game?',options:['Take every pawn','Checkmate the opposing king','Capture the opposing king'],answer:1,reason:'The goal is checkmate: the opposing king is attacked and no legal move removes the check. Kings are never captured.',
     takeaway:'You are ready to practice full games slowly: keep your king safe, check threats and explain your moves.'}),
 ];
+
+// Teach one movement at a time, then combine rules, threats and longer lines.
+// Reordering existing IDs preserves completion arrays and per-lesson drafts.
+export const BEGINNER_SEQUENCE=[
+  'board-and-first-move','rook-straight-lines','bishop-diagonals','queen-combines-moves','knight-jumps','pawn-moves-and-captures','friendly-blockers','king-safe-square','read-capture-notation','piece-values',
+  'capture-checking-piece','block-the-check','promote-a-pawn','castle-kingside','castle-queenside','en-passant',
+  'spot-an-undefended-piece','deliver-checkmate','avoid-stalemate','pin-a-piece','knight-fork','opening-plan',
+  'simple-rook-mate','take-opposition','support-your-pawn','beginner-checkpoint','create-a-passed-pawn','capablanca-rook-finish',
+];
+BEGINNER_LESSONS.sort((a,b)=>BEGINNER_SEQUENCE.indexOf(a.id)-BEGINNER_SEQUENCE.indexOf(b.id));

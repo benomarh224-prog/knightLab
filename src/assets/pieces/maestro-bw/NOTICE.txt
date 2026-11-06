@@ -1,0 +1,20 @@
+Maestro BW chess pieces
+
+Original Maestro artwork: sadsnake1, CC BY-NC-SA 4.0.
+https://github.com/lichess-org/lila/blob/master/COPYING.md
+https://github.com/lichess-org/lila/tree/master/public/piece/maestro
+
+Black and white adaptation: Kadagaden (Ka-hu), CC BY 4.0.
+https://github.com/Kadagaden/chess-pieces/tree/master/chess_maestro_bw
+https://github.com/Kadagaden/chess-pieces/blob/master/README.md#license
+Pinned source revision: b035b0cc6a68e9fb99c872c8fe073c3ae3eba8a0
+
+ROQVYN uses this artwork on its free, noncommercial educational site.
+The upstream noncommercial and share-alike conditions still apply to this
+adapted artwork; the adaptation's attribution license does not remove them.
+Commercial use requires separate permission or replacement of this set.
+
+The stored SVG files are unmodified. At rendering time ROQVYN scopes gradient
+IDs to each SVG instance and frames the drawings in a 46-unit viewport.
+No endorsement by the artists, Lichess or the source repository is implied.
+See the two accompanying license texts and SOURCES.json for file hashes.

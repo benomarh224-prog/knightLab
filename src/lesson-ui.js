@@ -22,6 +22,8 @@ import { createSquarePracticeUI } from './square-practice.js';
 import { createLessonViewport } from './lesson-viewport.js';
 import { createGuidedExample } from './lesson-demonstration.js';
 import { createLessonCoach } from './lesson-coach.js';
+import {createLessonAnalysis} from './lesson-analysis.js';
+import {solutionRecap} from './lesson-experience.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -34,7 +36,8 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   const squarePractice=createSquarePracticeUI({storage,feedbackSound});
   const guidedExample=createGuidedExample({storage,playSound});
   let course=COURSES.french,lessons=course.lessons,progress=memoryFor(course),player;
-  let selected=null,hint=null,message='',promotion=null;
+  let selected=null,hint=null,message='',promotion=null,alternative=null,alternativeText='';
+  const alternativeAnalysis=createLessonAnalysis();
   let focus=false,painted=null;
   let audioSequence=0;
   const motion=createLessonMotion({onFrame:frame=>playSound(frame.last,{eventId:'lesson-motion-'+(++audioSequence)}),paint:()=>render(),reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches});
@@ -68,12 +71,13 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       const next=continuation();
       return {...result,key:`${course.id}:${player.lesson.id}:${player.activityIndex}:${player.exploring?'explore':player.reviewing?'review':'study'}:${result.fen}`,continueLabel:next.enabled?next.label:'Return to lesson'};
     },
-    otherDialogOpen:()=>Boolean(document.querySelector('dialog[open]:not(#lesson-checkmate-dialog)')),
-    beforeOpen:()=>{for(const menu of document.querySelectorAll('.compact-options[open]'))menu.open=false;},
+    otherDialogOpen:()=>Boolean(document.querySelector('dialog[open]:not(#lesson-checkmate-dialog):not(#lesson-coach-dialog)')),
+    beforeOpen:()=>{coach.close();for(const menu of document.querySelectorAll('.compact-options[open]'))menu.open=false;},
     onContinue:()=>{if(player.exploring)player.stopExploring();clearTurn();if(continuation().enabled)continueLesson();else{render();focusStage();}},
     onExplore:()=>{exploreBeforeCheckmate(player);clearTurn();render();focusBoard();},focusBoard});
   function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor});renderLearningCompanion({memory,courses:COURSES,storage});}
-  function clearTurn(){motion.cancel();selected=null;hint=null;message='';promotion=null;}
+  function clearAlternative(){alternativeAnalysis.cancel();alternative=null;alternativeText='';}
+  function clearTurn(){motion.cancel();clearAlternative();selected=null;hint=null;message='';promotion=null;}
   function focusStage(){
     coach.close();
     $('lesson-stage-heading').focus({preventScroll:true});
@@ -182,8 +186,13 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       `<details><summary>Source &amp; study line</summary><p>${escape(lesson.source||'')} ${escape(course.reference||'')}</p>${activity?'<p>Practice follows one selected legal continuation. Other good moves exist; a different legal move is not automatically a mistake.</p>':''}</details>`;
     $('lesson-analyze').hidden=!session;$('lesson-analyze').disabled=!session||session.cursor===0;
     $('lesson-more').hidden=player.challengeMode&&stage==='try';
-    $('lesson-recap').hidden=!player.complete||stage==='learn'||player.challengeMode;
+    $('lesson-recap').hidden=!player.complete||stage!=='check'||player.challengeMode;
     $('lesson-recap-text').textContent=lesson.takeaway||study.goals?.[0]||player.plan.concepts[0]?.text||'Keep this idea in mind when you play.';
+    const recap=motion.active?null:solutionRecap(player);
+    $('lesson-solution-recap').hidden=!recap||stage!=='try';
+    $('lesson-solution-text').textContent=recap?.text||'';
+    $('lesson-alternative').hidden=!alternative;
+    $('lesson-alternative-status').textContent=alternativeText;
     const practiceActivities=player.activities.filter(item=>item.data.kind==='practice'),movesPlayed=practiceActivities.reduce((sum,item)=>sum+item.session.correct,0),hintsUsed=practiceActivities.reduce((sum,item)=>sum+item.session.hints,0),retries=practiceActivities.reduce((sum,item)=>sum+item.mistakes,0);
     $('lesson-recap-stats').parentElement.hidden=!practiceActivities.length;
     $('lesson-recap-stats').textContent=`This visit’s practice: ${movesPlayed} correct move${movesPlayed===1?'':'s'}, ${hintsUsed} hint step${hintsUsed===1?'':'s'}, ${retries} other attempt${retries===1?'':'s'}. Your earned lesson completion is saved.`;
@@ -196,7 +205,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-course-practice').hidden=!player.complete||globalIndex!==lessons.length-1||!coursePractice(course);
     dock.measure();
     lessonViewport.arrange(stage);
-    coach.update({lessonKey:course.id+':'+lesson.id,stage,title:study.coach||lesson.title,instruction:stage==='try'?$('lesson-instruction').textContent:player.plan.concepts[player.conceptIndex]?.text,hint,feedback:message||hint?.text});
+    coach.update({lessonKey:course.id+':'+lesson.id+':'+player.activityIndex,stage,title:study.coach||lesson.title,instruction:player.plan.concepts[player.conceptIndex]?.text||$('lesson-instruction').textContent,hint,feedback:message||hint?.text});
     updateProgress();
     checkmateDialog.sync();
   }
@@ -266,6 +275,10 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-replay').onclick=()=>{player.stopExploring();player.reviewing=!player.reviewing;player.save();clearTurn();render();};
   $('lesson-flip').onclick=()=>{motion.cancel();player.flipped=!player.flipped;player.save();render();};
   $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();if(hint)coach.open($('lesson-hint'));};
+  $('lesson-alternative-play').onclick=()=>{
+    if(!alternative)return;const move=alternative;coach.close();clearTurn();
+    if(player.startExploring({fresh:true})){player.exploreMove(move.from,move.to,move.promotion);message=`${move.san} played in free exploration. Your exercise is saved.`;render();playSound(move);focusBoard();}
+  };
   $('lesson-challenge').onclick=()=>{
     if(player.challengeMode){player.endChallenge();history.replaceState({},'',`${course.path}?lesson=${encodeURIComponent(player.lesson.id)}`);}
     else player.startChallenge();
@@ -290,7 +303,14 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     const result=player.attempt(from,to,promote);
     if(result.status==='correct'){clearTurn();message=`${result.move.san} fits this study line.${result.completed?' Exercise complete.':''}`;motion.play(lessonFrames(session,cursor));return;}
     else{promotion=null;message=result.status==='different'?result.feedback:illegalMoveReason(fen,from,to,promote);}
-    render();if(['different','illegal'].includes(result.status))feedbackSound('incorrect');
+    clearAlternative();
+    if(result.status==='different'){
+      alternative=result.move;alternativeText='Checking this alternative with Stockfish…';
+      const owner=player,root=player.session.fen,move=alternative;
+      alternativeAnalysis.explain(move,text=>{if(player===owner&&player.session.fen===root&&alternative===move){alternativeText=text;render();}});
+    }
+    render();if(result.status==='illegal')feedbackSound('incorrect');
+    if(result.status==='different')coach.open($('lesson-hint').hidden?$('lesson-coach-open'):$('lesson-hint'));
   }
   enableBoardDrag($('lesson-board'),{
     read:()=>{const session=player.exploration||player.session;return {chess:session?new Chess(session.fen):null,disabled:motion.active||!session||session.mode==='watch'||Boolean(promotion)};},
@@ -306,7 +326,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     if(selected&&square!==selected&&piece?.color!==color){
       if(chess.moves({square:selected,verbose:true}).some(move=>move.to===square&&move.promotion)){promotion={from:selected,to:square};message='Choose the promotion piece.';render();$('lesson-promotion').querySelector('button').focus();return;}
       attemptMove(selected,square);
-    }else{selected=piece?.color===color?(selected===square?null:square):null;message='';render();}
+    }else{clearAlternative();selected=piece?.color===color?(selected===square?null:square):null;message='';render();}
   };
   for(const button of document.querySelectorAll('[data-lesson-promotion]'))button.onclick=()=>{if(promotion){const target=promotion.to;attemptMove(promotion.from,target,button.dataset.lessonPromotion);const square=$('lesson-board').querySelector(`button[data-square="${target}"]`);(square||$('lesson-counter')).focus({preventScroll:true});}};
   $('lesson-promotion-cancel').onclick=()=>{const from=promotion?.from;promotion=null;selected=null;message='Promotion cancelled. Choose another move.';render();$('lesson-board').querySelector(`button[data-square="${from}"]`)?.focus({preventScroll:true});};

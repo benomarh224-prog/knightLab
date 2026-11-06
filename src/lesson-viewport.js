@@ -8,7 +8,7 @@ export function lessonBoardLimit({height,compact=false,focus=false}){
 export function createLessonViewport({doc=document,viewport=window}={}){
   const get=id=>doc.getElementById(id),footer=doc.querySelector('.lesson-course-footer');
   const home=doc.createComment('Lesson navigation');get('lesson-stage-panel').after(home);
-  const instruction=get('lesson-instruction'),status=get('lesson-mode-status'),heading=doc.querySelector('.lesson-page-heading'),panel=doc.querySelector('.lesson-practice-panel');
+  const instruction=get('lesson-instruction'),status=get('lesson-mode-status'),heading=doc.querySelector('.lesson-page-heading');
   const desktop=viewport.matchMedia('(min-width:1021px)');let stage='learn';
   // Small viewport units stay stable when mobile browser toolbars open/close.
   // The probe also responds to real window resizing and device rotation.
@@ -25,11 +25,8 @@ export function createLessonViewport({doc=document,viewport=window}={}){
     stage=next;doc.body.dataset.lessonStage=stage;
     const tools=doc.querySelector('.lesson-options'),toolsHost=stage==='try'?get('lesson-controls'):doc.querySelector('.lesson-topline');
     if(tools&&toolsHost&&tools.parentElement!==toolsHost)toolsHost.append(tools);
-    const adjacent=stage==='try'&&desktop.matches&&doc.body.dataset.lessonFocus!=='true';
-    const owner=adjacent?panel:heading;
-    if(status.parentElement!==owner){if(owner===heading)owner.append(status,instruction);else owner.prepend(status,instruction);}
-    if(adjacent){if(footer.parentElement!==panel)panel.append(footer);}
-    else if(stage==='try'){if(footer.previousElementSibling!==get('lesson-controls'))get('lesson-controls').after(footer);}
+    if(status.parentElement!==heading)heading.append(status,instruction);
+    if(stage==='try'){const anchor=get('lesson-solution-recap');if(footer.previousElementSibling!==anchor)anchor.after(footer);}
     else if(footer.previousSibling!==home)home.after(footer);
     measure();
   }

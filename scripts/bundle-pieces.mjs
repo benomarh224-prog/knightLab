@@ -4,6 +4,6 @@ import { readFile, writeFile } from 'node:fs/promises';
 const artwork={};
 for(const color of ['w','b'])for(const type of ['K','Q','R','B','N','P']){
  const id=color+type;
- artwork[id]=await readFile(new URL(`../src/assets/pieces/classic/${id}.svg`,import.meta.url),'utf8');
+ artwork[id]=await readFile(new URL(`../src/assets/pieces/maestro-bw/${id}.svg`,import.meta.url),'utf8');
 }
-await writeFile(new URL('../src/classic-artwork.json',import.meta.url),JSON.stringify(artwork,null,2)+'\n');
+await writeFile(new URL('../src/maestro-artwork.json',import.meta.url),JSON.stringify(artwork,null,2)+'\n');
