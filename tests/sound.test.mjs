@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MoveSounds, navigationSoundMove, woodenSamples,moveSoundKind,SOUND_KINDS } from '../src/sound.js';
+import { MoveSounds, navigationSoundMove, woodenSamples,moveSoundKind,SOUND_KINDS,SOUND_ASSET_VERSION } from '../src/sound.js';
 import { parseGame } from '../src/game.js';
 import {Chess} from 'chess.js';
 import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 
 test('move and capture clips are finite, distinct, audible, and fade to silence without clipping', () => {
   const move = woodenSamples(48000), capture = woodenSamples(48000, true);
@@ -126,5 +127,21 @@ test('all licensed WAV samples are small, distinct, restrained mono PCM with sil
   let peak=0;for(let i=44;i<bytes.length;i+=2)peak=Math.max(peak,Math.abs(bytes.readInt16LE(i))/32768);
   assert.ok(peak>.1&&peak<.7);assert.ok(Math.abs(bytes.readInt16LE(bytes.length-2))<4);
  }
- assert.equal(new Set(files).size,SOUND_KINDS.length);assert.match(await readFile('src/assets/audio/NOTICE.txt','utf8'),/Original dry chess taps/);
+ assert.equal(new Set(files).size,SOUND_KINDS.length);
+ const notice=await readFile('src/assets/audio/NOTICE.txt','utf8');assert.match(notice,/CC0/);assert.match(notice,/mh2o/);assert.match(notice,/Alnotreally/);
+});
+
+test('recorded fallback matches every shipped WAV sample exactly and provenance hashes match the licensed sources',async()=>{
+ const metadata=JSON.parse(await readFile('src/assets/audio/SOURCES.json','utf8'));assert.equal(metadata.version,SOUND_ASSET_VERSION);assert.equal(metadata.license,'CC0-1.0');
+ for(const file of metadata.files){const wav=await readFile(`src/assets/audio/${file.kind}.wav`),samples=woodenSamples(24000,file.kind);assert.equal(createHash('sha256').update(wav).digest('hex'),file.sha256);assert.equal(wav.length,44+samples.length*2);for(let i=0;i<samples.length;i++)assert.equal(wav.readInt16LE(44+i*2),Math.round(samples[i]*32767)||0);}
+ for(const source of metadata.sources){const wav=await readFile('src/assets/audio/recordings/'+source.file);assert.equal(createHash('sha256').update(wav).digest('hex'),source.sha256);assert.equal(source.license,'CC0-1.0');assert.match(source.source,/^https:\/\/freesound.org\/people\//);}
+});
+test('sound-settings audition honors mute and volume and does not consume a game move’s deduplication identity',async()=>{
+ const context=audioContext(),audio=new MoveSounds({createContext:()=>context}),accepted=new Chess().move('e4');
+ assert.equal(await audio.preview(),true);assert.equal(audio.play(accepted),true);assert.equal(audio.play(accepted),false);assert.equal(context.sources.length,2);
+ audio.setEnabled(false);assert.equal(await audio.preview(),false);audio.setEnabled(true);audio.setVolume(0);assert.equal(await audio.preview(),false);assert.equal(context.sources.length,2);audio.destroy();
+});
+test('versioned sample requests bypass cached old clips without creating audio or playing on page load',async()=>{
+ const urls=[],audio=new MoveSounds({createContext(){throw Error('Must not initialize');},fetcher:async url=>(urls.push(url),{ok:true,arrayBuffer:async()=>new ArrayBuffer(0)})});
+ await audio.preload();assert.equal(urls.length,SOUND_KINDS.length);assert.ok(urls.every(url=>url.endsWith('?v='+SOUND_ASSET_VERSION)));assert.equal(audio.context,null);assert.equal(audio.voices.size,0);
 });

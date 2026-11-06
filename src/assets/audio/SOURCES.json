@@ -1,7 +1,73 @@
 {
-  "author": "ROQVYN contributors",
+  "version": "foley-3",
   "license": "CC0-1.0",
-  "source": "scripts/prepare-classic-audio.mjs",
-  "method": "Original deterministic filtered-noise and damped wood resonances. No sampled recordings.",
-  "version": "classic-2"
+  "sources": [
+    {
+      "author": "mh2o",
+      "source": "https://freesound.org/people/mh2o/sounds/351518/",
+      "preview": "https://cdn.freesound.org/previews/351/351518_4502687-hq.mp3",
+      "originalSha256": "c13803890bd531fee08b167e780b0a7bab2c4e21b1b232366b8df3860792b25b",
+      "file": "chess-tap.wav",
+      "sha256": "eecf8f5a13acea18aee7de48a77a1ddaac95f71ff2013d4a5704ba5de5ecd5c7",
+      "excerpt": {
+        "start": 0,
+        "duration": 0.0725
+      },
+      "license": "CC0-1.0",
+      "processing": "Decoded public HQ preview; mono; 90 Hz high-pass / 3600 Hz low-pass; 0.5 ms onset and 8 ms tail fades; normalized; resampled to 24000 Hz."
+    },
+    {
+      "author": "Alnotreally",
+      "source": "https://freesound.org/people/Alnotreally/sounds/801349/",
+      "preview": "https://cdn.freesound.org/previews/801/801349_17217022-hq.mp3",
+      "originalSha256": "89ff2c5ba4db9d40f15cc81332a895bdbb386f29266edd9f159adb1339eed6bb",
+      "file": "wood-landing.wav",
+      "sha256": "99937db00fb65e7374d25b0d8af68447cdbc07ca8b00e79975bee0dfbe324374",
+      "excerpt": {
+        "start": 2.5375,
+        "duration": 0.155
+      },
+      "license": "CC0-1.0",
+      "processing": "Decoded public HQ preview; mono; 90 Hz high-pass / 3600 Hz low-pass; 0.5 ms onset and 8 ms tail fades; normalized; resampled to 24000 Hz."
+    }
+  ],
+  "files": [
+    {
+      "kind": "move",
+      "duration": 0.105,
+      "sha256": "67ac5ddbeff283df3145a19cc2c9875731ecb0ed45b63368efea36c3fbc177a6"
+    },
+    {
+      "kind": "capture",
+      "duration": 0.16,
+      "sha256": "c3afdf33d81b7683d2499e90674222b00e345b03572cd319301abb966f361240"
+    },
+    {
+      "kind": "castle",
+      "duration": 0.22,
+      "sha256": "edcf2fb05c79270e8aa4381cdb6b39a810f2a6a888dc79b94020ed340d15a494"
+    },
+    {
+      "kind": "check",
+      "duration": 0.17004166666666667,
+      "sha256": "102a6511c67c4f3952664375ca5389e67eec1457fe27bfa07661e7441a15f9d8"
+    },
+    {
+      "kind": "promotion",
+      "duration": 0.26,
+      "sha256": "2b9df8a1284415dc8ce5096c84c4f0b00affff24a93107187d0f57206f907ee9"
+    },
+    {
+      "kind": "complete",
+      "duration": 0.32,
+      "sha256": "d40583aa8064e5828a6da2b7ef4c3c5abaa1b3538a8a26300381e485d6dbce99"
+    },
+    {
+      "kind": "incorrect",
+      "duration": 0.1,
+      "sha256": "8a4650703ffeec0e238c0a3cb5637285c19684e64398ac6dce65777cd38cf1ac"
+    }
+  ],
+  "preparation": "node scripts/prepare-foley-audio.mjs",
+  "method": "Real chess impacts with restrained event-specific mixes. No synthesized tones."
 }

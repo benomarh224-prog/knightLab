@@ -1,0 +1,14 @@
+{
+  "author": "mh2o",
+  "source": "https://freesound.org/people/mh2o/sounds/351518/",
+  "preview": "https://cdn.freesound.org/previews/351/351518_4502687-hq.mp3",
+  "originalSha256": "c13803890bd531fee08b167e780b0a7bab2c4e21b1b232366b8df3860792b25b",
+  "file": "chess-tap.wav",
+  "sha256": "eecf8f5a13acea18aee7de48a77a1ddaac95f71ff2013d4a5704ba5de5ecd5c7",
+  "excerpt": {
+    "start": 0,
+    "duration": 0.0725
+  },
+  "license": "CC0-1.0",
+  "processing": "Decoded public HQ preview; mono; 90 Hz high-pass / 3600 Hz low-pass; 0.5 ms onset and 8 ms tail fades; normalized; resampled to 24000 Hz."
+}

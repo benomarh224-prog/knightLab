@@ -1,0 +1,14 @@
+{
+  "author": "Alnotreally",
+  "source": "https://freesound.org/people/Alnotreally/sounds/801349/",
+  "preview": "https://cdn.freesound.org/previews/801/801349_17217022-hq.mp3",
+  "originalSha256": "89ff2c5ba4db9d40f15cc81332a895bdbb386f29266edd9f159adb1339eed6bb",
+  "file": "wood-landing.wav",
+  "sha256": "99937db00fb65e7374d25b0d8af68447cdbc07ca8b00e79975bee0dfbe324374",
+  "excerpt": {
+    "start": 2.5375,
+    "duration": 0.155
+  },
+  "license": "CC0-1.0",
+  "processing": "Decoded public HQ preview; mono; 90 Hz high-pass / 3600 Hz low-pass; 0.5 ms onset and 8 ms tail fades; normalized; resampled to 24000 Hz."
+}

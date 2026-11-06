@@ -5,6 +5,10 @@ export function createAudioSettings(audio,{doc=document,beforeOpen=()=>{}}={}){
   doc.getElementById('audio-settings-close').onclick=()=>dialog.close();
   enabled.onchange=()=>{audio.setEnabled(enabled.checked);if(audio.enabled)audio.unlock();paint();};
   volume.oninput=()=>{audio.setVolume(Number(volume.value)/100);paint();};
+  doc.getElementById('audio-preview').onclick=async()=>{
+    const played=await audio.preview();
+    doc.getElementById('audio-settings-status').textContent=played?'':!audio.enabled?'Turn Sound on to preview.':!audio.volume?'Increase the volume to preview.':'Audio is paused by the browser. Tap Test sound again.';
+  };
   const unlock=event=>{if(event.isTrusted&&(event.type!=='keydown'||!event.repeat))audio.unlock();};
   doc.addEventListener('pointerdown',unlock,true);doc.addEventListener('keydown',unlock,true);
   audio.preload();paint();return {paint};

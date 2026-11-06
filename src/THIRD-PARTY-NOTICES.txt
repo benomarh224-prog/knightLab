@@ -30,5 +30,6 @@ The original artwork's noncommercial and share-alike restrictions remain.
 Used by the current free, noncommercial educational ROQVYN site.
 See assets/pieces/maestro-bw/NOTICE.txt, license texts and SOURCES.json.
 
-Default chess audio: original ROQVYN dry taps, dedicated to CC0 1.0.
-See assets/audio/NOTICE.txt and scripts/prepare-classic-audio.mjs.
+Chess audio: CC0 recordings by mh2o (chess_move_on_alabaster.wav) and
+Alnotreally (Chess piece setting 1 / queen on a wooden board), edited by ROQVYN.
+See assets/audio/NOTICE.txt, SOURCES.json and scripts/prepare-foley-audio.mjs.

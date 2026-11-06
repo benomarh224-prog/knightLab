@@ -1,5 +1,6 @@
 import {Chess} from 'chess.js';
 export const SOUND_KINDS=['move','capture','castle','check','promotion','complete','incorrect'];
+export const SOUND_ASSET_VERSION='foley-3';
 const KEY='roqvyn-audio-v1';
 const volumeValue=value=>Math.max(0,Math.min(1,Number.isFinite(value)?value:.45));
 export function moveSoundKind(move,{completion=false}={}){
@@ -26,7 +27,7 @@ export class MoveSounds{
   preload(){
     if(this.loading)return this.loading;
     this.loading=Promise.allSettled(SOUND_KINDS.map(async kind=>{
-      const response=await this.fetcher?.(`/assets/audio/${kind}.wav`);if(!response?.ok)throw Error('Sample unavailable');
+      const response=await this.fetcher?.(`/assets/audio/${kind}.wav?v=${SOUND_ASSET_VERSION}`);if(!response?.ok)throw Error('Sample unavailable');
       const bytes=await response.arrayBuffer();this.bytes.set(kind,bytes);await this.decode(kind,bytes);
     }));return this.loading;
   }
@@ -61,6 +62,13 @@ export class MoveSounds{
   feedback(kind='incorrect',options={}){
     if(!['incorrect','complete'].includes(kind)||options.eventId&&this.events.has(options.eventId))return false;
     const played=this.emit(kind);if(played&&options.eventId)this.remember(options.eventId);return played;
+  }
+  // Explicit sound-settings audition; it never creates or advances a game move.
+  async preview(){
+    if(!this.enabled||!this.volume||!this.unlock())return false;
+    const context=this.context;
+    try{if(context.state!=='running')await context.resume();}catch{return false;}
+    return context===this.context&&this.emit('move');
   }
   emit(kind){
     if(!this.enabled||!this.volume||!this.unlocked||!this.context||this.context.state!=='running')return false;
