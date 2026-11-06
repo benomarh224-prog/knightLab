@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compactCoachText, compactMoveText } from '../src/compact-review.js';
+import { compactCoachText, compactMoveText,reviewPlayerName } from '../src/compact-review.js';
+
+test('PGN placeholder names display the player color without modifying imported names',()=>{
+  assert.equal(reviewPlayerName('?','white'),'White');assert.equal(reviewPlayerName('  ','black'),'Black');
+  assert.equal(reviewPlayerName(null,'white'),'White');assert.equal(reviewPlayerName('Paul Morphy','white'),'Paul Morphy');
+});
 
 test('compact coaching preserves short tactical facts and normalizes whitespace',()=>{
   assert.equal(compactCoachText('Black can take your knight on b5.'),'Black can take your knight on b5.');

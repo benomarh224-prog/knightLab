@@ -9,3 +9,8 @@ export function compactCoachText(text,limit=96) {
 export function compactMoveText(move) {
   return move?.san||'Start';
 }
+
+export function reviewPlayerName(value,color){
+  const text=String(value||'').trim();
+  return text&&text!=='?'?text:color==='white'?'White':'Black';
+}

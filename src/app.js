@@ -24,8 +24,9 @@ import {evaluationLossText} from './accuracy.js';
 import {nextReviewPosition} from './review-schedule.js';
 import { finishBoard,enableBoardDrag } from './board-surface.js';
 import { createReviewMemory } from './review-memory.js';
+import {paintEvaluationBar,keepMoveInList} from './workspace-layout.js';
 import { moveTransitions, animatePieces, fadePreviousHighlights } from './piece-motion.js';
-import { compactCoachText, compactMoveText } from './compact-review.js';
+import { compactCoachText, compactMoveText,reviewPlayerName } from './compact-review.js';
 import { qualityLabels, qualityColors, qualityGlyph, selectedMoveVerdict, pieceMoveVerdict } from './verdict.js';
 import { createPageRouter } from './routes.js';
 import { createLearningUI } from './learning-ui.js';
@@ -279,7 +280,7 @@ function setGame(game, { demo = false, analyze = true,remember=true } = {}) {
   state.cache.set(game.pgn+state.mode,state.evaluations);
   $('analysis-error').hidden = true;
   $('demo-badge').hidden = !demo;
-  $('workspace-title').textContent = demo ? 'The Opera Game' : `${game.white?.username || parsed.headers.White || 'White'} vs ${game.black?.username || parsed.headers.Black || 'Black'}`;
+  $('workspace-title').textContent = demo ? 'The Opera Game' : `${reviewPlayerName(game.white?.username||parsed.headers.White,'white')} vs ${reviewPlayerName(game.black?.username||parsed.headers.Black,'black')}`;
   const { headers } = parsed;
   $('game-subtitle').textContent = demo ? 'Sample game · The Opera Game · Paris, 1858' : `${game.time_class ? game.time_class[0].toUpperCase() + game.time_class.slice(1) + ' · ' : ''}${headers.Event || 'Imported game'}${game.end_time ? ' · ' + new Date(game.end_time * 1000).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : ''}`;
   $('game-result').textContent = (headers.Result || '*').replaceAll('-', '–');
@@ -311,7 +312,7 @@ function updatePlayers() {
   const bottom = state.flipped ? 'black' : 'white';
   for (const [position, color] of [['top', top], ['bottom', bottom]]) {
     const player = state.selected[color];
-    const name = player?.username || headers[color === 'white' ? 'White' : 'Black'] || (color === 'white' ? 'White' : 'Black');
+    const name = reviewPlayerName(player?.username||headers[color==='white'?'White':'Black'],color);
     $(`${position}-player`).textContent = name;
     $(`${position}-player-detail`).textContent = `${player?.rating ? player.rating + ' · ' : ''}${color[0].toUpperCase() + color.slice(1)} pieces`;
     $(`${position}-avatar`).textContent = color === 'white' ? '♔' : '♚';
@@ -394,12 +395,7 @@ function renderBoard() {
   }
   if(!autoplay.active){playbackButton.textContent=coachDemo.active?(view.playing?'Pause demonstration':'Play demonstration'):'Play moves';playbackButton.setAttribute('aria-pressed',String(Boolean(coachDemo.active&&view.playing)));}
   renderMoveStrip();
-  const percent = evaluation ? 50 + 45 * Math.tanh(evaluation.cp / 450) : 50;
-  $('eval-fill').style.width = `${percent}%`;
-  $('eval-fill').style.height = '100%';
-  $('bar-score').textContent = formatEvaluation(evaluation);
-  document.querySelector('.evaluation-bar').setAttribute('aria-label',`Position evaluation from White’s perspective: ${formatEvaluation(evaluation)}`);
-  document.querySelector('.evaluation-bar').classList.toggle('awaiting-evaluation',!evaluation);
+  paintEvaluationBar({bar:document.querySelector('.evaluation-bar'),fill:$('eval-fill'),label:$('bar-score')},evaluation,formatEvaluation(evaluation));
   updatePlayers();
 }
 
@@ -456,6 +452,7 @@ function render() {
     $('analysis-status').textContent=inline.busy?'Analysing this position · depth 18…':depthReady(score,18)?'Position analysed':score?'Preliminary · deepen in Variation tools':'Move a piece to explore';
     $('analysis-percent').textContent=score?.depth?`Depth ${score.depth}`:'';
   }
+  $('analysis-status').title=$('analysis-status').textContent.trim();
   $('analyze-label').textContent = state.running ? 'Pause review' : analyzed === total ? 'Review complete' : searched === total ? 'Deepen remaining' : searched ? 'Resume review' : 'Review this game';
   $('analyze-button').disabled = coachDemo.active || inline.active || analyzed === total && !state.running;
   $('analysis-speed').disabled = coachDemo.active || inline.active;
@@ -585,7 +582,7 @@ function goTo(ply,{automatic=false}={}) {
   render();playSound(navigationSoundMove(state.parsed.moves,previous,state.ply),{eventId:'review-'+(++navigationAudio)});
   saveReviewPosition();
   const selectedCell=document.querySelector(`.move-cell[data-ply="${state.ply}"]`);
-  if (state.tab === 'moves'&&selectedCell?.getClientRects().length) selectedCell.scrollIntoView({ block:'nearest', behavior:'instant' });
+  if (state.tab === 'moves'&&selectedCell?.getClientRects().length) keepMoveInList(selectedCell,$('move-list'));
   boardCoach.reveal({playback:true});
   if(restart||demoRestart) startAnalysis();
   if(boardCoach.opened&&!automatic)inspectSelectedMove();

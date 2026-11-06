@@ -47,6 +47,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     $('explore-evaluation').hidden=!$('play-show-evaluation').checked;
     $('play-evaluation-perspective').hidden=!$('play-show-evaluation').checked;
     $('explore-evaluation').textContent=result?formatEvaluation(result):busy?'Thinking…':'—';
+    $('explore-evaluation').dataset.pending=String(!result&&busy);
     $('explore-best').hidden=!hintRequested;
     $('explore-best').textContent=hintRequested?(result?`Suggested move: ${uciToSan(variation.fen,result.best)} · Depth ${result.depth}`:'Finding a suggestion…'):'';
     $('play-hint').disabled=busy||variation.engineTurn||Boolean(variation.ending);

@@ -416,6 +416,34 @@ body[data-page] .learning-tools .learning-disclosure { padding:0; border:0; bord
 body[data-page] .learning-tools summary { min-height:48px; padding:12px 0; font-size:16px; }
 body[data-page] .learning-tools small { color:var(--ui-muted); font-size:14px; }
 body[data-page] #game-result,body[data-page] #analysis-percent,body[data-page] .analysis-status { font-size:14px; }
+
+/* Fixed evaluation geometry: only the fill is animated, on the compositor.
+   Scores, mate labels, engine status and verdicts cannot resize this workspace. */
+body[data-page="analysis"] { overflow-anchor:none; }
+body[data-page] :is(.workspace,.focus-dialog) .board-area { grid-template-rows:20px auto; }
+body[data-page] .board-area .evaluation-bar { box-sizing:border-box; position:relative; width:100%; height:20px; min-height:20px; max-height:20px; min-width:0; overflow:hidden; contain:size layout paint; }
+body[data-page] .board-area .evaluation-bar #eval-fill { position:absolute; inset:0; width:100%; height:100%; transform:scaleX(.5); transform-origin:left center; transition:transform 160ms ease-out; }
+body[data-page] .board-area .evaluation-bar #bar-score { position:absolute; inset:0 auto 0 6px; display:flex; align-items:center; height:100%; margin:0; padding:0 3px; transform:none; writing-mode:horizontal-tb; white-space:nowrap; font:650 13px/18px 'DM Sans',sans-serif; font-variant-numeric:tabular-nums; }
+body[data-page] .board-card>.engine-progress { box-sizing:border-box; display:grid; grid-template-rows:22px 3px; gap:5px; height:36px; min-height:36px; max-height:36px; width:100%; margin:0; padding:3px 0; border:0; overflow:hidden; }
+body[data-page] .board-card>.engine-progress .engine-progress-label { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; height:22px; margin:0; min-width:0; line-height:22px; }
+body[data-page] .board-card>.engine-progress :is(#analysis-status,#analysis-percent) { display:block; min-width:0; height:22px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:22px; }
+body[data-page] .board-card>.engine-progress .progress-track { height:3px; }
+body[data-page] .analysis-coach-launch { box-sizing:border-box; height:56px; min-height:56px; max-height:56px; flex-shrink:0; }
+body[data-page] .coach-launch-copy { flex-wrap:nowrap; overflow:hidden; white-space:nowrap; }
+body[data-page] .coach-launch-copy>strong { overflow:hidden; text-overflow:ellipsis; }
+body[data-page] #coach-launch-move { flex-shrink:0; max-width:48%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+body[data-page] .explore-score { box-sizing:border-box; height:68px; min-height:68px; max-height:68px; padding-block:10px; overflow:hidden; }
+body[data-page] .explore-score>strong { flex:0 0 88px; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:24px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+body[data-page] .explore-score>strong[data-pending="true"] { font-size:16px; }
+body[data-page] .explore-score :is(#explore-turn,#explore-best) { display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; line-height:20px; }
+body[data-page] .explore-score #explore-best { margin-top:4px; }
+
+/* The product name is the entire wordmark; no image tile or logo container. */
+body[data-page] .brand.brand-wordmark { width:auto; height:44px; min-height:44px; min-width:0; margin:0; padding:0 4px; border:0; border-radius:0; background:transparent; box-shadow:none; color:var(--ui-header-text); font:800 24px/1 'Manrope',sans-serif; letter-spacing:1.2px; white-space:nowrap; }
+body[data-page] .footer-brand.footer-wordmark { display:inline; width:auto; margin-right:8px; padding:0; border-radius:0; color:inherit; background:transparent; font:800 16px/1.5 'Manrope',sans-serif; letter-spacing:1px; }
+@media(max-width:860px){body[data-page] .brand.brand-wordmark { font-size:22px; }}
+@media(max-width:380px){body[data-page] .brand.brand-wordmark { font-size:20px; }}
+@media(prefers-reduced-motion:reduce){body[data-page] .board-area .evaluation-bar #eval-fill { transition:none; }}
 body[data-page] .coach-lesson>span { font-size:14px; letter-spacing:0; }
 body[data-page] .collection-details { margin-top:20px; }
 body[data-page] .collection-details>summary { min-height:48px; padding:12px 0; font-size:16px; cursor:pointer; }
