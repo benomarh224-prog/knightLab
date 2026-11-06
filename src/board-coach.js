@@ -11,8 +11,11 @@ export function createBoardCoach({showBoard,navigate,onInspect=()=>{},doc=docume
   const board=doc.querySelector('.board-card'),sidePanel=doc.querySelector('.review-panel'),desktop=win.matchMedia('(min-width:861px)');
   const triggers=['board-coach-toggle','board-coach','coach-tab','mobile-coach-tab'].map(get);
   const launcher=doc.createElement('button');launcher.id='analysis-coach-open';launcher.type='button';launcher.className='analysis-coach-launch';
-  launcher.innerHTML='<span class="coach-launch-copy"><strong id="coach-launch-verdict">Move coach</strong><span id="coach-launch-move"></span></span><span class="coach-launch-action">Coach <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></span>';
   launcher.setAttribute('aria-haspopup','dialog');launcher.setAttribute('aria-controls',card.id);launcher.setAttribute('aria-expanded','false');
+  const summary=doc.createElement('section');summary.id='analysis-coach-summary';summary.className='analysis-coach-summary';summary.setAttribute('aria-label','Move coach');
+  summary.innerHTML='<header><strong id="analysis-summary-verdict">Your move coach</strong><span id="analysis-summary-move"></span></header><p id="analysis-summary-text" aria-live="polite" aria-atomic="true">Choose a move to begin.</p><div class="analysis-summary-actions"><button id="analysis-summary-show" type="button" disabled>Show me</button></div>';
+  launcher.className='analysis-coach-launch analysis-coach-details';launcher.textContent='Details';summary.querySelector('.analysis-summary-actions').append(launcher);
+  summary.querySelector('#analysis-summary-show').onclick=()=>get('coach-show-me').click();
   const players=doc.createElement('div');players.className='board-players';
   get('board-top').append(get('line-toolbar'),players);
   doc.querySelector('.board-area').after(board.querySelector('.board-controls'));
@@ -48,12 +51,15 @@ export function createBoardCoach({showBoard,navigate,onInspect=()=>{},doc=docume
   }
   function position(){
     close();
-    if(desktop.matches&&!board.closest('.focus-dialog'))sidePanel.prepend(launcher);else board.querySelector('.board-area').before(launcher);
+    if(desktop.matches&&!board.closest('.focus-dialog'))sidePanel.prepend(summary);else board.prepend(summary);
   }
-  function update(){
-    get('coach-launch-verdict').textContent=card.dataset.reviewState==='ready'?get('insight-title').textContent:'Move coach';
-    get('coach-launch-move').textContent=get('insight-move').textContent;
-    launcher.setAttribute('aria-label',`${get('coach-launch-verdict').textContent}${get('insight-move').textContent?' · '+get('insight-move').textContent:''}. Open floating coach`);
+  function update(report={}){
+    const verdict=card.dataset.reviewState==='ready'?get('insight-title').textContent:'Your move coach',move=get('insight-move').textContent;
+    get('analysis-summary-verdict').textContent=verdict;get('analysis-summary-move').textContent=move;
+    const text=report.teaching?.reason||report.brief||report.summary||get('coach-brief').textContent;
+    const message=get('analysis-summary-text');if(message.textContent!==text)message.textContent=text;
+    message.title=text;get('analysis-summary-show').disabled=get('coach-show-me').disabled;
+    launcher.setAttribute('aria-label',`${verdict}${move?' · '+move:''}. Full coach details`);
   }
   for(const trigger of [launcher,...triggers])trigger.onclick=open;
   closeButton.onclick=()=>close(true);

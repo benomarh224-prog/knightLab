@@ -71,24 +71,18 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
     if (selected && square!==selected && line.legal(selected).some(move=>move.to===square)) attempt(selected,square);
     else select(selected===square?null:square);
   }
-  function jump(cursor) {
+  function jump(cursor,{stayInVariation=false}={}) {
     if (!line) return;
-    // Previous follows the shared game history, even across a variation's root.
-    // No separate "return to game" mode or button is needed.
-    if(cursor<0||!line.entries.length&&cursor>0){
-      const source=context(),base=line.origin.moves.length;
-      if(source.parsed.fens[base]===line.rootFen){
-        if(cursor<0&&base){
-          // Extend the same continuation backwards rather than throwing it
-          // away. Next can now replay the learner's branch after going back.
-          const previous=line,replacement=new AnalysisLine(source.parsed.fens[0],source.evaluations[0]||null);
-          for(const move of [...source.parsed.moves.slice(0,base),...previous.entries])replacement.play(move.from,move.to,move.promotion);
-          replacement.scores=[...Array.from({length:base},(_,i)=>source.evaluations[i]||null),...previous.scores];
-          cancel();line=replacement;line.jump(Math.max(0,base+cursor));selected=null;promotion=null;evaluate();
-          playSound(navigationSoundMove(source.parsed.moves,base,Math.max(0,base+cursor)),{eventId:'variation-'+(++navigationAudio)});return;
-        }
-        const restart=exit(false);navigate(base+cursor);if(restart)resume();return;
-      }
+    // Back to the root resumes the actual game. A studied branch must never
+    // replace the game's continuation when the learner presses Next again.
+    if(!stayInVariation&&(cursor<=0||!line.entries.length&&cursor>0)){
+      const source=context(),prefix=line.origin.moves.length;
+      // A coach takeover may start inside an alternative, off the game path.
+      const base=source.parsed.fens[prefix]===line.rootFen?prefix:source.ply;
+      const sound=cursor===0?navigationSoundMove(line.entries,line.cursor,0):null;
+      const restart=exit(false);navigate(base+cursor);
+      if(sound)playSound(sound,{eventId:'variation-'+(++navigationAudio)});
+      if(restart)resume();return;
     }
     const previous=line.cursor;cancel();line.jump(cursor);selected=null;promotion=null;evaluate();playSound(navigationSoundMove(line.entries,previous,line.cursor),{eventId:'variation-'+(++navigationAudio)});
   }
@@ -122,7 +116,7 @@ export function createInlineAnalysis({context,pause,resume,onChange,playSound,na
     line=replacement;selected=null;promotion=null;message='Coach continuation · use the move buttons to step through it. Your game is saved.';
     $('line-controls').open=analyze;if(analyze)evaluate();else onChange();return true;
   }
-  $('line-undo').onclick=()=>{if(line)jump(line.cursor-1);};
+  $('line-undo').onclick=()=>{if(line)jump(line.cursor-1,{stayInVariation:true});};
   $('line-reset').onclick=()=>{if(line){cancel();line.reset();selected=null;promotion=null;evaluate();}};
   $('line-reply').onclick=()=>{const source=context(),best=line?line.score?.best:source.evaluations[source.ply]?.best;if(best&&!busy)tryBest(best);};
   $('line-retry').onclick=()=>evaluate();

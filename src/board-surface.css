@@ -1,29 +1,30 @@
 /* One board theme for analysis, lessons, training, play, and future board views. */
-:root { --board-light:#EEEED2; --board-dark:#769656; --board-edge:#52713C; }
+:root { --board-light:#D6DCE3; --board-dark:#7C8B9D; --board-edge:#465568; }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square {
   background-color:var(--board-light); background-image:none; border:0; border-radius:0; padding:0;
 }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.dark { background-color:var(--board-dark); }
-body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.last { background-color:#F5F680; }
-body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.dark.last { background-color:#B8CA57; }
+body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.last { background-color:#B7C9D8; }
+body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.dark.last { background-color:#8DA8BD; }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square .piece {
   position:static; inset:auto; display:block; flex:none; width:100%; height:100%; max-width:100%; max-height:100%;
   margin:auto; object-fit:contain; pointer-events:none; user-select:none; -webkit-user-select:none; filter:drop-shadow(0 1px 1px #10271c29);
 }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .piece[data-piece="p"] { width:96%; height:96%; }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square :is(.rank,.file) {
-  color:#4D6243; font:600 clamp(9px,1vw,11px)/1 'DM Sans',sans-serif; z-index:2; pointer-events:none;
+  color:#435267; font:600 clamp(9px,1vw,11px)/1 'DM Sans',sans-serif; z-index:2; pointer-events:none;
 }
-body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.dark :is(.rank,.file) { color:#F5F2E4; }
+body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.dark :is(.rank,.file) { color:#F8FAFC; }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .rank { top:3px; left:3px; }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .file { bottom:3px; right:3px; }
-body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square:is(.piece-selected,.lesson-selected) { box-shadow:inset 0 0 0 3px #315F40; background-color:#BDCAA0; }
+body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square:is(.piece-selected,.lesson-selected) { box-shadow:inset 0 0 0 3px #334F70; background-color:#AEC4D8; }
+body[data-page] .lesson-board .square.lesson-hint-square { box-shadow:inset 0 0 0 3px #436C94; }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square:is(.legal-target,.lesson-target)::after {
-  content:''; position:absolute; inset:40%; width:auto; height:auto; border:0; border-radius:50%; background:#25483155; z-index:3; pointer-events:none;
+  content:''; position:absolute; inset:40%; width:auto; height:auto; border:0; border-radius:50%; background:#253B5355; z-index:3; pointer-events:none;
 }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square:is(.legal-target,.lesson-target):has(.piece)::after,
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.capture-target::after {
-  content:''; position:absolute; inset:6%; width:auto; height:auto; border:3px solid #31553DA6; border-radius:50%; background:transparent; z-index:3; pointer-events:none;
+  content:''; position:absolute; inset:6%; width:auto; height:auto; border:3px solid #334F70B3; border-radius:50%; background:transparent; z-index:3; pointer-events:none;
 }
 body[data-page] :is(#board,.chess-board,.lesson-board,.preview-board) .square.in-check {
   background-image:radial-gradient(ellipse at center,#C65F4B80 0%,#C65F4B33 55%,transparent 76%); box-shadow:inset 0 0 0 2px #A64835AA;

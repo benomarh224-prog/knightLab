@@ -133,6 +133,7 @@ const autoplay=createAutoplay({read:()=>inline?.active?{source:inline.line,curso
   next:()=>stepMove(1,{automatic:true}),onState:active=>{
     playbackButton.textContent=active?'Pause playback':'Play moves';playbackButton.setAttribute('aria-pressed',String(active));
     const toggle=$('board-actions-toggle');toggle.firstElementChild.textContent=active?'Pause':'More';
+    toggle.dataset.playing=String(active);
     toggle.setAttribute('aria-label',active?'Pause playback':'More board options');toggle.title=active?'Pause playback':'More board options';
     if(active){toggle.removeAttribute('aria-expanded');toggle.removeAttribute('aria-controls');}
     else{toggle.setAttribute('aria-expanded',String(!$('board-actions-panel').hidden));toggle.setAttribute('aria-controls','board-actions-panel');}
@@ -158,7 +159,7 @@ const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove,onInspect:inspectSelectedMove});
 coachDemo=createCoachDemo({onChange:render,onMove:playSound});
 const demoBar=$('coach-demo');
-function positionCoachDemo(){if(!compactLayout.matches&&!boardCard.closest('dialog[open]'))document.querySelector('.review-panel').prepend(demoBar);else document.querySelector('.board-area').before(demoBar);}
+function positionCoachDemo(){if(!compactLayout.matches&&!boardCard.closest('dialog[open]'))document.querySelector('.review-panel').prepend(demoBar);else boardCard.prepend(demoBar);}
 positionCoachDemo();compactLayout.addEventListener('change',positionCoachDemo);
 $('coach-extra-details').append($('coach-note'));
 $('coach-demo-toggle').onclick=()=>coachDemo.toggle();
@@ -201,6 +202,17 @@ function closeBoardActions(restoreFocus=false) {
   boardMenu.close(restoreFocus);
 }
 const boardMenu=createViewportMenu({trigger:actionsToggle,panel:actionsPanel});
+const boardTools=actionsToggle.closest('.board-actions'),viewOptions=document.createElement('div');
+viewOptions.className='analysis-view-options';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Review views');
+viewOptions.append($('mobile-board-tab'),$('mobile-moves-tab'),$('mobile-overview-tab'));actionsPanel.prepend(viewOptions);
+function positionAnalysisTools(){
+  const secondary=compactLayout.matches&&state.mobileView!=='board';
+  $('analysis-view-toolbar').hidden=!secondary;
+  $('analysis-view-title').textContent=state.mobileView==='overview'?'Game summary':'Game moves';
+  const host=secondary?$('analysis-view-actions'):boardCard.querySelector('.board-controls');
+  if(boardTools.parentElement!==host)host.append(boardTools);
+}
+compactLayout.addEventListener('change',positionAnalysisTools);positionAnalysisTools();
 actionsToggle.onclick=()=>{
   if(autoplay.active){autoplay.stop();return;}
   boardMenu.toggle();
@@ -228,7 +240,7 @@ $('focus-mode').onclick = () => {
 $('exit-focus').onclick = () => $('focus-dialog').close();
 $('focus-dialog').addEventListener('close', () => {
   boardHome.after(boardCard); document.body.classList.remove('focus-active');
-  boardCoach.position(); positionOpeningCard();positionCoachDemo(); $('focus-mode').focus({ preventScroll: true });
+  boardCoach.position(); positionOpeningCard();positionCoachDemo(); $('board-actions-toggle').focus({ preventScroll: true });
 });
 let toastTimer;
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 3500); }
@@ -506,7 +518,7 @@ function renderCoach(move, before, after) {
   $('recommended-move').setAttribute('aria-label',recommendation?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
   $('recommended-move').onclick=tryRecommendation;
   $('coach-note').textContent = ready ? `${!depthReady(before,18)||!depthReady(after,18)?'Preliminary evidence. ':''}${report.rating==='Brilliant'?'Brilliant is ROQVYN’s independent sacrifice classification. ':''}Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${Math.min(before.depth,after?.terminal?before.depth:after?.depth||0)}` : ''}. ${state.inspection?'Deepening this decision to depth 20.':'Deeper review can change the recommendation.'}` : 'The coach updates as each move is reviewed.';
-  boardCoach.update();
+  boardCoach.update(report);
 }
 
 function renderChart() {
@@ -864,9 +876,10 @@ $('toggle-sound').onclick = () => {
 };
 renderSoundControl();
 $('chart').onclick = event => { const rect = $('chart').getBoundingClientRect(); goTo(Math.round(Math.max(0,Math.min(1,(event.clientX - rect.left)/rect.width)) * state.parsed.moves.length)); };
-$('move-list').onclick = event => { const button = event.target.closest('[data-ply]'); if (button) { goTo(Number(button.dataset.ply)); if (compactLayout.matches) { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); $('mobile-board-tab').focus({preventScroll:true}); } } };
+$('move-list').onclick = event => { const button = event.target.closest('[data-ply]'); if (button) { goTo(Number(button.dataset.ply)); if (compactLayout.matches) { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); boardCoach.focusLauncher(); } } };
 function selectWorkspaceView(view) {
   if(view==='coach'){boardCoach.open();return;}
+  if(view!=='board'&&$('focus-dialog').open)$('focus-dialog').close();
   if(view!=='board'&&coachDemo.active)finishCoachDemo();
   state.mobileView = view;
   positionReviewProgress();
@@ -881,10 +894,12 @@ function selectWorkspaceView(view) {
   }
   for (const name of ['board','moves','overview']) {
     $('mobile-'+name+'-tab').classList.toggle('selected', name === view);
-    $('mobile-'+name+'-tab').setAttribute('aria-selected', String(name === view));
-    $('mobile-'+name+'-tab').tabIndex = name === view ? 0 : -1;
+    $('mobile-'+name+'-tab').setAttribute('aria-pressed', String(name === view));
+    $('mobile-'+name+'-tab').tabIndex = 0;
   }
+  $('mobile-board-tab').hidden=view==='board';positionAnalysisTools();
 }
+$('analysis-return').onclick=()=>{selectWorkspaceView('board');scrollToSection(document.querySelector('.workspace'));boardCoach.focusLauncher();};
 for (const name of ['moves','overview']) $(name+'-tab').onclick = () => selectWorkspaceView(name);
 for (const name of ['board','moves','overview']) $('mobile-'+name+'-tab').onclick = () => { selectWorkspaceView(name); scrollToSection(document.querySelector('.workspace')); };
 $('review-previous').onclick = () => stepMove(-1);

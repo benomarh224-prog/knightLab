@@ -19,14 +19,14 @@ function harness(pgn='1. e4 e5 2. Nf3 Nc6 *',ply=0){
  const node=id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,disabled:false,open:false,textContent:'',classList:{toggle(){}},setAttribute(){}});return nodes.get(id);};
  globalThis.document={getElementById:node,querySelectorAll:()=>[],querySelector:()=>node('board-card')};
  const state={parsed:parseGame(pgn),evaluations:[],ply};
- const engines=[],sounds=[];let paints=0,resumes=0,pauses=0,controller;
+ const engines=[],sounds=[],navigations=[];let paints=0,resumes=0,pauses=0,controller;
  const createEngine=()=>{
   const requests=[];
   const engine={requests,destroy(){},evaluate(fen){return new Promise((resolve,reject)=>requests.push({fen,resolve,reject}));}};
   engines.push(engine);return engine;
  };
- controller=createInlineAnalysis({context:()=>state,pause:()=>{pauses++;return true;},resume:()=>resumes++,onChange:()=>{paints++;controller.paint();},playSound:move=>sounds.push(move.san),createEngine});
- return {controller,state,nodes,engines,sounds,get paints(){return paints;},get resumes(){return resumes;},get pauses(){return pauses;}};
+ controller=createInlineAnalysis({context:()=>state,pause:()=>{pauses++;return true;},resume:()=>resumes++,navigate:ply=>{state.ply=Math.max(0,Math.min(state.parsed.moves.length,ply));navigations.push(state.ply);},onChange:()=>{paints++;controller.paint();},playSound:move=>sounds.push(move.san),createEngine});
+ return {controller,state,nodes,engines,sounds,navigations,get paints(){return paints;},get resumes(){return resumes;},get pauses(){return pauses;}};
 }
 
 test('the review board accepts direct selection and both sides can move during engine search',()=>{
@@ -55,7 +55,7 @@ test('engine replies and coach alternatives use their own exact positions, inclu
  assert.equal(c.tryBest('g1f3'),true);assert.equal(c.line.rootFen,original);assert.equal(c.line.last.san,'Nf3');
  assert.equal(c.tryBest('f1c4',{replaceLast:true}),true);assert.deepEqual(c.line.entries.map(m=>m.san),['Bc4']);
  const snapshot=c.line.snapshot();assert.equal(c.tryBest('e7e5',{replaceLast:true}),false);assert.equal(c.line.matches(snapshot),true);
- c.jump(0);assert.equal(c.tryBest('d2d4',{replaceLast:true}),true);assert.equal(c.line.last.san,'d4');
+ c.jump(0,{stayInVariation:true});assert.equal(c.tryBest('d2d4',{replaceLast:true}),true);assert.equal(c.line.last.san,'d4');
  c.exit();assert.equal(c.tryBest('c7c5',{replaceLast:true}),true);
  assert.equal(c.line.rootFen,h.state.parsed.fens[1]);assert.equal(c.line.last.san,'c5');assert.equal(h.state.ply,2);
  c.exit();
@@ -105,11 +105,30 @@ test('a variation keeps the preceding game moves in the shared playback timeline
  c.exit();
 });
 
-test('Previous crosses a branch root and Next replays that same branch without a return-mode action',()=>{
- const h=harness(undefined,2),c=h.controller,original=JSON.stringify(h.state.parsed);c.click('d2');c.click('d4');const variation=c.line.fen;
- c.jump(0);c.jump(-1);assert.equal(c.active,true);assert.equal(c.line.fen,h.state.parsed.fens[1]);
- assert.deepEqual(c.line.entries.map(m=>m.san),['e4','e5','d4']);
- c.jump(3);assert.equal(c.line.fen,variation);assert.equal(JSON.stringify(h.state.parsed),original);c.exit();
+test('Back to the branch root exits exploration and restores the original next move',()=>{
+ const h=harness(undefined,2),c=h.controller,original=JSON.stringify(h.state.parsed),scores=h.state.evaluations;
+ c.click('d2');c.click('d4');c.click('d7');c.click('d5');c.jump(1);assert.equal(c.active,true);assert.equal(c.line.last.san,'d4');
+ c.jump(0);assert.equal(c.active,false);assert.equal(h.state.ply,2);assert.deepEqual(h.navigations,[2]);assert.equal(h.resumes,1);
+ assert.equal(h.state.parsed.moves[h.state.ply].san,'Nf3');assert.equal(JSON.stringify(h.state.parsed),original);assert.equal(h.state.evaluations,scores);
+ c.click('g1');c.click('f3');assert.deepEqual(c.line.entries.map(m=>m.san),['Nf3']);c.exit();
+});
+
+test('Back after selection and First position leave the branch instead of stitching it into game history',()=>{
+ const h=harness(undefined,2),c=h.controller;c.click('d2');c.jump(-1);assert.equal(c.active,false);assert.equal(h.state.ply,1);
+ h.state.ply=2;c.click('d2');c.click('d4');c.jump(-2);assert.equal(c.active,false);assert.equal(h.state.ply,0);assert.deepEqual(h.state.parsed.moves.map(m=>m.san),['e4','e5','Nf3','Nc6']);
+});
+
+test('Back restores custom-FEN game roots and cancels delayed branch analysis',async()=>{
+ const h=harness('[SetUp "1"]\n[FEN "7k/8/8/8/8/8/P7/7K b - - 0 25"]\n\n25... Kg8 26. a4 *',1),c=h.controller;
+ c.click('h1');c.click('g1');const request=h.engines[0].requests[0];c.jump(0);assert.equal(c.active,false);assert.equal(h.state.ply,1);assert.equal(h.state.parsed.moves[h.state.ply].san,'a4');
+ request.resolve({cp:999,depth:20,best:'a2a4'});await tick();assert.deepEqual(h.state.evaluations,[]);assert.equal(c.active,false);
+});
+
+test('Back from a coach continuation inside an alternative returns to the original review anchor',()=>{
+ const h=harness(undefined,2),c=h.controller;c.click('d2');c.click('d4');const root=c.line.fen;
+ const alternative=parseGame(`[SetUp "1"]\n[FEN "${root}"]\n\n2... d5 *`).moves;
+ assert.equal(c.playback(root,alternative,1,{analyze:false}),true);assert.notEqual(c.line.rootFen,h.state.parsed.fens[c.line.origin.moves.length]);
+ c.jump(0);assert.equal(c.active,false);assert.equal(h.state.ply,2);assert.equal(h.state.parsed.moves[h.state.ply].san,'Nf3');
 });
 
 test('navigation scores retain each player perspective and a custom-FEN root',()=>{
