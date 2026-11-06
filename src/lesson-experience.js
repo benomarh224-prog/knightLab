@@ -10,5 +10,5 @@ export function solutionRecap(player){
   const principle=activity.data.takeaway||activity.data.recap||player.lesson.takeaway||activity.data.explanation;
   const fact=session.note||'';
   const text=[fact,principle].filter((value,index,all)=>value&&all.indexOf(value)===index).join(' ');
-  return text?{title:'What you learned',text}:null;
+  return text?{title:'What you learned',text,shortText:principle||fact}:null;
 }

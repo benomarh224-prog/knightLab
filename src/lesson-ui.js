@@ -24,6 +24,7 @@ import { createGuidedExample } from './lesson-demonstration.js';
 import { createLessonCoach } from './lesson-coach.js';
 import {createLessonAnalysis} from './lesson-analysis.js';
 import {solutionRecap} from './lesson-experience.js';
+import {lessonCoachSummary,paintLessonSummary} from './lesson-coach-summary.js';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -203,8 +204,10 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     $('lesson-after-board').hidden=stage!=='try'||!next.enabled||!['next-lesson','question','activity','stage'].includes(next.action);
     $('lesson-after-board').textContent=next.label;
     $('lesson-course-practice').hidden=!player.complete||globalIndex!==lessons.length-1||!coursePractice(course);
-    dock.measure();
+    const summary=lessonCoachSummary({guidance:activity?lessonGuidance(player,{session,busy:motion.active}):null,hint,feedback:message,recap,alternative:Boolean(alternative)});
+    paintLessonSummary({summary,next});
     lessonViewport.arrange(stage);
+    dock.measure();
     coach.update({lessonKey:course.id+':'+lesson.id+':'+player.activityIndex,stage,title:study.coach||lesson.title,instruction:player.plan.concepts[player.conceptIndex]?.text||$('lesson-instruction').textContent,hint,feedback:message||hint?.text});
     updateProgress();
     checkmateDialog.sync();
@@ -274,7 +277,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-previous').onclick=()=>jumpStudy(player.session.cursor-1);$('lesson-next').onclick=()=>jumpStudy(player.session.cursor+1);
   $('lesson-replay').onclick=()=>{player.stopExploring();player.reviewing=!player.reviewing;player.save();clearTurn();render();};
   $('lesson-flip').onclick=()=>{motion.cancel();player.flipped=!player.flipped;player.save();render();};
-  $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();if(hint)coach.open($('lesson-hint'));};
+  $('lesson-hint').onclick=()=>{hint=player.requestHint();message=hint?.text||'';render();};
   $('lesson-alternative-play').onclick=()=>{
     if(!alternative)return;const move=alternative;coach.close();clearTurn();
     if(player.startExploring({fresh:true})){player.exploreMove(move.from,move.to,move.promotion);message=`${move.san} played in free exploration. Your exercise is saved.`;render();playSound(move);focusBoard();}
@@ -310,7 +313,6 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
       alternativeAnalysis.explain(move,text=>{if(player===owner&&player.session.fen===root&&alternative===move){alternativeText=text;render();}});
     }
     render();if(result.status==='illegal')feedbackSound('incorrect');
-    if(result.status==='different')coach.open($('lesson-hint').hidden?$('lesson-coach-open'):$('lesson-hint'));
   }
   enableBoardDrag($('lesson-board'),{
     read:()=>{const session=player.exploration||player.session;return {chess:session?new Chess(session.fen):null,disabled:motion.active||!session||session.mode==='watch'||Boolean(promotion)};},

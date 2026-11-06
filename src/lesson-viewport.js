@@ -26,8 +26,14 @@ export function createLessonViewport({doc=document,viewport=window}={}){
     const tools=doc.querySelector('.lesson-options'),toolsHost=stage==='try'?get('lesson-controls'):doc.querySelector('.lesson-topline');
     if(tools&&toolsHost&&tools.parentElement!==toolsHost)toolsHost.append(tools);
     if(status.parentElement!==heading)heading.append(status,instruction);
-    if(stage==='try'){const anchor=get('lesson-solution-recap');if(footer.previousElementSibling!==anchor)anchor.after(footer);}
+    const summary=get('lesson-coach-summary'),compactPractice=stage==='try'&&!desktop.matches;
+    summary.hidden=!compactPractice;
+    if(compactPractice){
+      const owner=get('lesson-summary-navigation');if(footer.parentElement!==owner)owner.append(footer);
+      get('lesson-course-next').textContent=get('lesson-course-next').dataset.compactLabel||get('lesson-course-next').textContent;
+    }else if(stage==='try'){if(footer.previousElementSibling!==get('lesson-controls'))get('lesson-controls').after(footer);}
     else if(footer.previousSibling!==home)home.after(footer);
+    if(!compactPractice&&get('lesson-course-next').dataset.fullLabel)get('lesson-course-next').textContent=get('lesson-course-next').dataset.fullLabel;
     measure();
   }
   desktop.addEventListener('change',()=>arrange());viewport.addEventListener('resize',measure);
