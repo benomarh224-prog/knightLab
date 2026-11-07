@@ -23,3 +23,42 @@ body[data-page] :is(#lesson-page-position,#course-progress-label,#lesson-counter
 body[data-page] .review-panel>.review-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin-bottom:12px; border-color:var(--ui-border); background:var(--ui-soft); }
 body[data-page] .review-tabs button { min-height:44px; color:var(--ui-muted-secondary); font-size:14px; }
 body[data-page] .review-tabs button[aria-selected="true"] { color:var(--ui-text); background:var(--ui-surface); box-shadow:none; }
+
+/* One board surface: the three-part playback dock sits below all 64 squares.
+   Its width follows the board itself, including landscape and Focus mode. */
+body[data-page] :is(.workspace,.focus-dialog) .board-area { grid-template-rows:20px auto 48px; }
+body[data-page] :is(.workspace,.focus-dialog) .board-area>#board { border-bottom-left-radius:0; border-bottom-right-radius:0; }
+body[data-page] :is(.workspace,.focus-dialog) .board-area>.analysis-board-dock { grid-column:1; grid-row:3; display:grid; grid-template-columns:48px minmax(0,1fr) 48px; grid-template-rows:44px; align-items:center; box-sizing:border-box; width:100%; height:48px; min-height:48px; max-height:48px; gap:4px; padding:2px 6px; margin:-6px 0 0; background:var(--ui-surface); border:1px solid var(--board-edge); border-top:0; border-radius:0 0 8px 8px; }
+body[data-page] .analysis-board-dock::after { display:none; content:none; }
+body[data-page] .analysis-board-dock .move-controls { display:contents; position:static; margin:0; padding:0; border:0; box-shadow:none; }
+body[data-page] :is(.workspace,.focus-dialog) .analysis-board-dock :is(#previous-move,#next-move) { display:flex; align-items:center; justify-content:center; width:48px; min-width:48px; height:44px; min-height:44px; max-height:44px; padding:0; border:0; border-radius:6px; background:transparent; color:var(--ui-text); box-shadow:none; }
+body[data-page] :is(.workspace,.focus-dialog) .analysis-board-dock #next-move { background:var(--ui-soft); }
+body[data-page] .analysis-board-dock :is(#previous-move,#next-move)>span:not([data-icon]) { display:none; }
+body[data-page] .analysis-board-dock :is(#previous-move,#next-move) svg { width:22px; height:22px; }
+body[data-page] :is(.workspace,.focus-dialog) .analysis-board-dock #previous-move { grid-column:1; grid-row:1; }
+body[data-page] :is(.workspace,.focus-dialog) .analysis-board-dock #next-move { grid-column:3; grid-row:1; }
+body[data-page] :is(.workspace,.focus-dialog) .analysis-board-dock #move-strip { display:flex; justify-content:center; grid-column:2; grid-row:1; align-self:center; width:100%; height:44px; min-width:0; margin:0; padding:0; border:0; overflow:hidden; }
+body[data-page] .analysis-board-dock #move-strip button:not([aria-current="step"]) { display:none; }
+body[data-page] .analysis-board-dock #move-strip button[aria-current="step"] { display:block; width:100%; min-width:0; max-width:100%; height:44px; min-height:44px; padding:10px 2px; border:0; border-radius:0; background:transparent; box-shadow:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ui-text); font:600 16px/24px 'DM Sans',sans-serif; font-variant-numeric:tabular-nums; }
+body[data-page] .analysis-board-dock #move-strip button::before { content:attr(data-notation); }
+body[data-page] .analysis-board-dock #move-strip button>span,body[data-page] .analysis-board-dock #move-strip .strip-dot { display:none; }
+html[data-theme] body[data-page] .analysis-board-dock #move-strip button[aria-current="step"] { background:transparent; color:var(--ui-text); box-shadow:none; }
+body[data-page] .analysis-coach-summary { overflow:visible; }
+body[data-page] .analysis-summary-actions .board-actions { flex:none; min-width:44px; }
+body[data-page] .analysis-summary-actions #board-actions-toggle { display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:44px; min-width:44px; height:44px; min-height:44px; padding:0; border:1px solid var(--ui-control-border); border-radius:7px; background:transparent; color:var(--ui-text); }
+body[data-page] .analysis-summary-actions #board-actions-toggle>span { display:none; }
+body[data-page] .analysis-summary-actions #board-actions-toggle::after { content:'⋯'; font-size:24px; line-height:1; }
+body[data-page] .analysis-summary-actions #board-actions-toggle[data-playing="true"]::after { content:'Ⅱ'; font-size:20px; }
+body[data-page] .workspace .review-panel>.panel-heading { color:var(--ui-muted); }
+body[data-page] .workspace .review-panel>.panel-heading>span:first-child { color:var(--ui-muted); }
+body[data-page] .workspace .review-panel>.panel-heading .panel-label { display:none; }
+body[data-page] .workspace .moves-table-heading { color:var(--ui-muted); font-size:13px; line-height:20px; letter-spacing:0; text-transform:none; }
+body[data-page] :is(.workspace,.focus-dialog) #analysis-status { color:var(--ui-muted); }
+@media(max-width:860px) {
+  body[data-page] .workspace .board-card { gap:6px; }
+  body[data-page] .analysis-view-shortcuts { margin:0; }
+  body[data-page] .workspace .board-card>.engine-progress { gap:3px; height:52px; min-height:52px; max-height:52px; padding:1px 0; }
+  body[data-page] .workspace .board-card>.engine-progress .engine-progress-label { box-sizing:border-box; margin:0; padding-inline:6px; }
+  body[data-page] :is(.workspace,.focus-dialog) .board-players { box-sizing:border-box; padding-inline:6px; }
+  body[data-page] :is(.workspace,.focus-dialog) .analysis-play-tools { padding-inline:6px; }
+}

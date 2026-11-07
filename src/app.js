@@ -218,7 +218,7 @@ function positionAnalysisTools(){
   $('overview-tab').textContent='Summary & accuracy';
   $('analysis-view-toolbar').hidden=!secondary;
   $('analysis-view-title').textContent=state.mobileView==='overview'?'Game summary':'Game moves';
-  const host=secondary?$('analysis-view-actions'):boardCard.querySelector('.board-controls');
+  const host=secondary?$('analysis-view-actions'):document.querySelector('.analysis-summary-actions');
   if(boardTools.parentElement!==host)host.append(boardTools);
 }
 compactLayout.addEventListener('change',positionAnalysisTools);positionAnalysisTools();
