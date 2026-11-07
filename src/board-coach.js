@@ -18,7 +18,7 @@ export function createBoardCoach({showBoard,navigate,onInspect=()=>{},doc=docume
   summary.querySelector('#analysis-summary-show').onclick=()=>get('coach-show-me').click();
   const players=doc.createElement('div');players.className='board-players';
   get('board-top').append(get('line-toolbar'),players);
-  doc.querySelector('.board-area').after(board.querySelector('.board-controls'));
+  doc.querySelector('.board-area').before(board.querySelector('.board-controls'));
   board.querySelector('.board-header-actions').append(board.querySelector('.board-actions'));
   players.append(...board.querySelectorAll(':scope > .player-row'));
   card.insertBefore(panel,get('coach-playback'));
