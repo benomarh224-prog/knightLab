@@ -1,0 +1,25 @@
+/* Visible review destinations; compact controls retain a 44px touch surface. */
+body[data-page] .analysis-view-shortcuts { display:flex; align-items:center; gap:8px; margin:6px 0 10px; }
+body[data-page] .analysis-view-shortcuts button { flex:1; min-width:0; min-height:44px; padding:8px 12px; background:var(--ui-surface); color:var(--ui-text); border:1px solid var(--ui-control-border); border-radius:var(--ui-radius); font:600 14px/20px 'DM Sans',sans-serif; }
+body[data-page] .analysis-view-shortcuts button:last-child { flex:1.7; }
+body[data-page] .analysis-view-shortcuts :is(#mobile-moves-tab,#mobile-overview-tab) { display:flex; align-items:center; justify-content:center; width:auto; min-width:0; height:44px; min-height:44px; padding:8px 12px; border-radius:var(--ui-radius); font:600 14px/20px 'DM Sans',sans-serif; white-space:nowrap; }
+body[data-page] .engine-progress-label { min-height:44px; gap:8px; align-items:center; }
+body[data-page] #analysis-status { min-width:0; font-size:14px; line-height:20px; }
+body[data-page] #analysis-percent { white-space:nowrap; font-size:14px; font-variant-numeric:tabular-nums; }
+body[data-page] :is(#analysis-retry,#analysis-error-retry) { min-width:60px; min-height:44px; padding:8px 12px; color:var(--ui-text); background:var(--ui-soft); border:1px solid var(--ui-control-border); border-radius:var(--ui-radius); font:600 14px/20px 'DM Sans',sans-serif; }
+body[data-page] #analysis-error p { margin:0 0 12px; font-size:16px; line-height:1.5; }
+body[data-page] :is(#analysis-retry,#analysis-error-retry,.analysis-view-shortcuts button):focus-visible { outline:3px solid var(--ui-link); outline-offset:2px; }
+/* The status row has the same footprint while loading, reviewing, or retrying. */
+body[data-page] .board-card>.engine-progress { grid-template-rows:44px 3px; height:58px; min-height:58px; max-height:58px; }
+body[data-page] .board-card>.engine-progress .engine-progress-label { grid-template-columns:minmax(0,1fr) auto auto; height:44px; min-height:44px; }
+body[data-page] .board-card>.engine-progress #analysis-retry { grid-column:3; grid-row:1; }
+/* The outline is moved into a body-level dialog on phones. Its labels must not
+   inherit the old compact course carousel's hidden final span. */
+body[data-page] .course-drawer .course-lessons button>.lesson-list-name { display:block; flex:1; min-width:0; margin-left:0; }
+body[data-page] .course-drawer .lesson-list-name strong { color:var(--ui-text); font-size:16px; line-height:1.4; }
+body[data-page] .course-drawer .lesson-list-name small { display:block; margin-top:4px; color:var(--ui-muted); font-size:14px; line-height:1.4; }
+body[data-page] :is(#lesson-page-position,#course-progress-label,#lesson-counter) { font-variant-numeric:tabular-nums; }
+:root { --ui-disabled-text:#59616b; }
+body[data-page] .review-panel>.review-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin-bottom:12px; border-color:var(--ui-border); background:var(--ui-soft); }
+body[data-page] .review-tabs button { min-height:44px; color:var(--ui-muted-secondary); font-size:14px; }
+body[data-page] .review-tabs button[aria-selected="true"] { color:var(--ui-text); background:var(--ui-surface); box-shadow:none; }

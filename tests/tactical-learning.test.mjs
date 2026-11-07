@@ -10,7 +10,8 @@ test('the workbook course has 144 unique diagram positions in three complete lev
   assert.equal(TACTICAL_LESSONS.length,144);assert.equal(new Set(TACTICAL_LESSONS.map(lesson=>lesson.id)).size,144);
   for(const level of TACTICAL_LEVELS){
     const lessons=courseLessons(COURSES.tactics,level);assert.equal(lessons.length,48);
-    assert.deepEqual(lessons.map(lesson=>lesson.number),Array.from({length:48},(_,i)=>i+1));
+    assert.deepEqual(lessons.map(lesson=>lesson.number).sort((a,b)=>a-b),Array.from({length:48},(_,i)=>i+1));
+    assert.deepEqual(TACTICAL_LESSONS.filter(lesson=>lesson.level===level).map(lesson=>lesson.number),Array.from({length:48},(_,i)=>i+1));
   }
 });
 test('all 144 source diagrams and selected solutions are legal and have grounded move explanations',()=>{

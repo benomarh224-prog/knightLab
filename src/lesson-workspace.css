@@ -103,3 +103,18 @@ body[data-page] .lesson-player #lesson-controls .lesson-options>summary::after {
 body[data-layout="lesson"][data-lesson-focus="true"] #lesson-coach-inline { display:none; }
 body[data-layout="lesson"][data-lesson-focus="true"] #lesson-coach-open { display:inline-flex; }
 @media(prefers-reduced-motion:reduce){body[data-page] .lesson-coach-dialog { scroll-behavior:auto; }}
+body[data-page] .lesson-player #lesson-controls #lesson-solution-open { grid-column:3; grid-row:1; width:88px; min-width:88px; height:44px; padding:8px; font-size:14px; color:var(--ui-text); background:var(--ui-soft); border-color:var(--ui-control-border); }
+body[data-page] .lesson-player #lesson-controls[data-practice="false"] { grid-template-columns:44px minmax(0,1fr) 44px 44px 44px; }
+body[data-page] .lesson-player #lesson-controls #lesson-current-move { grid-column:2; grid-row:1; }
+body[data-page] .lesson-player #lesson-controls[data-practice="false"] #lesson-review-play { grid-column:3; grid-row:1; min-width:44px; min-height:44px; padding:0; color:var(--ui-text); background:var(--ui-soft); border-color:var(--ui-control-border); }
+body[data-page] .lesson-player #lesson-controls[data-practice="false"] #lesson-next { grid-column:4; grid-row:1; }
+body[data-page] .lesson-player #lesson-controls[data-practice="false"] .lesson-options { grid-column:5; grid-row:1; }
+body[data-page] #lesson-line-evidence { padding-block:12px; border-top:1px solid var(--ui-border); }
+body[data-page] #lesson-line-evidence h3 { margin:0 0 10px; color:var(--ui-text); font-size:18px; }
+body[data-page] #lesson-line-evidence p { margin:8px 0; color:var(--ui-text-secondary); font-size:16px; line-height:1.5; }
+body[data-page] #lesson-line-evidence #lesson-evidence-source { color:var(--ui-muted); font-size:14px; }
+body[data-page] .lesson-evidence-line { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+body[data-page] .lesson-evidence-line button { min-height:44px; min-width:44px; padding:8px; color:var(--ui-text); background:var(--ui-soft); border:1px solid var(--ui-control-border); border-radius:6px; font-size:14px; }
+body[data-page] .lesson-evidence-line button[aria-current="step"] { color:var(--ui-on-action); background:var(--ui-action); }
+body[data-page] #lesson-alternative-check { min-height:44px; font-size:16px; }
+body[data-page] .lesson-unit-heading { margin:20px 0 8px; color:var(--ui-text); font-size:14px; font-weight:600; }

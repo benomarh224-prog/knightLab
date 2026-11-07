@@ -1,5 +1,5 @@
 import { Chess } from 'chess.js';
-import { DEMO_PGN, parseGame, classifyMove, formatEvaluation, summarize, resultFor, timeControl, uciToSan } from './game.js';
+import { DEMO_PGN, parseGame, classifyMove, formatEvaluation, summarize, resultFor, timeControl, uciToSan,terminalEvaluation } from './game.js';
 import { Engine } from './engine.js';
 import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
@@ -77,6 +77,7 @@ document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = 
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
 const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, inspection: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: DEFAULT_REVIEW_MODE, tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
+state.analysisError=null;state.engineLoading=false;
 let router;
 const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:$('workspace-menu'),desktopSlot:$('desktop-navigation'),mobileSlot:$('mobile-navigation'),dialog:$('navigation-dialog'),toggle:$('workspace-menu-toggle'),closeButton:$('navigation-close')});
 function closeWorkspaceMenu(){navigation.close();}
@@ -207,9 +208,14 @@ function closeBoardActions(restoreFocus=false) {
 const boardMenu=createViewportMenu({trigger:actionsToggle,panel:actionsPanel});
 const boardTools=actionsToggle.closest('.board-actions'),viewOptions=document.createElement('div');
 viewOptions.className='analysis-view-options';viewOptions.setAttribute('role','group');viewOptions.setAttribute('aria-label','Review views');
-viewOptions.append($('mobile-board-tab'),$('mobile-moves-tab'),$('mobile-overview-tab'));actionsPanel.prepend(viewOptions);
+viewOptions.append($('mobile-board-tab'));actionsPanel.prepend(viewOptions);
+const viewShortcuts=document.createElement('div');viewShortcuts.className='analysis-view-shortcuts';viewShortcuts.setAttribute('role','group');viewShortcuts.setAttribute('aria-label','Game review views');
+$('mobile-overview-tab').textContent='Summary & accuracy';viewShortcuts.append($('mobile-moves-tab'),$('mobile-overview-tab'));boardCard.querySelector('.board-top').after(viewShortcuts);
 function positionAnalysisTools(){
   const secondary=compactLayout.matches&&state.mobileView!=='board';
+  viewShortcuts.hidden=!compactLayout.matches||secondary;
+  document.querySelector('.review-tabs').hidden=compactLayout.matches;
+  $('overview-tab').textContent='Summary & accuracy';
   $('analysis-view-toolbar').hidden=!secondary;
   $('analysis-view-title').textContent=state.mobileView==='overview'?'Game summary':'Game moves';
   const host=secondary?$('analysis-view-actions'):boardCard.querySelector('.board-controls');
@@ -293,7 +299,7 @@ function setGame(game, { demo = false, analyze = true,remember=true } = {}) {
   paintedPosition=null;
   state.evaluations = state.cache.get(game.pgn + state.mode) || reviewCache.load(game.pgn,state.mode,parsed.fens.length);
   state.cache.set(game.pgn+state.mode,state.evaluations);
-  $('analysis-error').hidden = true;
+  $('analysis-error').hidden = true;state.analysisError=null;
   $('demo-badge').hidden = !demo;
   $('workspace-title').textContent = demo ? 'The Opera Game' : `${reviewPlayerName(game.white?.username||parsed.headers.White,'white')} vs ${reviewPlayerName(game.black?.username||parsed.headers.Black,'black')}`;
   const { headers } = parsed;
@@ -468,6 +474,10 @@ function render() {
     $('analysis-percent').textContent=score?.depth?`Depth ${score.depth}`:'';
   }
   $('analysis-status').title=$('analysis-status').textContent.trim();
+  if(state.running&&state.engineLoading&&!inline.active)$('analysis-status').textContent='Loading Stockfish…';
+  if(state.analysisError&&!inline.active)$('analysis-status').textContent='Analysis stopped. Retry to keep reviewing.';
+  $('analysis-retry').hidden=!state.analysisError||inline.active;
+  $('analysis-status').title=state.analysisError||$('analysis-status').textContent.trim();
   $('analyze-label').textContent = state.running ? 'Pause review' : analyzed === total ? 'Review complete' : searched === total ? 'Deepen remaining' : searched ? 'Resume review' : 'Review this game';
   $('analyze-button').disabled = coachDemo.active || inline.active || analyzed === total && !state.running;
   $('analysis-speed').disabled = coachDemo.active || inline.active;
@@ -556,7 +566,7 @@ function renderMoveStrip(){
   const signature=moves.map(move=>move.from+move.to+(move.promotion||'')).join(' ');
   const source=inline.line||moves;
   if(stripSource!==source||stripSignature!==signature){
-    strip.innerHTML='<button data-strip-ply="0" aria-label="Starting position">Start</button>'+moves.map((move,index)=>`<button data-strip-ply="${index+1}" aria-label="Go to ${escape(moveLabelForStrip(move))}"><span>${escape(compactMoveText(move))}</span><i class="strip-dot" hidden></i></button>`).join('');
+    strip.innerHTML='<button data-strip-ply="0" aria-label="Starting position"><span>Start</span></button>'+moves.map((move,index)=>`<button data-strip-ply="${index+1}" aria-label="Go to ${escape(moveLabelForStrip(move))}"><span>${escape(compactMoveText(move))}</span><i class="strip-dot" hidden></i></button>`).join('');
     stripSource=source;stripSignature=signature;stripPosition=null;
   }
   strip.setAttribute('aria-label',inline.active?'Explored continuation':'Game moves');
@@ -613,7 +623,7 @@ function inspectSelectedMove(){
 }
 function stopAnalysis() {
   if(state.selected&&reviewOpened)reviewCache.save(state.selected.pgn,state.mode,state.evaluations);
-  state.run++; state.running = false; state.engine?.destroy(); state.engine = null;state.inspection=null;
+  state.run++; state.running = false; state.engineLoading=false;state.engine?.destroy(); state.engine = null;state.inspection=null;
 }
 async function startAnalysis() {
   if (state.running) return;
@@ -622,7 +632,7 @@ async function startAnalysis() {
   state.evaluations = state.cache.get(key) || reviewCache.load(state.selected.pgn,state.mode,state.parsed.fens.length);
   state.cache.set(key, state.evaluations);
   state.engine = new Engine(); state.running = true; state.reviewIndex = 0;
-  $('analysis-error').hidden = true; render();
+  $('analysis-error').hidden = true;state.analysisError=null; render();
   try {
     const engine = state.engine;
     const parsed = state.parsed;
@@ -635,6 +645,9 @@ async function startAnalysis() {
       const index=focus??nextReviewPosition(parsed.fens.length,state.ply,state.evaluations,state.mode,attempted);if(index===null)break;
       if(focus!==undefined)inspected.add(request.ply+':'+index);else attempted.add(index);state.reviewIndex = index;
       const history = { startFen: parsed.fens[0], moves: parsed.moves.slice(0, index).map(move => move.from + move.to + (move.promotion || '')) };
+      if(!engine.worker&&!terminalEvaluation(parsed.fens[index],history)){
+        state.engineLoading=true;render();await engine.init();if(run!==state.run)return;state.engineLoading=false;render();
+      }
       const score = await engine.evaluate(parsed.fens[index], focus!==undefined?positionSearch(INSPECTION_DEPTH,state.evaluations[index]):reviewSearch(state.mode, state.evaluations[index]), history);
       if (run !== state.run) return;
       state.evaluations[index] = strongerScore(state.evaluations[index],score);
@@ -646,7 +659,7 @@ async function startAnalysis() {
   } catch (error) {
     if (run !== state.run) return;
     state.running = false; state.engine?.destroy(); state.engine = null;state.inspection=null;
-    $('analysis-error').hidden = false; $('analysis-error').textContent = error.message;
+    state.engineLoading=false;state.analysisError=error.message;$('analysis-error').hidden = false; $('analysis-error-message').textContent = error.message;
     render();
   }
 }
@@ -916,6 +929,7 @@ for (const tablist of document.querySelectorAll('[role="tablist"]')) tablist.add
   tabs[next].click(); tabs[next].focus({preventScroll:true});
 });
 $('analyze-button').onclick = () => { if (state.running) { stopAnalysis(); render(); } else startAnalysis(); };
+$('analysis-retry').onclick=()=>startAnalysis();$('analysis-error-retry').onclick=()=>startAnalysis();
 $('analysis-speed').onchange = () => { stopAnalysis(); state.mode = $('analysis-speed').value; try{reviewStorage?.setItem('roqvyn-review-mode',state.mode);}catch{} state.evaluations = state.cache.get(state.selected.pgn + state.mode) || reviewCache.load(state.selected.pgn,state.mode,state.parsed.fens.length); render(); startAnalysis(); };
 $('next-mistake').onclick = () => {
   const { items } = summarize(state.parsed, state.evaluations, playerColor());
@@ -991,5 +1005,6 @@ router=createPageRouter(page=>{
     selectLearningCategory(learningCategory(COURSES,new URLSearchParams(location.search).get('category'),saved));
   }
   if(Object.hasOwn(COURSES,page))learning.open(page);
+  else learning.leave();
 });
 router.start();

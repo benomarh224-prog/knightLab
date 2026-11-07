@@ -1,8 +1,9 @@
 import { learningLink } from './learning-memory.js';
 import { createCourseProgress } from './opening-course.js';
+import{lessonDisplay}from'./lesson-insight.js';
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const title=(course,lesson)=>course.study?.(lesson.id)?.title||lesson.title;
+const title=(course,lesson)=>lessonDisplay(course,lesson,course.study?.(lesson.id)).title;
 export function renderLearningCompanion({memory,courses,storage}){
   const last=learningLink(courses,memory.last());
   if(last){

@@ -5,6 +5,7 @@ import {OPEN_GAMES_LESSONS,OPEN_GAMES_REFERENCE} from './open-games-lessons.js';
 import {BEGINNER_LESSONS,BEGINNER_REFERENCE} from './beginner-lessons.js';
 import {TAL_LESSONS,TAL_REFERENCE,TAL_COURSE_INFO} from './tal-lessons.js';
 import {SCOTCH_LESSONS,SCOTCH_REFERENCE} from './scotch-lessons.js';
+import{orderedLessons}from'./lesson-insight.js';
 export const COURSES={
   beginners:{id:'beginners',title:'Chess for Beginners',path:'/learn/chess-for-beginners/',lessons:BEGINNER_LESSONS,reference:BEGINNER_REFERENCE,key:'knightlab-beginner-course-v1',study:id=>BEGINNER_LESSONS.find(lesson=>lesson.id===id).study,idea:move=>move&&/[+#]/.test(move.san)?'check':studyIdea(move),label:'Lesson',orientToSolver:false},
   french:{id:'french',title:'French Defense',path:'/learn/french-defense/',lessons:FRENCH_LESSONS,reference:FRENCH_REFERENCE,key:'knightlab-french-course-v1',study:lessonStudy,idea:studyIdea,label:'Lesson',orientToSolver:true,orientationRevision:1},
@@ -24,6 +25,7 @@ COURSES.beginners.category='beginners';
 COURSES.french.category=COURSES.opengames.category='openings';
 COURSES.tactics.category='tactics';
 COURSES.tactics.levels=['beginner','intermediate','advanced'];
+COURSES.tactics.presentation='tactical-themes';
 COURSES.scotch.catalog={cover:'/assets/scotch-gambit.svg',alt:'Scotch Gambit course cover with the position after 4.Bc4',kicker:'PLAYING WHITE · ACTIVE OPENING PLAY',description:'Trade a little material for development. Learn the Scotch Gambit’s central breaks, forcing ideas, and practical replies to Black’s defenses.',benefits:['10 short lessons with guided board exercises and knowledge checks','Compare Bxf7+ with Nxc3 after the c3 pawn offer','Meet the declined gambit, …Bb4+, and …Nf6']};
 COURSES.beginners.practice={lessonId:'support-your-pawn',startPly:0,goal:'Bring your king closer, support your passed pawn, and watch the opposing king.'};
 COURSES.french.practice={lessonId:FRENCH_LESSONS[0].id,startPly:4,goal:'Challenge White’s center. Develop your pieces and look for the …c5 pawn break.'};
@@ -36,4 +38,4 @@ COURSES.tactics.method=[
   'Compare the resulting position with the one you started from.',
   'Recheck the line for hidden resources before committing.',
 ];
-export function courseLessons(course,level){return course.levels?.length?course.lessons.filter(lesson=>lesson.level===level):course.lessons;}
+export function courseLessons(course,level){const lessons=orderedLessons(course);return course.levels?.length?lessons.filter(lesson=>lesson.level===level):lessons;}

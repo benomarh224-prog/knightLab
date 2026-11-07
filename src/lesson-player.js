@@ -109,6 +109,14 @@ export class LessonPlayer {
     this.challengeMode=true;this.stage='try';this.save();return true;
   }
   endChallenge(){this.challengeMode=false;this.reviewSource=null;this.save();}
+  startReview({restart=true}={}){
+    if(!this.activity)return false;
+    if(this.challengeMode)this.activity.challengeHelped=true;
+    this.exploring=false;this.challengeMode=false;this.reviewing=this.activity.data.kind==='practice';this.stage='try';
+    if(restart)this.session.watch();
+    this.save();return true;
+  }
+  endReview(){this.reviewing=false;this.save();}
   reviewQuestion(index){
     if(!this.checkUnlocked||!this.plan.questions[index])return false;
     this.challengeMode=false;this.questionIndex=index;this.questionReviewIndex=index;this.answers[index]=null;this.stage='check';this.save();return true;

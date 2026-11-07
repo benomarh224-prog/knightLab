@@ -1,6 +1,7 @@
 import { Chess } from 'chess.js';
 import { classifyMove, formatEvaluation } from './game.js';
 import { pieceNames, moveLabel } from './training.js';
+import{tacticalFact}from'./tactical-facts.js';
 
 const name = color => color === 'w' ? 'White' : 'Black';
 const opposite = color => color === 'w' ? 'b' : 'w';
@@ -113,6 +114,7 @@ function computeCoachMove(move,before,after){
   const losingMate=after.mate!=null&&after.cp*sign<0,alreadyLosingMate=before.mate!=null&&before.cp*sign<0;
   const immediateCapture=reply?.captured?reply:null,evidence=continuationEvidence(replies);
   let why=moveIdea(move),brief=why.split(/(?<=[.!?])\s+/)[0];
+  const fact=tacticalFact(move);if(!bad&&fact&&!['mate','check'].includes(fact.kind)){why=fact.text+' '+why;brief=fact.text;}
   if(move.san.endsWith('#'))why='This move checkmates the opponent. The king has no legal escape.';
   else if(losingMate){
     why=`Stockfish ${alreadyLosingMate?'still finds':'now finds'} a forced mate for ${name(opposite(move.color))}.${reply?.san.endsWith('#')?` ${reply.san} delivers mate immediately.`:' The continuation below shows the beginning of its line.'}`;

@@ -1,6 +1,6 @@
 import './bundle-pieces.mjs';
 import { build } from 'esbuild';
-import { mkdir, copyFile, readdir, readFile, cp } from 'node:fs/promises';
+import { mkdir, copyFile, readdir, readFile, writeFile,cp } from 'node:fs/promises';
 import { PAGE_PATHS } from '../src/routes.js';
 await mkdir('dist/engine', { recursive: true });
 await build({ entryPoints: ['src/app.js'], bundle: true, minify: true, sourcemap: true, outfile: 'dist/app.js', format: 'esm', target: ['es2022'] });
@@ -9,9 +9,13 @@ await Promise.all(['index.html', 'style.css', 'pages.css', 'home.css', 'lesson.c
 await cp('src/assets','dist/assets',{recursive:true});
 await copyFile('src/daily-training.css','dist/daily-training.css');
 await copyFile('src/board-lab.css','dist/board-lab.css');
+const html=await readFile('src/index.html','utf8'),styles=[...html.matchAll(/<link rel="stylesheet" href="\/([^"]+)"\s*\/>/g)].map(match=>match[1]);
+await build({stdin:{contents:styles.map(file=>`@import "./src/${file}";`).join('\n'),resolveDir:process.cwd(),loader:'css'},bundle:true,minify:true,outfile:'dist/app.css',external:['/assets/*'],legalComments:'none'});
+const entryHtml=html.replace(/\s*<link rel="stylesheet" href="\/[^\"]+"\s*\/>/g,'').replace('</head>','  <link rel="stylesheet" href="/app.css"/>\n</head>');
+await writeFile('dist/index.html',entryHtml);
 for(const route of Object.values(PAGE_PATHS).filter(path=>path!=='/')){
   await mkdir(`dist${route}`,{recursive:true});
-  await copyFile('src/index.html',`dist${route}index.html`);
+  await writeFile(`dist${route}index.html`,entryHtml);
 }
 const files = await readdir('node_modules/stockfish/bin');
 const engine = files.find(file => /lite-single\.js$/.test(file));

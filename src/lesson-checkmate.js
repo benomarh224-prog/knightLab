@@ -2,7 +2,7 @@ import { Chess } from 'chess.js';
 
 export function lessonCheckmate(player) {
   const session=player.exploration||player.session;
-  if(player.stage!=='try'||!session)return null;
+  if(player.stage!=='try'||!session||player.reviewing)return null;
   const chess=new Chess(session.fen);
   if(!chess.isCheckmate())return null;
   return {fen:session.fen,winner:chess.turn()==='w'?'Black':'White',
