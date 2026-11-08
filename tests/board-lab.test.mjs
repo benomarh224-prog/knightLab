@@ -7,7 +7,7 @@ test('all original memory positions are quiet, uniquely identifiable and graded 
  for(const [level,records]of Object.entries(LAB_PUZZLES.memory))for(const puzzle of records){
   assert.ok(!ids.has(puzzle.id));ids.add(puzzle.id);count++;
   const chess=new Chess(puzzle.fen),pieces=chess.board().flat().filter(Boolean),target=chess.get(puzzle.target);
-  assert.equal(pieces.length,level==='beginner'?3:level==='intermediate'?5:7);assert.ok(target);assert.notEqual(target.type,'k');
+  assert.equal(pieces.length,({beginner:3,intermediate:5,advanced:7,expert:12})[level]);assert.ok(target);assert.notEqual(target.type,'k');
   assert.equal(pieces.filter(piece=>piece.type===target.type&&piece.color===target.color).length,1);
   for(const king of pieces.filter(piece=>piece.type==='k'))assert.equal(chess.isAttacked(king.square,king.color==='w'?'b':'w'),false);
  }assert.ok(count>=15);
@@ -55,7 +55,7 @@ test('multiple shortest routes are accepted; hints recalculate and Undo cannot i
 test('partial routes and each mode/level resume separately without touching course or daily progress',()=>{
  const store=storage();store.setItem('knightlab-beginner-course-v1','["rook-straight-lines"]');store.setItem('roqvyn-daily-training-v1','{"test":true}');
  const session=new BoardLabSession({storage:store,mode:'route',seed:19});session.start();const path=shortestKnightPath(session.puzzle);session.attempt(path[1]);
- const restored=new BoardLabSession({storage:store,mode:'route'});assert.equal(restored.current,path[1]);assert.equal(restored.phase,'play');
+ const restored=new BoardLabSession({storage:store,mode:'route'});assert.equal(restored.current,path[1]);assert.equal(restored.phase,'paused');restored.start();assert.equal(restored.phase,'play');
  const memory=new BoardLabSession({storage:store,mode:'memory',seed:4});assert.equal(memory.phase,'ready');assert.equal(store.getItem('knightlab-beginner-course-v1'),'["rook-straight-lines"]');assert.equal(store.getItem('roqvyn-daily-training-v1'),'{"test":true}');
 });
 test('a complete session has five unique rounds, honest totals, a retained best and fresh next puzzles',()=>{

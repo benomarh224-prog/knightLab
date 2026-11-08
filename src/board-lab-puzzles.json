@@ -528,6 +528,272 @@
         "target": "d2",
         "orientation": "b"
       }
+    ],
+    "expert": [
+      {
+        "id": "memory-expert-0",
+        "fen": "4N2k/Rn6/8/8/5bnq/r4q2/1n6/1B4K1 w - - 0 1",
+        "target": "e8",
+        "targets": [
+          "e8",
+          "f4",
+          "a7"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-1",
+        "fen": "4b2k/n7/7B/8/2R3N1/3n1BP1/n5P1/6K1 w - - 0 1",
+        "target": "g4",
+        "targets": [
+          "g4",
+          "e8",
+          "c4"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-2",
+        "fen": "7k/8/2rnN3/4pQ1r/n2Bb3/1R6/8/6K1 w - - 0 1",
+        "target": "e6",
+        "targets": [
+          "e6",
+          "e4",
+          "b3"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-3",
+        "fen": "1Q4Bk/1q2p3/8/7N/8/2bRP3/6P1/1n4K1 w - - 0 1",
+        "target": "h5",
+        "targets": [
+          "h5",
+          "c3",
+          "d3"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-4",
+        "fen": "1q4nk/1q2B3/4N3/8/8/q3P3/n7/1b1R2K1 w - - 0 1",
+        "target": "e6",
+        "targets": [
+          "e6",
+          "b1",
+          "d1"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-5",
+        "fen": "N5nk/6b1/1B6/4n2r/3B1R2/7B/2P5/6K1 w - - 0 1",
+        "target": "a8",
+        "targets": [
+          "a8",
+          "g7",
+          "f4"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-6",
+        "fen": "7k/6R1/6pq/4b3/1n6/1N6/5nQP/3n2K1 w - - 0 1",
+        "target": "b3",
+        "targets": [
+          "b3",
+          "e5",
+          "g7"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-7",
+        "fen": "7k/6b1/Q7/4N3/3r1p1p/q7/5RQ1/3Q2K1 w - - 0 1",
+        "target": "e5",
+        "targets": [
+          "e5",
+          "g7",
+          "f2"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-8",
+        "fen": "1r4nk/8/2q2b2/8/2P1p3/5RQ1/1NP5/6K1 w - - 0 1",
+        "target": "b2",
+        "targets": [
+          "b2",
+          "f6",
+          "f3"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-9",
+        "fen": "7k/p7/5N1P/5Qb1/Q7/8/Rn3Q2/1Q4K1 w - - 0 1",
+        "target": "f6",
+        "targets": [
+          "f6",
+          "g5",
+          "a2"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-10",
+        "fen": "nR4Nk/5r2/3B3b/2Br4/p7/8/8/1B4K1 w - - 0 1",
+        "target": "g8",
+        "targets": [
+          "g8",
+          "h6",
+          "b8"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-11",
+        "fen": "3r3k/6n1/8/3q4/1R6/2q4N/2q2r1P/3b2K1 w - - 0 1",
+        "target": "h3",
+        "targets": [
+          "h3",
+          "d1",
+          "b4"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-12",
+        "fen": "5q1k/6N1/8/rpRp2r1/1n6/6b1/5r2/6K1 w - - 0 1",
+        "target": "g7",
+        "targets": [
+          "g7",
+          "g3",
+          "c5"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-13",
+        "fen": "5n1k/8/r7/8/N2rqB2/4B3/6bB/R5K1 w - - 0 1",
+        "target": "a4",
+        "targets": [
+          "a4",
+          "g2",
+          "a1"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-14",
+        "fen": "n2B3k/n4B2/8/R7/7b/5r2/1n2p3/2N3K1 w - - 0 1",
+        "target": "c1",
+        "targets": [
+          "c1",
+          "h4",
+          "a5"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-15",
+        "fen": "1n5k/8/6br/1R6/q4n2/4nq2/1N6/2Q3K1 w - - 0 1",
+        "target": "b2",
+        "targets": [
+          "b2",
+          "g6",
+          "b5"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-16",
+        "fen": "7k/1PQ3p1/3p4/3n4/5N2/q5R1/B2b4/6K1 w - - 0 1",
+        "target": "f4",
+        "targets": [
+          "f4",
+          "d2",
+          "g3"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-17",
+        "fen": "7k/1Q2BP2/QQ4P1/8/8/3b4/1R2N1P1/6K1 w - - 0 1",
+        "target": "e2",
+        "targets": [
+          "e2",
+          "d3",
+          "b2"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-18",
+        "fen": "2n4k/1r6/3P4/2rQ4/4b3/1R2B3/4N2n/6K1 w - - 0 1",
+        "target": "e2",
+        "targets": [
+          "e2",
+          "e4",
+          "b3"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-19",
+        "fen": "6nk/4n3/8/B3N3/1R4b1/2n1r3/p7/5QK1 w - - 0 1",
+        "target": "e5",
+        "targets": [
+          "e5",
+          "g4",
+          "b4"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-20",
+        "fen": "3r3k/N4Q2/4Rp2/5q2/8/5r2/1n4B1/b5K1 w - - 0 1",
+        "target": "a7",
+        "targets": [
+          "a7",
+          "a1",
+          "e6"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-21",
+        "fen": "Q4N1k/8/6nq/n3b3/3p2B1/8/8/n1R3K1 w - - 0 1",
+        "target": "f8",
+        "targets": [
+          "f8",
+          "e5",
+          "c1"
+        ],
+        "orientation": "b"
+      },
+      {
+        "id": "memory-expert-22",
+        "fen": "2n4k/1n2bB2/r1R5/8/1r6/1q6/1N6/n5K1 w - - 0 1",
+        "target": "b2",
+        "targets": [
+          "b2",
+          "e7",
+          "c6"
+        ],
+        "orientation": "w"
+      },
+      {
+        "id": "memory-expert-23",
+        "fen": "7k/Nb1r1r2/qR3P2/3P4/8/8/1p6/4n1K1 w - - 0 1",
+        "target": "a7",
+        "targets": [
+          "a7",
+          "b7",
+          "b6"
+        ],
+        "orientation": "b"
+      }
     ]
   },
   "route": {
@@ -1135,6 +1401,179 @@
         "to": "h4",
         "distance": 6,
         "orientation": "w"
+      }
+    ],
+    "expert": [
+      {
+        "id": "route-expert-0",
+        "fen": "7k/7p/3r4/5Pr1/1Pn5/7N/8/7K w - - 0 1",
+        "from": "h3",
+        "to": "h2",
+        "distance": 9,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-1",
+        "fen": "7k/8/4P3/2r2r2/p4P2/8/2p4N/7K w - - 0 1",
+        "from": "h2",
+        "to": "b6",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-2",
+        "fen": "7k/3r1P2/n7/6p1/N5p1/2P5/8/7K w - - 0 1",
+        "from": "a4",
+        "to": "e8",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-3",
+        "fen": "7k/4P3/1N6/5b2/3rn3/4b3/8/7K w - - 0 1",
+        "from": "b6",
+        "to": "f1",
+        "distance": 9,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-4",
+        "fen": "5n1k/8/8/4b3/6r1/5N2/1P6/2n4K w - - 0 1",
+        "from": "f3",
+        "to": "b7",
+        "distance": 8,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-5",
+        "fen": "7k/4r3/8/7b/3P4/b6N/2n5/7K w - - 0 1",
+        "from": "h3",
+        "to": "a6",
+        "distance": 8,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-6",
+        "fen": "N2n3k/3n4/8/8/1bP2n2/8/8/1n5K w - - 0 1",
+        "from": "a8",
+        "to": "a4",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-7",
+        "fen": "5r1k/8/8/nP6/4p1N1/8/8/6bK w - - 0 1",
+        "from": "g4",
+        "to": "h5",
+        "distance": 8,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-8",
+        "fen": "2N4k/2p5/8/2P5/2np1P2/2b5/8/1b5K w - - 0 1",
+        "from": "c8",
+        "to": "g2",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-9",
+        "fen": "5n1k/8/5p2/1n6/5Pn1/7N/6P1/4b2K w - - 0 1",
+        "from": "h3",
+        "to": "e7",
+        "distance": 9,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-10",
+        "fen": "7k/3P4/1N6/rp2r3/8/4r2P/8/7K w - - 0 1",
+        "from": "b6",
+        "to": "b2",
+        "distance": 8,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-11",
+        "fen": "r6k/7b/3b4/P7/N4n2/2P5/5b2/7K w - - 0 1",
+        "from": "a4",
+        "to": "d7",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-12",
+        "fen": "7k/4n3/1N6/3pbP2/8/8/7n/7K w - - 0 1",
+        "from": "b6",
+        "to": "a7",
+        "distance": 8,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-13",
+        "fen": "7k/8/P5p1/P5r1/2n2n2/8/8/3N3K w - - 0 1",
+        "from": "d1",
+        "to": "f1",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-14",
+        "fen": "4N2k/1n6/8/8/3p1r2/2P4b/6P1/7K w - - 0 1",
+        "from": "e8",
+        "to": "h5",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-15",
+        "fen": "1N5k/8/1P5n/5P2/2r3n1/4n3/2r5/7K w - - 0 1",
+        "from": "b8",
+        "to": "a3",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-16",
+        "fen": "7k/8/2n5/8/1P6/2r3b1/1P2N3/7K w - - 0 1",
+        "from": "e2",
+        "to": "c8",
+        "distance": 8,
+        "orientation": "w",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-17",
+        "fen": "5nbk/8/8/2N5/r3p3/8/4p3/7K w - - 0 1",
+        "from": "c5",
+        "to": "g5",
+        "distance": 8,
+        "orientation": "b",
+        "hideTargets": true
+      },
+      {
+        "id": "route-expert-18",
+        "fen": "2N4k/5P2/8/3p4/n4r2/8/2b5/7K w - - 0 1",
+        "from": "c8",
+        "to": "a2",
+        "distance": 10,
+        "orientation": "b",
+        "hideTargets": true
       }
     ]
   }

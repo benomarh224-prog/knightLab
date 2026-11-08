@@ -35,5 +35,39 @@ for(const [levelIndex,level]of levels.entries()){
   }
   if(data.memory[level].length<5||data.route[level].length<5)throw Error('Insufficient original puzzles: '+level);
 }
+
+// Expert puzzles are additive: existing IDs/FENs remain stable for saved rounds.
+let seed=8112026;
+const random=n=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return Math.floor(seed/4294967296*n);};
+const squares=squareGrid();
+data.memory.expert=[];data.route.expert=[];
+for(let attempt=0;attempt<1000&&data.memory.expert.length<24;attempt++){
+ const identities=[['w','n'],['b','b'],['w','r']],chess=position([['w','k','g1'],['b','k','h8']]),targets=[];
+ for(const[color,type]of identities){const square=squares[random(64)];if(chess.get(square))break;chess.put({color,type},square);targets.push(square);}
+ if(targets.length!==3||!quiet(chess))continue;
+ for(let n=0;n<100&&chess.board().flat().filter(Boolean).length<12;n++){
+  const color=random(2)?'w':'b',type=['p','n','b','r','q'][random(5)],square=squares[random(64)];
+  if(chess.get(square)||type==='p'&&/[18]/.test(square)||identities.some(([c,t])=>c===color&&t===type))continue;
+  chess.put({color,type},square);if(!quiet(chess))chess.remove(square);
+ }
+ if(chess.board().flat().filter(Boolean).length!==12)continue;
+ const fen=chess.fen();if(data.memory.expert.some(p=>p.fen===fen))continue;
+ data.memory.expert.push({id:'memory-expert-'+data.memory.expert.length,fen,target:targets[0],targets,orientation:attempt%2?'b':'w'});
+}
+for(let attempt=0;attempt<450&&data.route.expert.length<24;attempt++){
+ const chess=position([['w','k','h1'],['b','k','h8']]);
+ for(let n=0;n<7;n++){
+  const square=squares[random(64)],color=n<5?'b':'w',type=color==='w'?'p':['r','b','n','p'][random(4)];
+  if(chess.get(square)||type==='p'&&/[18]/.test(square))continue;
+  chess.put({color,type},square);if(!quiet(chess))chess.remove(square);
+ }
+ if(chess.board().flat().filter(Boolean).length<7)continue;
+ const from=squares[random(64)];if(chess.get(from))continue;chess.put({color:'w',type:'n'},from);if(!quiet(chess))continue;
+ const base={fen:chess.fen(),from};if(!routeDestination(base,from).allowed)continue;
+ const goals=squares.map(to=>({to,path:shortestKnightPath(base,from,to)})).filter(g=>g.path&&g.path.length>=9&&g.path.length<=13);
+ if(!goals.length)continue;
+ const {to,path}=goals[random(goals.length)];data.route.expert.push({id:'route-expert-'+data.route.expert.length,...base,to,distance:path.length-1,orientation:attempt%2?'b':'w',hideTargets:true});
+}
+if(data.memory.expert.length<12||data.route.expert.length<12)throw Error('Insufficient Expert puzzles: '+data.memory.expert.length+' memory, '+data.route.expert.length+' routes');
 await writeFile('src/board-lab-puzzles.json',JSON.stringify(data,null,2)+'\n');
-console.log(Object.fromEntries(levels.map(level=>[level,{memory:data.memory[level].length,route:data.route[level].length}])));
+console.log(Object.fromEntries([...levels,'expert'].map(level=>[level,{memory:data.memory[level].length,route:data.route[level].length}])));

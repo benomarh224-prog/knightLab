@@ -9,10 +9,13 @@ body[data-page] .lab-modes { display:grid; grid-template-columns:repeat(2,minmax
 body[data-page] .lab-modes button { min-height:44px; padding:8px 12px; color:var(--ui-text); background:var(--ui-soft); border:1px solid transparent; border-radius:var(--ui-radius); font:600 16px/1.35 'DM Sans',sans-serif; }
 body[data-page] .lab-modes button[aria-pressed="true"] { background:var(--ui-action); color:var(--ui-on-action); }
 body[data-page] .lab-workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,330px); align-items:start; gap:24px; }
-body[data-page] .lab-board-column { grid-column:1; grid-row:1; justify-self:center; min-width:0; width:min(100%,620px,max(260px,calc(100svh - 230px))); }
+body[data-page] .lab-board-column { grid-column:1; grid-row:1; justify-self:center; min-width:0; width:min(100%,620px,max(260px,calc(100svh - 330px))); }
 body[data-page] .lab-instruction { grid-column:2; grid-row:1; display:grid; grid-template-rows:20px 48px 64px 44px; gap:4px; height:214px; min-width:0; padding:12px; background:var(--ui-surface); color:var(--ui-text); border:1px solid var(--ui-border); border-radius:var(--ui-card-radius); box-sizing:border-box; }
 body[data-page] .lab-round-line { display:flex; justify-content:space-between; gap:12px; color:var(--ui-muted); font-size:14px; line-height:20px; }
 body[data-page] #lab-timer { font-variant-numeric:tabular-nums; min-width:42px; text-align:right; }
+body[data-page] #lab-timer { min-width:92px; flex-shrink:0; white-space:nowrap; }
+body[data-page] #lab-timer:is([data-state="low"],[data-state="expired"]) { color:#993b33; font-weight:700; }
+:root[data-theme="dark"] body[data-page] #lab-timer:is([data-state="low"],[data-state="expired"]) { color:#f0a696; }
 body[data-page] #lab-question { margin:0; align-self:center; color:var(--ui-text); font:600 20px/24px 'DM Sans',sans-serif; letter-spacing:-.3px; }
 body[data-page] .lab-instruction-body { min-width:0; align-content:center; }
 body[data-page] :is(#lab-copy,#lab-feedback) { margin:0; color:var(--ui-text-secondary); font-size:16px; line-height:21px; overflow-wrap:anywhere; }
@@ -63,7 +66,7 @@ body[data-page] .lab-entry-card>strong { color:var(--ui-text); }
   body[data-page] .lab-heading h1 { font-size:24px; }
   body[data-page] .lab-workspace { grid-template-columns:minmax(0,1fr); gap:12px; }
   body[data-page] .lab-instruction { grid-column:1; grid-row:1; }
-  body[data-page] .lab-board-column { grid-column:1; grid-row:2; width:min(100%,620px,max(260px,calc(100svh - 280px))); }
+  body[data-page] .lab-board-column { grid-column:1; grid-row:2; width:min(100%,620px,max(260px,calc(100svh - 500px))); }
   body[data-page="train"] .entry-grid { grid-template-columns:minmax(0,1fr); }
 }
 @media(prefers-reduced-motion:reduce){body[data-page] #lab-board .square.lab-wrong { animation:none; }}
