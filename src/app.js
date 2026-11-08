@@ -5,7 +5,7 @@ import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
 import { pageGames } from './library.js';
 import { identifyOpening } from './opening.js';
-import { evaluationReady, reviewSearch, depthReady, positionSearch, strongerScore, DEFAULT_REVIEW_MODE, INSPECTION_DEPTH,PRECISION_DEPTH,STANDARD_DEPTH,loadReviewMode } from './review-quality.js';
+import { evaluationReady, depthReady, positionSearch, strongerScore, DEFAULT_REVIEW_MODE, INSPECTION_DEPTH,PRECISION_DEPTH,STANDARD_DEPTH,loadReviewMode } from './review-quality.js';
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
@@ -21,7 +21,7 @@ import { courseTopics } from './course-topics.js';
 import { createAppearance } from './theme.js';
 import {createViewportMenu} from './viewport-menu.js';
 import {evaluationLossText} from './accuracy.js';
-import {nextReviewPosition} from './review-schedule.js';
+import {createReviewPlan} from './review-plan.js';
 import { finishBoard,enableBoardDrag } from './board-surface.js';
 import { createReviewMemory } from './review-memory.js';
 import {paintEvaluationBar,keepMoveInList} from './workspace-layout.js';
@@ -77,7 +77,7 @@ document.querySelectorAll('[data-icon]').forEach(element => element.innerHTML = 
 function escape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character])); }
 const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow: true, evaluations: [], running: false, reviewIndex: 0, run: 0, engine: null, inspection: null, games: [], archives: [], archiveIndex: 0, profile: null, username: '', filter: 'all', libraryPage: 0, request: null, cache: new Map(), mode: DEFAULT_REVIEW_MODE, tab: 'moves', mobileView: 'board', demo: true };
 const compactLayout = matchMedia('(max-width: 860px)');
-state.analysisError=null;state.engineLoading=false;
+state.analysisError=null;state.engineLoading=false;state.reviewPhase=null;state.reviewTask=null;
 let router;
 const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:$('workspace-menu'),desktopSlot:$('desktop-navigation'),mobileSlot:$('mobile-navigation'),dialog:$('navigation-dialog'),toggle:$('workspace-menu-toggle'),closeButton:$('navigation-close')});
 function closeWorkspaceMenu(){navigation.close();}
@@ -465,6 +465,7 @@ function render() {
   document.querySelector('.engine-progress').setAttribute('aria-busy',String(state.running));
   $('progress-fill').style.width = `${percent}%`;
   $('analysis-status').innerHTML = `<span class="live-dot"></span>${state.running ? state.inspection?`Deepening selected move · depth ${INSPECTION_DEPTH}`:`${state.mode==='quick'?'Fast preview':'Reviewing'} · ${analyzed}/${total} positions${state.mode !== 'quick' ? ` · depth ${state.mode==='precise'?PRECISION_DEPTH:STANDARD_DEPTH}` : ''}` : analyzed === total ? (state.mode==='quick'?'Preview complete · preliminary':'Review complete') : searched === total ? 'More search depth needed' : searched ? 'Review paused' : 'Ready to review'}`;
+  if(state.running&&state.reviewPhase==='preview')$('analysis-status').textContent='Quick look at selected move · preliminary';
   document.querySelector('.engine-progress').classList.toggle('running', state.running);
   liveProgress.dataset.scope=inline.active?'position':'game';
   document.querySelector('.progress-track').setAttribute('aria-label',inline.active?'Current position analysis':'Game review progress');
@@ -531,7 +532,7 @@ function renderCoach(move, before, after) {
   $('recommended-move').setAttribute('aria-label',recommendation?`Try ${$('recommended-move').textContent} on the board`:'Engine recommendation not available');
   $('recommended-move').onclick=tryRecommendation;
   $('coach-note').textContent = ready ? `${!depthReady(before,PRECISION_DEPTH)||!depthReady(after,PRECISION_DEPTH)?'Preliminary evidence. ':''}${report.rating==='Brilliant'?'Brilliant is ROQVYN’s independent sacrifice classification. ':''}Based on Stockfish’s legal continuations${before?.depth ? ` · Depth ${Math.min(before.depth,after?.terminal?before.depth:after?.depth||0)}` : ''}. ${state.inspection?`Deepening this decision to depth ${INSPECTION_DEPTH}.`:'Deeper review can change the recommendation.'}` : 'The coach updates as each move is reviewed.';
-  boardCoach.update(report);
+  boardCoach.update({...report,preliminary:ready&&(state.mode==='quick'||!evaluationReady(before,state.mode)||!evaluationReady(after,state.mode))});
 }
 
 function renderChart() {
@@ -604,6 +605,10 @@ function goTo(ply,{automatic=false}={}) {
   const restart=inline.active?inline.exit(false):false;
   const previous = state.ply;
   state.ply = Math.max(0, Math.min(state.parsed.moves.length, ply));
+  if(!automatic&&state.running&&state.reviewTask&&state.reviewTask.phase!=='preview'&&state.mode!=='quick'){
+    const needed=[Math.max(0,state.ply-1),state.ply];
+    if(!needed.includes(state.reviewTask.index)&&needed.some(index=>!evaluationReady(state.evaluations[index],state.mode)))state.engine?.interrupt();
+  }
   render();playSound(navigationSoundMove(state.parsed.moves,previous,state.ply),{eventId:'review-'+(++navigationAudio)});
   saveReviewPosition();
   const selectedCell=document.querySelector(`.move-cell[data-ply="${state.ply}"]`);
@@ -623,7 +628,7 @@ function inspectSelectedMove(){
 }
 function stopAnalysis() {
   if(state.selected&&reviewOpened)reviewCache.save(state.selected.pgn,state.mode,state.evaluations);
-  state.run++; state.running = false; state.engineLoading=false;state.engine?.destroy(); state.engine = null;state.inspection=null;
+  state.run++; state.running = false; state.engineLoading=false;state.engine?.destroy(); state.engine = null;state.inspection=null;state.reviewTask=null;state.reviewPhase=null;
 }
 async function startAnalysis() {
   if (state.running) return;
@@ -636,30 +641,32 @@ async function startAnalysis() {
   try {
     const engine = state.engine;
     const parsed = state.parsed;
-    const attempted=new Set(),inspected=new Set();
+    const plan=createReviewPlan(parsed,state.mode),inspected=new Set();let finished=0;
     while(true) {
       if (run !== state.run) return;
       const request=state.inspection;
       const focus=request?[Math.max(0,request.ply-1),request.ply].find(index=>!inspected.has(request.ply+':'+index)&&!depthReady(state.evaluations[index],INSPECTION_DEPTH)):undefined;
       if(request&&focus===undefined)state.inspection=null;
-      const index=focus??nextReviewPosition(parsed.fens.length,state.ply,state.evaluations,state.mode,attempted);if(index===null)break;
-      if(focus!==undefined)inspected.add(request.ply+':'+index);else attempted.add(index);state.reviewIndex = index;
+      const task=focus!==undefined?{index:focus,phase:'inspect',search:positionSearch(INSPECTION_DEPTH,state.evaluations[focus])}:plan.next(state.ply,state.evaluations);if(!task)break;
+      const {index}=task;if(focus!==undefined)inspected.add(request.ply+':'+index);
+      state.reviewIndex=index;state.reviewTask=task;state.reviewPhase=task.phase;render();
       const history = { startFen: parsed.fens[0], moves: parsed.moves.slice(0, index).map(move => move.from + move.to + (move.promotion || '')) };
       if(!engine.worker&&!terminalEvaluation(parsed.fens[index],history)){
         state.engineLoading=true;render();await engine.init();if(run!==state.run)return;state.engineLoading=false;render();
       }
-      const score = await engine.evaluate(parsed.fens[index], focus!==undefined?positionSearch(INSPECTION_DEPTH,state.evaluations[index]):reviewSearch(state.mode, state.evaluations[index]), history);
+      const score = await engine.evaluate(parsed.fens[index],task.search,history);
       if (run !== state.run) return;
-      state.evaluations[index] = strongerScore(state.evaluations[index],score);
+      const previous=state.evaluations[index];state.evaluations[index] = strongerScore(previous,score);state.reviewTask=null;
+      if(score.interrupted){if(task.phase==='inspect')inspected.delete(request.ply+':'+index);else plan.retry(task);}
       render();
-      if(attempted.size%8===0)reviewCache.save(parsed.pgn,state.mode,state.evaluations);
+      if(++finished%8===0)reviewCache.save(parsed.pgn,state.mode,state.evaluations);
       await new Promise(resolve => setTimeout(resolve, 0));
     }
-    if (run === state.run) { state.running = false; state.engine?.destroy(); state.engine = null; reviewCache.save(parsed.pgn,state.mode,state.evaluations);render(); }
+    if (run === state.run) { state.running = false;state.reviewTask=null;state.reviewPhase=null; state.engine?.destroy(); state.engine = null; reviewCache.save(parsed.pgn,state.mode,state.evaluations);render(); }
   } catch (error) {
     if (run !== state.run) return;
     state.running = false; state.engine?.destroy(); state.engine = null;state.inspection=null;
-    state.engineLoading=false;state.analysisError=error.message;$('analysis-error').hidden = false; $('analysis-error-message').textContent = error.message;
+    state.engineLoading=false;state.reviewTask=null;state.reviewPhase=null;state.analysisError=error.message;$('analysis-error').hidden = false; $('analysis-error-message').textContent = error.message;
     render();
   }
 }

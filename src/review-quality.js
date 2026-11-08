@@ -40,5 +40,6 @@ export function positionSearch(depth=PRECISION_DEPTH, previous) {
 }
 
 export function strongerScore(previous,next) {
+  if(previous&&!previous.legacy&&!previous.terminal&&!next.terminal&&previous.depth===next.depth&&previous.alternative?.depth===previous.depth&&next.alternative?.depth!==next.depth)return previous;
   return !previous || !Number.isFinite(previous.cp) || !Number.isFinite(previous.depth) || previous.legacy || next.terminal || (!previous.terminal&&next.depth>=previous.depth) ? next : previous;
 }

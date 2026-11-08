@@ -23,6 +23,8 @@ test('the live coach summary stays beside desktop or above mobile while Details 
  const h=fixture(true),launcher=h.node('analysis-coach-open'),summary=h.node('analysis-coach-summary');assert.equal(summary.parent,h.side);assert.equal(h.card.hidden,true);
  h.controller.open();assert.equal(h.card.parent,h.node('body'));assert.equal(h.card.popover,true);assert.equal(h.card.contains(h.panel),true);assert.equal(h.card.attributes['aria-modal'],'false');assert.equal(h.active.id,'board-coach-close');
  h.card.dataset.reviewState='ready';h.node('insight-title').textContent='Inaccuracy';h.node('insight-move').textContent='24... Qe1';h.controller.update({teaching:{reason:'The rook can capture the queen.'}});assert.equal(h.controller.opened,true);assert.equal(h.node('analysis-summary-verdict').textContent,'Inaccuracy');assert.equal(h.node('analysis-summary-text').textContent,'The rook can capture the queen.');
+ h.controller.update({preliminary:true});assert.equal(h.node('analysis-summary-verdict').textContent,'Preview · Inaccuracy');
+ h.controller.update({preliminary:false});assert.equal(h.node('analysis-summary-verdict').textContent,'Inaccuracy');
  assert.equal(h.inspections,1);h.controller.open();h.controller.update();assert.equal(h.inspections,1);
  h.node('coach-next').onclick();assert.equal(h.moved,1);assert.equal(h.controller.opened,true);
  h.node('board-coach-close').onclick();assert.equal(h.card.hidden,true);assert.equal(h.active,launcher);h.desktop.matches=false;h.desktop.change();assert.equal(summary.parent,h.board);

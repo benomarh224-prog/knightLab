@@ -42,9 +42,9 @@ export class Engine {
   }
   async evaluate(fen, search, history) {
     const options = typeof search === 'number' ? { milliseconds: search } : search;
-    const { milliseconds, depth, clearHash, skill=20 } = options || {};
+    const { milliseconds, depth, clearHash, skill=20, multiPV=2 } = options || {};
     if (!Number.isFinite(milliseconds) || milliseconds <= 0 || milliseconds > 120000 ||
-        (depth !== undefined && (!Number.isInteger(depth) || depth < 1 || depth > 30))||!Number.isInteger(skill)||skill<0||skill>20) {
+        (depth !== undefined && (!Number.isInteger(depth) || depth < 1 || depth > 30))||!Number.isInteger(skill)||skill<0||skill>20||!Number.isInteger(multiPV)||multiPV<1||multiPV>4) {
       throw new Error('Invalid engine search limits.');
     }
     const terminal = terminalEvaluation(fen, history);
@@ -52,7 +52,9 @@ export class Engine {
     await this.init();
     if (this.pending) throw new Error('The engine is already evaluating a position.');
     return new Promise((resolve, reject) => {
-      const frames=new Map();
+      const frames=new Map();let interrupted=false,stopSent=false;
+      const stop=()=>{if(interrupted&&!stopSent&&frames.size){stopSent=true;this.worker.postMessage('stop');}};
+      this.interruptSearch=()=>{interrupted=true;stop();return true;};
       const timeout = setTimeout(() => { this.destroy(new Error('Engine analysis timed out. Please try again.')); }, Math.max(15000, milliseconds + 15000));
       this.rejectPending = error => { clearTimeout(timeout); reject(error); };
       this.pending = line => {
@@ -61,21 +63,24 @@ export class Engine {
           if(score?.pv.length&&score.multipv>=1&&score.multipv<=(skill<20?4:2)){
             if(!frames.has(score.depth))frames.set(score.depth,new Map());
             frames.get(score.depth).set(score.multipv,score);
+            stop();
           }
         }
         if (line.startsWith('bestmove ')) {
-          clearTimeout(timeout); this.pending = null; this.rejectPending = null;
-          try { resolve({...completedSearch(frames,line.split(' ')[1],fen),searchTime:milliseconds}); }
+          clearTimeout(timeout); this.pending = null; this.rejectPending = null;this.interruptSearch=null;
+          try { resolve({...completedSearch(frames,line.split(' ')[1],fen),searchTime:milliseconds,...(interrupted?{interrupted:true}:{})}); }
           catch(error){reject(error);}
         }
       };
       if (clearHash) this.worker.postMessage('setoption name Clear Hash');
       // Reduced-skill play may deliberately choose outside the first two PVs.
-      this.worker.postMessage(`setoption name MultiPV value ${skill<20?4:2}`);
+      this.worker.postMessage(`setoption name MultiPV value ${skill<20?4:multiPV}`);
       this.worker.postMessage(`setoption name Skill Level value ${skill}`);
       this.worker.postMessage(history ? `position fen ${history.startFen}${history.moves.length ? ` moves ${history.moves.join(' ')}` : ''}` : `position fen ${fen}`);
       this.worker.postMessage(`go ${depth ? `depth ${depth} ` : ''}movetime ${milliseconds}`);
     });
   }
-  destroy(error = new Error('Analysis paused.')) { this.cancelInitialization?.(error); this.cancelInitialization = null; this.rejectPending?.(error); this.rejectPending = null; this.worker?.terminate(); this.worker = null; this.pending = null; this.initializing = null; }
+  // Cooperatively finish the current search, retaining the worker and its hash.
+  interrupt(){return this.interruptSearch?.()||false;}
+  destroy(error = new Error('Analysis paused.')) { this.cancelInitialization?.(error); this.cancelInitialization = null; this.rejectPending?.(error); this.rejectPending = null;this.interruptSearch=null; this.worker?.terminate(); this.worker = null; this.pending = null; this.initializing = null; }
 }

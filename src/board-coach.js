@@ -57,7 +57,7 @@ export function createBoardCoach({showBoard,navigate,onInspect=()=>{},doc=docume
   }
   function update(report={}){
     const verdict=card.dataset.reviewState==='ready'?get('insight-title').textContent:'Your move coach',move=get('insight-move').textContent;
-    get('analysis-summary-verdict').textContent=verdict;get('analysis-summary-move').textContent=move;
+    get('analysis-summary-verdict').textContent=(report.preliminary?'Preview · ':'')+verdict;get('analysis-summary-move').textContent=move;
     const text=report.teaching?.reason||report.brief||report.summary||get('coach-brief').textContent;
     const message=get('analysis-summary-text');if(message.textContent!==text)message.textContent=text;
     message.title=text;get('analysis-summary-show').disabled=get('coach-show-me').disabled;
