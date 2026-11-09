@@ -44,16 +44,25 @@
         <section class="home-page academy-home home-refresh" data-page-view="home" aria-labelledby="home-title">
   <div class="academy-hero home-hero">
     <div class="academy-hero-inner"><div class="academy-hero-copy">
-      <h1 id="home-title">Know your<br/>next move.</h1>
-      <p class="academy-description">Chess lessons, game reviews, and board challenges you can learn from.</p>
-      <div class="academy-hero-actions"><a href="/learn/chess-for-beginners/" data-route="beginners" class="academy-primary">Learn chess <span data-icon="arrow" aria-hidden="true"></span></a><button id="home-analyze" class="academy-outline">Analyze a game</button></div>
-      <p class="home-hero-note">Start from the basics. Keep your progress.</p>
+      <h1 id="home-title">Your next move,<br/>understood.</h1>
+      <p class="academy-description">Learn chess, review your games, and build your board vision.</p>
+      <div class="academy-hero-actions"><a href="/learn/chess-for-beginners/" data-route="beginners" class="academy-primary">Start learning <span data-icon="arrow" aria-hidden="true"></span></a><button id="home-analyze" class="academy-outline">Analyze a game</button></div>
+      <p class="home-hero-note">From your first square to your next game.</p>
     </div></div>
-    <div class="home-hero-art"><img class="academy-hero-image" src="/assets/academy-hero.png" alt="" fetchpriority="high" decoding="async" width="1942" height="809"/><div class="academy-hero-shade" aria-hidden="true"></div></div>
+    <div class="home-hero-stage">
+      <div id="home-review-demo" class="home-review-demo" data-ui role="group" aria-label="Replay a sample from the Opera Game">
+        <div class="home-demo-heading"><span id="home-review-title">The Opera Game</span><button id="home-review-sample" aria-label="Open the full Opera Game sample review">Sample review <span aria-hidden="true">↗</span></button></div>
+        <div class="home-demo-coach"><strong id="home-review-move">10. Nxb5</strong><p id="home-review-explanation" aria-live="polite" aria-atomic="true">White’s knight captures the pawn on b5.</p></div>
+        <div id="home-review-board" class="home-demo-board chess-board board-surface" role="img" aria-label="Sample Opera Game position"></div>
+        <div class="home-demo-controls"><button id="home-review-back" aria-label="Previous sample move" disabled><span aria-hidden="true">←</span> Back</button><span id="home-review-step" aria-label="Sample move progress">1 of 5</span><button id="home-review-next" aria-label="Next sample move">Next <span aria-hidden="true">→</span></button></div>
+        <noscript><p>Open the sample review to follow this continuation.</p></noscript>
+      </div>
+    </div>
   </div>
   <section id="home-learning-resume" class="home-learning-resume" aria-label="Continue learning" hidden><div class="academy-progress"><strong>Continue learning</strong><span id="home-course-progress"></span><div role="progressbar" id="home-course-progressbar" aria-label="Lessons completed" aria-valuemin="0" aria-valuemax="28" aria-valuenow="0"><span id="home-course-progress-fill"></span></div></div><a id="home-continue" href="/learn/chess-for-beginners/" data-route="beginners" class="primary-button">Continue <span aria-hidden="true">→</span></a></section>
+
   <section class="academy-discover home-chapter" aria-labelledby="academy-discover-title">
-    <div class="academy-section-heading" data-home-reveal><div><h2 id="academy-discover-title">Learn it on the board.</h2><p>One idea, a position to try, and a lesson to keep.</p></div><a href="/learn/" data-route="learn">All courses</a></div>
+    <div class="academy-section-heading" data-home-reveal><div><h2 id="academy-discover-title">Find your starting point.</h2><p>Learn an idea. Try it on the board. Make it yours.</p></div><a href="/learn/" data-route="learn">All courses <span aria-hidden="true">↗</span></a></div>
     <div class="academy-courses home-course-shelf">
       <article class="academy-course academy-beginner-course" data-home-category="beginners" aria-labelledby="home-beginner-title" data-home-reveal>
         <a href="/learn/chess-for-beginners/" data-route="beginners" class="academy-course-image" aria-label="Start Chess for Beginners"><img src="/assets/chess-play.png" width="1536" height="1024" alt="Ivory king and pawn on a sunlit chessboard" loading="lazy" decoding="async"/></a>
@@ -68,30 +77,31 @@
         <div class="academy-course-copy"><h3>See the tactic.</h3><p>Look for checks, captures, and forcing ideas.</p><p id="home-tactics-progress">144 exercises · 3 levels</p><button id="home-tactics" class="academy-course-link">Practice tactics</button></div>
       </article>
     </div>
-  </section>
-  <section class="home-review home-chapter" aria-labelledby="home-review-title">
-    <div class="home-review-copy" data-home-reveal><h2 id="home-review-title">See why a move works.</h2><p>Review your games with Stockfish, compare continuations, and try another move on the same board.</p><p>Paste a PGN, upload a file, or find your public games by username.</p><a href="/analyze/" data-route="analyze" class="home-action">Review a game</a><button id="home-review-sample" class="home-text-action">Open the Opera sample</button></div>
-    <div id="home-review-demo" class="home-review-demo" data-ui data-home-reveal role="group" aria-label="Replay a sample from the Opera Game">
-      <div class="home-demo-heading"><span>Sample · The Opera Game</span><span id="home-review-step">1 of 5</span></div>
-      <div class="home-demo-coach"><strong id="home-review-move">10. Nxb5</strong><p id="home-review-explanation" aria-live="polite" aria-atomic="true">White’s knight captures the pawn on b5.</p></div>
-      <div id="home-review-board" class="home-demo-board chess-board board-surface" role="img" aria-label="Sample Opera Game position"></div>
-      <div class="home-demo-controls"><button id="home-review-back" aria-label="Previous sample move" disabled><span aria-hidden="true">←</span> Back</button><span>Follow the moves</span><button id="home-review-next" aria-label="Next sample move">Next <span aria-hidden="true">→</span></button></div>
-      <noscript><p>Open the sample review to follow this continuation.</p></noscript>
-    </div>
+
   </section>
   <section class="home-lab" aria-labelledby="home-lab-title"><div class="home-lab-inner home-chapter">
-    <div class="home-lab-intro" data-home-reveal><h2 id="home-lab-title">Train your chess vision.</h2><p>Step away from the usual tactic. Remember a position, or guide a knight through squares that are safe.</p><p class="home-lab-count"><strong id="home-lab-total">205</strong><span>original board puzzles</span></p><a href="/train/board-lab/" data-route="boardlab" class="home-action">Open Board Lab</a></div>
-    <dl class="home-lab-facts"><div data-home-reveal><dt>Board memory</dt><dd>Study the position, hide the pieces, then recall their squares.</dd></div><div data-home-reveal><dt>Knight trail</dt><dd>Find a route through empty squares your opponent does not attack.</dd></div><div data-home-reveal><dt>Go a little deeper</dt><dd id="home-lab-expert">Expert challenges with longer routes and more to remember.</dd></div><div data-home-reveal><dt>Your pace</dt><dd>Timed or untimed. Pause a round and pick it up later in this browser.</dd></div></dl>
+    <div class="home-lab-art" data-home-reveal><img src="/assets/academy-hero.png" alt="Ivory knight and black king on a marble chessboard" width="1942" height="809" loading="lazy" decoding="async"/></div>
+    <div class="home-lab-intro" data-home-reveal><h2 id="home-lab-title">See the board.<br/>Think ahead.</h2><p>There is more to chess than finding the next tactic. Train your memory and find a safe path.</p>
+      <dl class="home-lab-facts"><div><dt>Board memory</dt><dd>Remember the position. Recall the pieces.</dd></div><div><dt>Knight trail</dt><dd>Reach the target without crossing an attacked square.</dd></div></dl>
+      <p class="home-lab-count"><strong id="home-lab-total">205</strong> original puzzles · Timed or untimed</p>
+      <p id="home-lab-expert" class="home-lab-extra">Expert challenges with longer routes and more to remember.</p>
+      <a href="/train/board-lab/" data-route="boardlab" class="home-action">Explore Board Lab <span aria-hidden="true">↗</span></a>
+    </div>
   </div></section>
   <section class="home-daily home-chapter" aria-labelledby="home-daily-title">
-    <div class="home-daily-copy" data-home-reveal><h2 id="home-daily-title">A little chess, every day.</h2><p>Your lessons, tactics, and reviewed games feed a focused daily plan. Finish an exercise now, and return to the rest later.</p><a class="daily-shortcut" href="/train/" data-route="train" data-daily-shortcut><strong>Your daily training</strong><span>3 exercises · About 10 minutes</span></a></div>
-    <div class="home-daily-sheet" data-ui data-home-reveal><h3>Your practice plan</h3><ul id="home-daily-plan"><li><strong>Open your daily training</strong><span>Your saved plan appears here.</span></li></ul><p>Progress stays in this browser.</p></div>
+    <div class="home-daily-copy" data-home-reveal><h2 id="home-daily-title">A little practice.<br/>Every day.</h2><p>A focused plan from your lessons, tactics, and reviewed games. Pick up where you left off.</p><a class="daily-shortcut" href="/train/" data-route="train" data-daily-shortcut><strong>Your daily training</strong><span>3 exercises · About 10 minutes</span></a></div>
+    <div class="home-daily-sheet" data-ui data-home-reveal><h3>Today’s practice</h3><ul id="home-daily-plan"><li><strong>Open your daily training</strong><span>Your saved plan appears here.</span></li></ul><p>Progress stays in this browser.</p></div>
   </section>
   <section class="home-questions home-chapter" aria-labelledby="home-questions-title">
-    <h2 id="home-questions-title" data-home-reveal>Before your first move.</h2>
-    <div class="home-answers"><article data-home-reveal><h3>Can I start from zero?</h3><p>Yes. Chess for Beginners starts with the squares and pieces, then lets you practice the rules on the board.</p></article><article data-home-reveal><h3>Can I review my own games?</h3><p>Paste or upload a PGN, or find public Chess.com games by username. No Chess.com password is needed.</p></article><article data-home-reveal><h3>Why do review results change?</h3><p>The first result is a preview. Stockfish deepens the analysis, so explanations and move labels can change. Unfinished results stay provisional.</p></article><article data-home-reveal><h3>Do I have to use the timer?</h3><p>No. In Board Lab, open More and switch Timer off. Your unfinished rounds and lesson progress stay saved in this browser.</p></article></div>
+    <h2 id="home-questions-title" data-home-reveal>A few useful answers.</h2>
+    <div class="home-answers" data-home-reveal>
+      <details><summary>Can I start from zero?</summary><p>Yes. Chess for Beginners starts with the squares and pieces, then lets you practice the rules on the board.</p></details>
+      <details><summary>Can I review my own games?</summary><p>Paste or upload a PGN, or find public Chess.com games by username. No Chess.com password is needed.</p></details>
+      <details><summary>Why do review results change?</summary><p>The first result is a preview. Stockfish deepens the analysis, so explanations and move labels can change. Unfinished results stay provisional.</p></details>
+      <details><summary>Do I have to use the timer?</summary><p>No. In Board Lab, open More and switch Timer off. Your unfinished rounds and lesson progress stay saved in this browser.</p></details>
+    </div>
   </section>
-  <section class="home-invitation" aria-labelledby="home-invitation-title"><div class="home-chapter"><div data-home-reveal><h2 id="home-invitation-title">Your next lesson awaits.</h2><p>Start with the board. Learn an idea you can use.</p></div><a href="/learn/chess-for-beginners/" data-route="beginners" class="home-action" data-home-reveal>Learn chess</a></div></section>
+  <div class="home-closing home-chapter"><p>Your next lesson is waiting.</p><a href="/learn/" data-route="learn" class="home-action">Choose a lesson <span aria-hidden="true">→</span></a></div>
 </section>
         <section class="entry-page" data-page-view="analyze" aria-labelledby="analysis-entry-title" hidden><div class="page-heading"><h1 id="analysis-entry-title" tabindex="-1">Analyze a game.</h1><p>Import a game or find your public games.</p></div><button id="analysis-resume" class="entry-resume" hidden>Resume your review</button><div class="entry-grid"><button id="analysis-entry-paste" class="entry-card"><strong>Paste PGN</strong><span>Copy the game notation from your chess app.</span></button><button id="analysis-entry-upload" class="entry-card"><strong>Upload PGN</strong><span>Choose a .pgn file from your device.</span></button><button id="analysis-entry-find" class="entry-card"><strong>Find public games</strong><span>Search by Chess.com username. No password needed.</span></button><button id="analysis-entry-sample" class="entry-card"><strong>Explore a sample game</strong><span>The Opera Game · Morphy, Paris 1858.</span></button></div></section>
 <section class="entry-page" data-page-view="train" aria-labelledby="train-title" hidden><div class="page-heading"><div><h1 id="train-title" tabindex="-1">Train.</h1><p>Choose a skill to practice.</p></div></div><section id="daily-training" class="daily-training" aria-labelledby="daily-heading"><div class="daily-heading"><h2 id="daily-heading" tabindex="-1">Daily training</h2><span id="daily-date"></span></div><p id="daily-description">Three focused exercises · About 10 minutes.</p><div class="daily-progress-row"><span id="daily-count" role="status" aria-live="polite">0 of 3 exercises complete</span><progress id="daily-progress" value="0" max="3" aria-label="Daily exercises completed"></progress></div><button type="button" id="daily-start">Start daily training →</button><details class="daily-options"><summary>Session options</summary><div class="daily-level-row"><label for="daily-level">Tactics level</label><select id="daily-level" aria-describedby="daily-level-help"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div><p id="daily-level-help"></p></details><ol id="daily-tasks"></ol><p class="daily-storage-note">Your session is saved in this browser. A new plan is ready each day.</p></section><div class="entry-grid"><a class="entry-card lab-entry-card" href="/train/board-lab/" data-route="boardlab"><strong>Board Lab</strong><span>Remember the pieces. Find a safe knight route. Three levels.</span></a><a class="entry-card" href="/learn/tactical-vision/" data-route="tactics"><strong>Tactical exercises</strong><span>144 positions · Three levels · Hints when you need them.</span></a><a class="entry-card" href="/learn/chess-for-beginners/?lesson=board-and-first-move&amp;practice=squares" data-route="beginners"><strong>Coordinate practice</strong><span>Find squares like e4, with or without coordinates.</span></a></div><section class="train-mistakes"><h2>Practice reviewed mistakes.</h2><p>Choose a reviewed game and which side to practice. Incomplete reviews produce provisional exercises.</p><div id="train-setup"><label for="train-review">Reviewed game</label><select id="train-review"></select><label for="train-side">Practice mistakes by</label><select id="train-side"><option value="both">Both players</option><option value="w">White</option><option value="b">Black</option></select></div><p id="train-status" role="status"></p><div class="entry-actions"><button id="train-start" class="primary-button" disabled>Practice mistakes</button><button id="train-review-game" class="practice-secondary">Open game review</button><a id="train-choose-game" href="/analyze/" data-route="analyze">Choose a game →</a></div></section></section>

@@ -12,7 +12,7 @@ const explanations=[
   'Black’s c-pawn captures the knight on b5.',
   'White’s bishop recaptures on b5 with check.',
   'Black’s knight moves to d7, blocking the check.',
-  'White castles queenside, bringing a rook to the d-file.',
+  'Queenside castling brings the rook to d1.',
 ];
 export function homeReviewFrames(){
   return parsed.moves.slice(18,23).map((move,i)=>({fen:move.after,move,label:`${move.before.split(' ')[5]}${move.color==='w'?'.':'…'} ${move.san}`,explanation:explanations[i]}));
