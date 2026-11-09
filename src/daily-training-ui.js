@@ -18,6 +18,8 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice}){
       link.querySelector('strong').textContent=complete?'Daily training complete':'Your daily training';
       link.querySelector('span').textContent=complete?`${total} exercises completed today · Review →`:count?`${count}/${total} completed · Continue →`:'3 exercises · About 10 minutes →';
     }
+    const preview=$('home-daily-plan');
+    if(preview)preview.innerHTML=day.tasks.map(task=>`<li><span class="home-daily-state">${day.done.includes(task.id)?'Completed':'To practice'}</span><strong>${escape(task.title)}</strong><span>${escape(task.detail)}</span></li>`).join('');
     return day;
   }
   function open(date,task){

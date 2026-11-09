@@ -5,7 +5,7 @@ import { PAGE_PATHS } from '../src/routes.js';
 await mkdir('dist/engine', { recursive: true });
 await build({ entryPoints: ['src/app.js'], bundle: true, minify: true, sourcemap: true, outfile: 'dist/app.js', format: 'esm', target: ['es2022'] });
 await build({entryPoints:['src/theme-init.js'],bundle:true,minify:true,outfile:'dist/theme-init.js',format:'iife',target:['es2022']});
-await Promise.all(['index.html', 'style.css', 'pages.css', 'home.css', 'lesson.css', 'academy.css', 'navigation.css', 'analysis.css', 'simple.css', 'board-surface.css', 'usability.css', 'calm-theme.css', 'dark-theme.css', 'lesson-workspace.css', 'favicon.svg'].map(file => copyFile(`src/${file}`, `dist/${file}`)));
+await Promise.all(['index.html', 'style.css', 'pages.css', 'home.css', 'home-refresh.css', 'lesson.css', 'academy.css', 'navigation.css', 'analysis.css', 'simple.css', 'board-surface.css', 'usability.css', 'calm-theme.css', 'dark-theme.css', 'lesson-workspace.css', 'favicon.svg'].map(file => copyFile(`src/${file}`, `dist/${file}`)));
 await cp('src/assets','dist/assets',{recursive:true});
 await copyFile('src/daily-training.css','dist/daily-training.css');
 await copyFile('src/board-lab.css','dist/board-lab.css');

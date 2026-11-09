@@ -18,6 +18,7 @@ import { createAudioSettings } from './audio-settings.js';
 import { createAutoplay } from './autoplay.js';
 import { createCoachDemo } from './coach-demo.js';
 import { courseTopics } from './course-topics.js';
+import {createHomeExperience} from './home-experience.js';
 import { createAppearance } from './theme.js';
 import {createViewportMenu} from './viewport-menu.js';
 import {evaluationLossText} from './accuracy.js';
@@ -792,6 +793,7 @@ $('analysis-entry-paste').onclick=()=>{openImport();$('pgn-input').focus();};
 $('analysis-entry-upload').onclick=()=>{openImport();$('pgn-file').click();};
 $('analysis-entry-find').onclick=openConnect;
 $('analysis-entry-sample').onclick=()=>{setGame({pgn:DEMO_PGN},{demo:true,analyze:false});router.go('analysis');};
+const homeExperience=createHomeExperience({openSample:()=>$('analysis-entry-sample').click()});
 $('analysis-resume').onclick=()=>router.go('analysis');
 let trainGames=[],selectedTrainPgn=null;
 function trainSelection(){
@@ -1007,6 +1009,7 @@ router=createPageRouter(page=>{
   }
   if(page==='train'){renderTrain();daily.render();$('train-title').focus({preventScroll:true});}
   if(page==='learn'||page==='home'){learning.refresh();daily.render();}
+  if(page==='home')homeExperience.activate();
   if(page==='learn'){
     let saved;try{saved=reviewStorage?.getItem('knightlab-learning-category');}catch{}
     selectLearningCategory(learningCategory(COURSES,new URLSearchParams(location.search).get('category'),saved));
