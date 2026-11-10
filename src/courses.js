@@ -5,6 +5,7 @@ import {OPEN_GAMES_LESSONS,OPEN_GAMES_REFERENCE} from './open-games-lessons.js';
 import {BEGINNER_LESSONS,BEGINNER_REFERENCE} from './beginner-lessons.js';
 import {TAL_LESSONS,TAL_REFERENCE,TAL_COURSE_INFO} from './tal-lessons.js';
 import {SCOTCH_LESSONS,SCOTCH_REFERENCE} from './scotch-lessons.js';
+import {SICILIAN_LESSONS,SICILIAN_REFERENCE} from './sicilian-lessons.js';
 import {MATE_LESSONS,MATE_REFERENCE} from './mate-lessons.js';
 import {CALCULATION_LESSONS,CALCULATION_REFERENCE,CALCULATION_LEVELS} from './calculation-lessons.js';
 import{orderedLessons}from'./lesson-insight.js';
@@ -16,6 +17,18 @@ export const COURSES={
   calculation:{id:'calculation',title:'Calculation Lab',path:'/learn/calculation/',lessons:CALCULATION_LESSONS,reference:CALCULATION_REFERENCE,key:'knightlab-calculation-course-v1',category:'tactics',label:'Exercise',orientToSolver:true,levels:Object.keys(CALCULATION_LEVELS),levelLabels:CALCULATION_LEVELS,study:id=>CALCULATION_LESSONS.find(lesson=>lesson.id===id)?.study||{},idea:studyIdea,catalog:{cover:'/assets/calculation-lab.svg',alt:'Calculation Lab course cover with a multi-move variation',kicker:`${CALCULATION_LESSONS.length} REAL-GAME CHALLENGES · THREE LEVELS`,description:'Calculate 3–6 of your moves against selected defensive replies. Work through distinct positions, from challenging to expert.',benefits:['40 Challenging · 40 Advanced · 40 Expert','10 themes · Equal practice with White and Black','Lichess CC0 puzzles · Legal lines checked with Stockfish 19']}},
   opengames:{id:'opengames',title:'Italian Game',path:'/learn/open-games/',lessons:OPEN_GAMES_LESSONS,reference:OPEN_GAMES_REFERENCE,key:'knightlab-open-games-course-v1',study:id=>OPEN_GAMES_LESSONS.find(lesson=>lesson.id===id).study,idea:move=>move&&/[+#]/.test(move.san)?'check':studyIdea(move),label:'Lesson',orientToSolver:true},
   scotch:{id:'scotch',title:'Scotch Gambit',path:'/learn/scotch-gambit/',lessons:SCOTCH_LESSONS,reference:SCOTCH_REFERENCE,key:'knightlab-scotch-course-v1',study:id=>SCOTCH_LESSONS.find(lesson=>lesson.id===id).study,idea:studyIdea,label:'Lesson',orientToSolver:true,category:'openings',practice:{lessonId:'scotch-first-moves',startPly:4,goal:'Develop quickly, challenge the center, and compare recovering the pawn with gaining activity.'}},
+  sicilian:{
+    id:'sicilian', title:'Sicilian Defense', path:'/learn/sicilian-defense/', category:'openings', label:'Lesson',
+    lessons:SICILIAN_LESSONS, reference:SICILIAN_REFERENCE, key:'knightlab-sicilian-course-v1', orientToSolver:true,
+    study:id=>SICILIAN_LESSONS.find(lesson=>lesson.id===id)?.study||{}, idea:studyIdea,
+    practice:{lessonId:'sicilian-open-center', startPly:4, goal:'Open the center, develop your pieces, and compare Black’s replies after the exchange on d4.'},
+    catalog:{
+      cover:'/assets/sicilian-defense.webp', alt:'A chessboard after 1.e4 c5 with both pawns highlighted',
+      kicker:'PLAYING WHITE · THE OPEN SICILIAN',
+      description:'Meet 1…c5 by opening the center. Learn what changes when Black chooses a different setup, and practice a plan for each position.',
+      benefits:[`${SICILIAN_LESSONS.length} lessons with board practice, hints, and questions`, 'Najdorf with 6.h3, Kan, Taimanov, and Four Knights', 'Classical, Dragon, Accelerated Dragon, Sveshnikov, and Kalashnikov']
+    }
+  },
 };
 for(const info of TAL_COURSE_INFO){
   const lessons=TAL_LESSONS.filter(lesson=>lesson.courseId===info.id).sort((a,b)=>a.unit.localeCompare(b.unit));

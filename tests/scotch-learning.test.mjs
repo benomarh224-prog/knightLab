@@ -63,5 +63,6 @@ test('the Scotch course is routable under Openings and its completion never over
 test('the opening catalog exposes Scotch and counts registered openings rather than a fixed pair',()=>{
  const root={},counter={},names={},doc={getElementById:()=>root,querySelectorAll:selector=>selector.includes('data-learn-filter')?[counter]:[names]};
  renderOpeningCatalog(COURSES,doc);assert.match(root.innerHTML,/href="\/learn\/scotch-gambit\/"/);assert.match(root.innerHTML,/Scotch Gambit/);assert.match(root.innerHTML,/10 lessons/);
- assert.equal(counter.textContent,'3');assert.match(names.textContent,/French Defense · Italian Game · Scotch Gambit/);
+ const openings=Object.values(COURSES).filter(course=>course.category==='openings');
+ assert.equal(counter.textContent,String(openings.length));assert.equal(names.textContent,openings.map(course=>course.title).join(' · '));
 });
