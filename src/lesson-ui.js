@@ -16,6 +16,7 @@ import { illegalMoveReason } from './lesson-move-help.js';
 import { coursePractice } from './course-practice.js';
 import { renderAttackingCatalog } from './attacking-catalog.js';
 import { renderOpeningCatalog } from './opening-catalog.js';
+import { renderCatalogAdditions } from './course-catalog.js';
 import { lessonCheckmate,exploreBeforeCheckmate,createLessonCheckmateDialog } from './lesson-checkmate.js';
 import { lessonEntry,lessonGuidance } from './lesson-guidance.js';
 import { createSquarePracticeUI } from './square-practice.js';
@@ -36,6 +37,7 @@ const names={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen',k:'king'},stageNa
 export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePractice,playSound=()=>{},feedbackSound=()=>{},daily}){
   renderAttackingCatalog(COURSES);
   renderOpeningCatalog(COURSES);
+  renderCatalogAdditions(COURSES,{category:'tactics',hostId:'additional-tactics-courses'});
   const memoryFor=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key),players=new Map(),memory=createLearningMemory(storage,COURSES);
   const squarePractice=createSquarePracticeUI({storage,feedbackSound});
   const guidedExample=createGuidedExample({storage,playSound});

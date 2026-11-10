@@ -17,3 +17,11 @@ The images are decorative editorial illustrations. They do not assert evaluated 
 The current opening-course covers are the user-supplied `italian-game-cover.jpg` and `french-defense-cover.jpg`, copied unchanged from their attached images. They replace the earlier cover references in the catalog; the French cover also illustrates the homepage Openings category. Their embedded headings are preserved using `object-fit: contain`, with a full 3:2 image area on phones.
 
 `scotch-gambit.svg` is an original Knightlab vector cover showing the legal position after `1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Bc4`. Its nested chess pieces use the unchanged Chessnut artwork by Alexis Luengas under Apache-2.0, credited in `THIRD-PARTY-NOTICES.txt`. The cover is not copied from the supplied opening booklet.
+
+## Future homepage / November 2026
+
+`roqvyn-knight-future.png` is original decorative artwork generated with the built-in ImageGen tool for ROQVYN. It is an isolated graphite/titanium chess knight with a restrained mint inlay, 1200×1310 pixels with alpha, copied into this repository from the generated result. It is not an evaluated position, a brand logo, or a physical product for sale. No external stock image was used. `mate-in-one.svg` is an original code-native course cover with a geometric rook, not borrowed chess artwork.
+
+Final ImageGen prompt:
+
+> Use case: stylized-concept. Asset type: premium chess website hero object for ROQVYN. Create one sculptural, futuristic Staunton chess knight as an isolated product render, complete base visible, no other pieces. Three-quarter view facing left, strong recognizable chess knight silhouette, simplified architectural facets in satin graphite titanium, one restrained mint-turquoise inlay along the mane and lower base, brushed metal material with fine believable detail. Museum product photography quality, broad soft studio lighting, crisp edges, tactile and elegant, minimal rather than science fiction. Center the full object with generous transparent space around it. Transparent background with real alpha; no floor, no backdrop. No text, no letters, no UI, no logos, no neon glow, no ornamental circuitry, no gradients as graphic elements. Designed to sit on a flat pale-mint stage in a modern chess learning website. Portrait or square composition, high resolution.

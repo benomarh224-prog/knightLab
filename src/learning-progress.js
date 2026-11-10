@@ -6,10 +6,10 @@ export function renderLearningProgress({progress,activeLessons,course,player,mem
   function updateProgress(){
     const completed=progress.read(),visible=activeLessons(),inLevel=visible.filter(lesson=>completed.includes(lesson.id)).length;
     const focusedLesson=document.activeElement?.closest('#course-lessons [data-lesson]')?.dataset.lesson;
-    $('course-progress-label').textContent=`${inLevel} of ${visible.length} ${course.id==='tactics'?'exercises':'lessons'} practiced`;
+    $('course-progress-label').textContent=`${inLevel} of ${visible.length} ${course.label==='Exercise'?'exercises':'lessons'} practiced`;
     $('course-progress-fill').style.width=`${inLevel/visible.length*100}%`;
     for(const element of document.querySelectorAll('[data-course-progress]')){
-      const target=COURSES[element.dataset.courseProgress];if(target)element.textContent=`${memoryFor(target).read().length} of ${target.lessons.length} lessons completed`;
+      const target=COURSES[element.dataset.courseProgress];if(target)element.textContent=`${memoryFor(target).read().length} of ${target.lessons.length} ${target.label==='Exercise'?'exercises':'lessons'} completed`;
     }
     const frenchDone=memoryFor(COURSES.french).read(),tacticsDone=memoryFor(COURSES.tactics).read();
     $('learn-progress-label').textContent=frenchDone.length?`${frenchDone.length} of ${COURSES.french.lessons.length} lessons practiced`:`${COURSES.french.lessons.length} focused lessons · Interactive practice`;

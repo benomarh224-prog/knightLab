@@ -771,7 +771,7 @@ $('open-connect').onclick = openConnect;
 $('games-search').onclick=openConnect;
 function homeAnalyze(){router.go('analyze');}
 $('home-analyze').onclick=homeAnalyze;
-for(const id of ['home-tactics','home-tactics-art'])$(id).onclick=()=>{
+for(const id of ['home-tactics','home-tactics-art'])if($(id))$(id).onclick=()=>{
   router.go('tactics');
 };
 $('learn-topic').innerHTML=courseTopics(COURSES).map(topic=>`<option value="${escape(topic.value)}">${escape(topic.label)}</option>`).join('');
