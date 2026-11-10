@@ -9,7 +9,7 @@ const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
 http.createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    if(pathname.startsWith('/api/auth/')||pathname==='/api/account'){
+    if(pathname.startsWith('/api/auth/')||pathname==='/api/auth'||pathname==='/api/account'){
       const chunks=[];let bytes=0;for await(const chunk of req){bytes+=chunk.length;if(bytes>4300000){res.writeHead(413);res.end();return;}chunks.push(chunk);}
       const request=new Request(`http://${req.headers.host}${req.url}`,{method:req.method,headers:req.headers,...(!['GET','HEAD'].includes(req.method)?{body:Buffer.concat(chunks)}:{})});
       const response=await (pathname==='/api/account'?accountAPI:authProxy)(request),headers=Object.fromEntries(response.headers);delete headers['set-cookie'];const cookies=response.headers.getSetCookie();if(cookies.length)headers['set-cookie']=cookies;

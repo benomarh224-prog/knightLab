@@ -2,7 +2,7 @@ import {authURL,json,privateHeaders,sameOrigin} from './account-security.js';
 const routes=new Map([['get-session','GET'],['sign-in/email','POST'],['sign-up/email','POST'],['sign-out','POST'],['email-otp/send-verification-otp','POST'],['email-otp/verify-email','POST'],['email-otp/check-verification-otp','POST'],['email-otp/reset-password','POST']]);
 export function createAuthProxy({env=process.env,fetcher=fetch}={}){
   return async request=>{
-    const url=new URL(request.url),path=url.pathname.replace(/^\/api\/auth\//,'');
+    const url=new URL(request.url),path=url.pathname==='/api/auth'?(url.searchParams.get('route')||''):url.pathname.replace(/^\/api\/auth\//,'');
     if(!routes.has(path)||routes.get(path)!==request.method)return json({error:'Not found'},404);
     if(request.method==='POST'&&!sameOrigin(request))return json({error:'This request must come from ROQVYN.'},403);
     try{

@@ -66,6 +66,12 @@ test('auth responses keep cookies first-party and prevent shared caching',async(
   const proxy=createAuthProxy({env:{NEON_AUTH_BASE_URL:'https://ep-example.neonauth.eu-central-1.aws.neon.tech/neondb/auth'},fetcher:async()=>new Response('{}',{headers:{'Set-Cookie':'session=private; HttpOnly; Secure; Domain=.neon.tech; Path=/auth','Content-Type':'application/json'}})});
   const response=await proxy(new Request('https://roqvyn.example/api/auth/get-session'));assert.match(response.headers.get('Cache-Control'),/no-store/);assert.doesNotMatch(response.headers.get('set-cookie'),/Domain=/i);assert.match(response.headers.get('set-cookie'),/HttpOnly/);assert.match(response.headers.get('set-cookie'),/Path=\//);
 });
+test('the Vercel rewrite reaches nested auth paths without opening arbitrary forwarding',async()=>{
+  const calls=[],proxy=createAuthProxy({env:{NEON_AUTH_BASE_URL:'https://ep-example.neonauth.eu-central-1.aws.neon.tech/neondb/auth'},fetcher:async(url,options)=>{calls.push({url:String(url),method:options.method});return Response.json({ok:true});}});
+  const request=route=>new Request('https://roqvyn.example/api/auth?route='+encodeURIComponent(route),{method:'POST',headers:{Origin:'https://roqvyn.example'},body:'{}'});
+  assert.equal((await proxy(request('sign-in/email'))).status,200);assert.equal(calls[0].url,'https://ep-example.neonauth.eu-central-1.aws.neon.tech/neondb/auth/sign-in/email');
+  assert.equal((await proxy(request('admin/list-users'))).status,404);assert.equal((await proxy(request('https://evil.example/'))).status,404);assert.equal(calls.length,1);
+});
 test('account API rejects missing or forged identity before accessing the database',async()=>{
   let called=false;const api=createAccountAPI({identify:async()=>{throw Error('invalid');},sql:()=>{called=true;}});assert.equal((await api(new Request('https://roqvyn.example/api/account'))).status,401);assert.equal(called,false);
 });
