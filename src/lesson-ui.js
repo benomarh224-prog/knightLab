@@ -7,6 +7,7 @@ import { createCourseProgress } from './opening-course.js';
 import { LessonPlayer } from './lesson-player.js';
 import { renderLearningProgress } from './learning-progress.js';
 import { createLessonLayout } from './lesson-layout.js';
+import { createLessonOutline } from './lesson-outline.js';
 import { createLearningMemory } from './learning-memory.js';
 import { renderLearningCompanion } from './learning-companion.js';
 import { createLessonDock,lessonContinuation } from './lesson-navigation.js';
@@ -61,6 +62,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   }
   player=getPlayer(lessonEntry(course,{rememberedId:memory.lastFor(course.id),completed:progress.read()}));
   const layout=createLessonLayout({compact:matchMedia('(max-width:1020px)'),layout:document.querySelector('.course-layout'),sidebar:document.querySelector('.course-sidebar'),drawer:$('course-drawer'),drawerBody:$('course-drawer-body'),openButton:$('lesson-list-open'),closeButton:$('lesson-list-close'),outline:$('course-outline')});
+  const outline=createLessonOutline();
   const dock=createLessonDock({footer:document.querySelector('.lesson-course-footer'),root:document.documentElement});
   const lessonViewport=createLessonViewport();
   const coach=createLessonCoach();
@@ -86,7 +88,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     beforeOpen:()=>{coach.close();for(const menu of document.querySelectorAll('.compact-options[open]'))menu.open=false;},
     onContinue:()=>{if(player.exploring)player.stopExploring();clearTurn();if(continuation().enabled)continueLesson();else{render();focusStage();}},
     onExplore:()=>{exploreBeforeCheckmate(player);clearTurn();render();focusBoard();},focusBoard});
-  function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor});renderLearningCompanion({memory,courses:COURSES,storage});}
+  function updateProgress(){renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor,outline});renderLearningCompanion({memory,courses:COURSES,storage});}
   function clearAlternative(){alternativeAnalysis.cancel();alternative=null;alternativeText='';}
   function clearAttempt(){attempt=null;attemptEffect.clear();}
   function clearTurn({keepReplay=false}={}){if(!keepReplay)replay?.stop();mateEvent=null;stepEvidence=null;motion.cancel();clearAlternative();clearAttempt();selected=null;hint=null;message='';promotion=null;}
@@ -287,7 +289,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   $('lesson-demonstration-done').onclick=()=>{player.acknowledgeDemonstration();render();};
   $('lesson-answers').onclick=event=>{const item=event.target.closest('[data-lesson-answer]');if(item){const answer=Number(item.dataset.lessonAnswer);player.answer(answer);render();if(answer!==player.question.answer)feedbackSound('incorrect');else if(player.complete)feedbackSound('complete');}};
   for(const [id,delta] of [['lesson-question-previous',-1],['lesson-question-next',1]])$(id).onclick=()=>{player.questionIndex=Math.max(0,Math.min(player.plan.questions.length-1,player.questionIndex+delta));player.save();render();focusStage();};
-  $('course-lessons').onclick=event=>{const item=event.target.closest('[data-lesson]');if(item){selectLesson(item.dataset.lesson);layout.close();$('lesson-title').focus({preventScroll:true});document.querySelector('.lesson-page-heading').scrollIntoView({block:'start'});}};
+  $('course-lessons').onclick=event=>{const item=event.target.closest('[data-lesson]');if(item){selectLesson(item.dataset.lesson);layout.close({restoreFocus:false});focusStage();$('lesson-title').focus({preventScroll:true});}};
   $('lesson-reset').onclick=()=>{player.reset();clearTurn();render();};
   $('lesson-undo').onclick=()=>{const exploring=player.exploring;clearTurn();if(player.undo())message=exploring?'Move taken back. Try another continuation.':'Back to your previous decision. Your earned completion is saved.';render();};
   function toggleExploration(){

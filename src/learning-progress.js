@@ -1,11 +1,9 @@
 import {COURSES} from './courses.js';
 import{lessonDisplay}from'./lesson-insight.js';
 const $=id=>document.getElementById(id);
-const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor}){
+export function renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor,outline}){
   function updateProgress(){
     const completed=progress.read(),visible=activeLessons(),inLevel=visible.filter(lesson=>completed.includes(lesson.id)).length;
-    const focusedLesson=document.activeElement?.closest('#course-lessons [data-lesson]')?.dataset.lesson;
     $('course-progress-label').textContent=`${inLevel} of ${visible.length} ${course.label==='Exercise'?'exercises':'lessons'} practiced`;
     $('course-progress-fill').style.width=`${inLevel/visible.length*100}%`;
     for(const element of document.querySelectorAll('[data-course-progress]')){
@@ -29,15 +27,10 @@ export function renderLearningProgress({progress,activeLessons,course,player,mem
     if(pathNodes[0])pathNodes[0].textContent=beginnerDone.length===beginnerTotal?'✓':'01';
     $('course-levels').hidden=!course.levels?.length;
     for(const button of document.querySelectorAll('[data-course-level]'))button.setAttribute('aria-pressed',String(button.dataset.courseLevel===player.lesson.level));
-    $('course-lessons').innerHTML=visible.map((lesson,index)=>{
-      const active=lesson.id===player.lesson.id,done=completed.includes(lesson.id);
-      const display=lessonDisplay(course,lesson,studyFor(lesson.id)),title=display.title.replace(/\.$/,'');
-      const subtitle=display.effort||'';
-      const previous=visible[index-1],group=display.group,previousGroup=previous?lessonDisplay(course,previous,studyFor(previous.id)).group:null;
-      const unit=group&&previousGroup!==group?`<p class="lesson-unit-heading">${escape(group)}</p>`:'';
-      return `${unit}<button data-lesson="${lesson.id}" aria-current="${active?'step':'false'}" class="${done?'is-practiced':''}" aria-label="${course.label} ${index+1}: ${escape(display.title)}${done?'. Practiced':''}"><span class="lesson-status" aria-hidden="true">${done?'✓':active?'▶':'○'}</span><span class="lesson-number">${String(index+1).padStart(2,'0')}</span><span class="lesson-list-name"><strong>${escape(title)}</strong>${subtitle?`<small>${escape(subtitle)}</small>`:''}</span></button>`;
-    }).join('');
-    if(focusedLesson)$('course-lessons').querySelector(`[data-lesson="${focusedLesson}"]`)?.focus({preventScroll:true});
+    outline.render(visible.map((lesson,index)=>{
+      const display=lessonDisplay(course,lesson,studyFor(lesson.id));
+      return {id:lesson.id,index,title:display.title,group:display.group,subtitle:display.effort||'',done:completed.includes(lesson.id)};
+    }),{courseId:course.id,lessonId:player.lesson.id,lessonLabel:course.label});
   }
 
 updateProgress();

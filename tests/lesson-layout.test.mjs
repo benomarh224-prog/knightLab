@@ -55,10 +55,14 @@ test('compact course picker focuses the active lesson and closes without a stale
   assert.equal(ui.drawer.open,true);assert.equal(ui.drawer.shown,1);
   assert.equal(current.focusCount,1);assert.equal(current.scrolled,true);
   assert.equal(ui.openButton.attributes['aria-expanded'],'true');
-  controller.close();assert.equal(ui.openButton.attributes['aria-expanded'],'false');
+  controller.close();assert.equal(ui.openButton.attributes['aria-expanded'],'false');assert.equal(ui.openButton.focusCount,1);
   ui.openButton.onclick();ui.closeButton.onclick();assert.equal(ui.drawer.open,false);
   ui.openButton.onclick();ui.compact.matches=false;ui.compact.change();
   assert.equal(ui.drawer.open,false);assert.equal(ui.sidebar.parent,ui.layout);
   assert.equal(ui.openButton.attributes['aria-expanded'],'false');
   ui.openButton.onclick();assert.equal(ui.drawer.open,false);
+});
+test('selecting a lesson can keep focus on its heading instead of the closed drawer trigger',()=>{
+  const {ui,controller}=fixture(true);ui.openButton.onclick();controller.close({restoreFocus:false});assert.equal(ui.openButton.focusCount,0);
+  ui.openButton.onclick();ui.compact.matches=false;ui.compact.change();assert.equal(ui.openButton.focusCount,0);
 });
