@@ -41,6 +41,8 @@ import { renderReviewStatistics } from './review-statistics.js';
 import {createDailyTrainingUI} from './daily-training-ui.js';
 import {reviewedDailyMistakes} from './daily-training.js';
 import{createBoardLabUI}from'./board-lab-ui.js';
+import{createAccountStorage}from'./account-storage.js';
+import{createAccountUI}from'./account-ui.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -84,8 +86,9 @@ const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:
 function closeWorkspaceMenu(){navigation.close();}
 $('nav-import').onclick=()=>{closeWorkspaceMenu();$('sidebar-import').click();};
 $('nav-guide').onclick=()=>{closeWorkspaceMenu();$('how-it-works').click();};
-let reviewStorage;
-try { reviewStorage=localStorage; } catch {}
+let deviceStorage;
+try { deviceStorage=localStorage; } catch {}
+const reviewStorage=createAccountStorage(deviceStorage);
 state.mode=loadReviewMode(reviewStorage);
 $('analysis-speed').value=state.mode;
 const reviewMemory=createReviewMemory(reviewStorage);
@@ -986,6 +989,7 @@ for(const id of ['course-cover-board']){
   }
   $(id).innerHTML=html;
 }
+const account=createAccountUI({storage:reviewStorage,beforeReload:()=>{saveReviewPosition();stopAnalysis();}});
 installSimpleUI();createAppearance({storage:reviewStorage});$('board-actions-panel').append(playbackButton);
 createAudioSettings(moveSounds,{beforeOpen:()=>{coachDemo.pause();autoplay.stop();closeWorkspaceMenu();closeBoardActions();for(const menu of document.querySelectorAll('.compact-options'))menu.open=false;}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){coachDemo.pause();autoplay.stop();moveSounds.stop();}});
@@ -1002,6 +1006,7 @@ router=createPageRouter(page=>{
   if(page==='analysis'){if(!state.running)startAnalysis();}
   else {if(coachDemo.active)finishCoachDemo({resume:false});saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
+  if(page==='account'){account.open();$('account-title').focus({preventScroll:true});}
   if(page==='analyze'){
     $('analysis-resume').hidden=!reviewOpened;
     $('analysis-resume').textContent=`Resume ${state.demo?'sample review':$('workspace-title').textContent} · Move ${Math.ceil(state.ply/2)}`;

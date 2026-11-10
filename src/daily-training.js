@@ -47,7 +47,7 @@ function taskValid(task,courses){
 export function createDailyTraining({storage,courses,learningMemory,now=()=>new Date()}){
   let state;try{state=JSON.parse(storage?.getItem(KEY)||'null');}catch{}
   const adaptive=createAdaptiveTraining({storage,courses,now});
-  state={version:1,level:adaptive.bands.some(b=>b.value===state?.level)?state.level:null,days:Array.isArray(state?.days)?state.days.filter(day=>/^\d{4}-\d{2}-\d{2}$/.test(day?.date)&&Array.isArray(day.tasks)&&day.tasks.length>0&&day.tasks.length<=3&&day.tasks.every(task=>taskValid(task,courses))).slice(-35).map(day=>({...day,done:Array.isArray(day.done)?day.done.filter(id=>day.tasks.some(task=>task.id===id)):[],started:day.started===true,
+  state={version:1,level:adaptive.bands.some(b=>b.value===state?.level)?state.level:null,days:Array.isArray(state?.days)?state.days.filter(day=>/^\d{4}-\d{2}-\d{2}$/.test(day?.date)&&Array.isArray(day.tasks)&&day.tasks.length>0&&day.tasks.length<=(day.merged?24:3)&&day.tasks.every(task=>taskValid(task,courses))).slice(-35).map(day=>({...day,done:Array.isArray(day.done)?day.done.filter(id=>day.tasks.some(task=>task.id===id)):[],started:day.started===true,
     opened:Array.isArray(day.opened)?day.opened.filter(id=>day.tasks.some(task=>task.id===id)):day.started?day.tasks.map(task=>task.id):[],choice:day.choice||day.level||'auto'})):[]};
   const save=()=>{try{storage?.setItem(KEY,JSON.stringify(state));}catch{}};
   const completed=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key).read();

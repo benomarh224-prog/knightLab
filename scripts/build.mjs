@@ -3,7 +3,16 @@ import { build } from 'esbuild';
 import { mkdir, copyFile, readdir, readFile, writeFile,cp } from 'node:fs/promises';
 import { PAGE_PATHS } from '../src/routes.js';
 await mkdir('dist/engine', { recursive: true });
-await build({ entryPoints: ['src/app.js'], bundle: true, minify: true, sourcemap: true, outfile: 'dist/app.js', format: 'esm', target: ['es2022'] });
+await build({ entryPoints: ['src/app.js'], bundle: true, minify: true, sourcemap: true, outfile: 'dist/app.js', format: 'esm', target: ['es2022'],external:['/account-neon.js'] });
+const authBuild=await build({entryPoints:['src/account-neon.js'],bundle:true,minify:true,outfile:'dist/account-neon.js',format:'esm',target:['es2022'],metafile:true});
+const licenseRoots=new Set(Object.keys(authBuild.metafile.inputs).flatMap(path=>{const marker=path.lastIndexOf('node_modules/');if(marker<0)return [];const parts=path.slice(marker+13).split('/');return [path.slice(0,marker+13)+parts.slice(0,parts[0].startsWith('@')?2:1).join('/')];}));
+const authLicenses=[];
+for(const root of [...licenseRoots].sort()){
+  const pkg=JSON.parse(await readFile(`${root}/package.json`,'utf8'));
+  const files=(await readdir(root)).filter(file=>/^(license|copying|notice)(\..*)?$/i.test(file));
+  authLicenses.push(`${pkg.name} ${pkg.version} (${pkg.license||'see source'})\n${(await Promise.all(files.map(file=>readFile(`${root}/${file}`,'utf8')))).join('\n')}`);
+}
+await writeFile('dist/ACCOUNT-SDK-LICENSES.txt',authLicenses.join('\n\n----------------------------------------\n\n'));
 await build({entryPoints:['src/theme-init.js'],bundle:true,minify:true,outfile:'dist/theme-init.js',format:'iife',target:['es2022']});
 await Promise.all(['index.html', 'style.css', 'pages.css', 'home.css', 'home-refresh.css', 'lesson.css', 'academy.css', 'navigation.css', 'analysis.css', 'simple.css', 'board-surface.css', 'usability.css', 'calm-theme.css', 'dark-theme.css', 'lesson-workspace.css', 'favicon.svg'].map(file => copyFile(`src/${file}`, `dist/${file}`)));
 await cp('src/assets','dist/assets',{recursive:true});

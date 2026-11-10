@@ -8,6 +8,11 @@ Chess.js source: https://github.com/jhlywa/chess.js/tree/v1.4.0
 Public player and game data is provided by the Chess.com Published-Data API.
 ROQVYN is independent of and not affiliated with Chess.com.
 
+Account sign-in uses @neon/auth (Apache-2.0) and its bundled dependencies.
+Source: https://github.com/neondatabase/neon-js
+See ACCOUNT-SDK-LICENSES.txt for bundled package licenses and notices.
+Server-only progress storage uses @neondatabase/serverless (MIT) and jose (MIT).
+
 Opening names and reference positions: lichess-org/chess-openings (CC0-1.0).
 Source: https://github.com/lichess-org/chess-openings
 Snapshot revision: a6189a30dc273ccb21fc2536a9a2fefd5592a67a.
