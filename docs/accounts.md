@@ -38,7 +38,9 @@ Apply the initial schema once using an ignored local environment file:
 node --env-file=.env.local scripts/migrate-accounts.mjs
 ```
 
-The migration is applied to the production database. Add a new migration for
+Both migrations are applied to the production database. Migration 002 adds the
+canonical website origin to this branch's managed Auth configuration without
+removing any existing domain. Add a new migration for
 future schema changes. The progress table has RLS enabled and no public policy;
 the server verifies JWT signature, issuer, audience, expiry, and the verified
 database identity before scoped parameterized queries. Writes use a transactional
@@ -73,6 +75,13 @@ and run the same script. It creates two uniquely named accounts on the reserved
 `tests.example.invalid` domain, verifies only these fixture identities in SQL,
 tests owner isolation and revision conflicts, and removes their rows in `finally`.
 It does not send codes to a real person and does not test email delivery.
+
+Production verification completed on 2026-11-10: 20 checks passed through
+`https://knightlab.vercel.app`, including real managed SDK sign-in/session JWTs,
+verified-user enforcement, two-account isolation, revision conflicts, restricted
+proxy routes, and non-cacheable responses. Both temporary accounts were removed.
+The first production check caught a framework-less nested-route 404; the explicit
+Vercel rewrite and a regression check now cover that path.
 
 Browser Use was unavailable for this change. No screenshots, mobile viewport
 checks, real iPhone/iOS Safari, or Edge UI tests were performed. Account styling
