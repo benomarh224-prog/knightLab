@@ -52,7 +52,7 @@ export function createHomeExperience({openSample,doc=document,win=window}){
   };
   for(const count of root.querySelectorAll('[data-mate-count]'))count.textContent=String(COURSES.mates.lessons.length);
   const facts=homeLabFacts();get('home-lab-total').textContent=String(facts.total);
-  get('home-lab-expert').textContent=`${facts.expert} Expert puzzles. Knight trails take ${facts.minHops}–${facts.maxHops} safe hops.`;
+  get('home-lab-expert').textContent=`${facts.expert} expert`;
   // No content depends on animation or IntersectionObserver support.
   if(win.IntersectionObserver){
     const observer=new win.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('home-arrived');observer.unobserve(entry.target);}},{threshold:.12});

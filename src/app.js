@@ -1007,7 +1007,13 @@ router=createPageRouter(page=>{
     $('analysis-resume').textContent=`Resume ${state.demo?'sample review':$('workspace-title').textContent} · Move ${Math.ceil(state.ply/2)}`;
     $('analysis-entry-title').focus({preventScroll:true});
   }
-  if(page==='train'){renderTrain();daily.render();$('train-title').focus({preventScroll:true});}
+  if(page==='train'){
+    renderTrain();daily.render();$('train-title').focus({preventScroll:true});
+    if(new URLSearchParams(location.search).get('practice')==='mistakes')requestAnimationFrame(()=>{
+      if(document.body.dataset.page!=='train'||new URLSearchParams(location.search).get('practice')!=='mistakes')return;
+      const heading=document.querySelector('.train-mistakes h2');heading.tabIndex=-1;heading.focus({preventScroll:true});heading.scrollIntoView({block:'center',behavior:'instant'});
+    });
+  }
   if(page==='learn'||page==='home'){learning.refresh();daily.render();}
   if(page==='home')homeExperience.activate();
   if(page==='learn'){

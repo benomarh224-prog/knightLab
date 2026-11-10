@@ -1,5 +1,6 @@
 import { createDailyTraining } from './daily-training.js';
 import { createLearningMemory } from './learning-memory.js';
+import {homePlanState,homePlanRows} from './home-daily-plan.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 export function createDailyTrainingUI({storage,courses,mistakes,go,practice}){
   const $=id=>document.getElementById(id),freshMemory=()=>createLearningMemory(storage,courses);
@@ -19,7 +20,11 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice}){
       link.querySelector('span').textContent=complete?`${total} exercises completed today · Review →`:count?`${count}/${total} completed · Continue →`:'3 exercises · About 10 minutes →';
     }
     const preview=$('home-daily-plan');
-    if(preview)preview.innerHTML=day.tasks.map(task=>`<li><span class="home-daily-state">${day.done.includes(task.id)?'Completed':'To practice'}</span><strong>${escape(task.title)}</strong><span>${escape(task.detail)}</span></li>`).join('');
+    if(preview){
+      preview.innerHTML=homePlanRows(day,courses);const state=homePlanState(day);
+      $('home-daily-summary').textContent=state.summary;$('home-daily-progress').max=state.total;$('home-daily-progress').value=state.done;
+      $('home-daily-start-label').textContent=state.action;
+    }
     return day;
   }
   function open(date,task){
@@ -32,6 +37,8 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice}){
   }
   function advance(date){const task=model.next(date);if(task)open(date,task);else go('train');}
   $('daily-start').onclick=()=>{const day=render();advance(day.date);};
+  $('home-daily-start').onclick=()=>{const day=render();if(day.done.length===day.tasks.length)go('train');else advance(day.date);};
+  $('home-daily-plan').onclick=event=>{const id=event.target.closest('[data-home-daily-task]')?.dataset.homeDailyTask;if(!id)return;const day=render(),task=day.tasks.find(item=>item.id===id);if(task)open(day.date,task);};
   $('daily-tasks').onclick=event=>{const id=event.target.closest('[data-daily-task]')?.dataset.dailyTask;if(!id)return;const day=render(),task=day.tasks.find(item=>item.id===id);if(task)open(day.date,task);};
   $('daily-level').onchange=()=>{model.setLevel($('daily-level').value);render();};
   return {render,context:(courseId,lessonId,query)=>model.context(courseId,lessonId,query),start:ctx=>model.start(ctx.date,ctx.task.id),
