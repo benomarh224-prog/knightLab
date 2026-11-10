@@ -18,8 +18,9 @@ function position(id,plies) {
 }
 
 test('every Sicilian line is legal and the player restores the exercise and quiz after reload',()=>{
-  assert.equal(course.lessons.length,14);
-  assert.equal(new Set(course.lessons.map(lesson=>lesson.id)).size,14);
+  assert.equal(course.lessons.length,32);
+  assert.equal(new Set(course.lessons.map(lesson=>lesson.id)).size,course.lessons.length);
+  const startPositions=new Set();
   const saved=new Map();
   const storage={getItem:key=>saved.get(key)??null,setItem:(key,value)=>saved.set(key,value)};
   storage.setItem(COURSES.french.key,'["advance"]');
@@ -37,6 +38,9 @@ test('every Sicilian line is legal and the player restores the exercise and quiz
     player.setStage('try');
     assert.equal(lessonContinuation(player).enabled,false);
     const start=player.session.fen;
+    const positionKey=start.split(' ').slice(0,4).join(' ');
+    assert.ok(!startPositions.has(positionKey),`Duplicate exercise position: ${lesson.id}`);
+    startPositions.add(positionKey);
     assert.equal(player.requestHint().level,1);
     assert.equal(player.session.fen,start);
     const first=player.session.expected;
@@ -86,6 +90,6 @@ test('Sicilian appears in Openings with its own routable and syncable course',()
   renderOpeningCatalog(COURSES,doc);
   assert.match(catalog.innerHTML,/href="\/learn\/sicilian-defense\/" data-route="sicilian"/);
   assert.match(catalog.innerHTML,/sicilian-defense\.webp/);
-  assert.match(catalog.innerHTML,/0 of 14 lessons completed/);
+  assert.ok(catalog.innerHTML.includes(`0 of ${course.lessons.length} lessons completed`));
   assert.match(names.textContent,/Sicilian Defense/);
 });

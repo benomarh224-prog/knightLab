@@ -25,8 +25,8 @@ export const COURSES={
     catalog:{
       cover:'/assets/sicilian-defense.webp', alt:'A chessboard after 1.e4 c5 with both pawns highlighted',
       kicker:'PLAYING WHITE · THE OPEN SICILIAN',
-      description:'Meet 1…c5 by opening the center. Learn what changes when Black chooses a different setup, and practice a plan for each position.',
-      benefits:[`${SICILIAN_LESSONS.length} lessons with board practice, hints, and questions`, 'Najdorf with 6.h3, Kan, Taimanov, and Four Knights', 'Classical, Dragon, Accelerated Dragon, Sveshnikov, and Kalashnikov']
+      description:'Start with the central exchange, then practice the decisions that follow when Black changes the move order or creates a threat.',
+      benefits:[`${SICILIAN_LESSONS.length} lessons in ${new Set(SICILIAN_LESSONS.map(lesson=>lesson.unit)).size} groups with board practice, hints, and questions`, 'Najdorf, Keres Attack, Kan, Taimanov, and Four Knights', 'Classical, both Dragons, Sveshnikov, Kalashnikov, Löwenthal, and O’Kelly']
     }
   },
 };
