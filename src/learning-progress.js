@@ -1,5 +1,6 @@
 import {COURSES} from './courses.js';
 import{lessonDisplay}from'./lesson-insight.js';
+import{renderCourseLevels}from'./course-levels.js';
 const $=id=>document.getElementById(id);
 export function renderLearningProgress({progress,activeLessons,course,player,memoryFor,studyFor,outline}){
   function updateProgress(){
@@ -25,8 +26,7 @@ export function renderLearningProgress({progress,activeLessons,course,player,mem
     const pathNodes=document.querySelectorAll('.academy-milestones .milestone-node');
     pathNodes[0]?.classList.toggle('active',beginnerDone.length<beginnerTotal);pathNodes[1]?.classList.toggle('active',beginnerDone.length===beginnerTotal);
     if(pathNodes[0])pathNodes[0].textContent=beginnerDone.length===beginnerTotal?'✓':'01';
-    $('course-levels').hidden=!course.levels?.length;
-    for(const button of document.querySelectorAll('[data-course-level]'))button.setAttribute('aria-pressed',String(button.dataset.courseLevel===player.lesson.level));
+    renderCourseLevels($('course-levels'),course,player.lesson.level);
     outline.render(visible.map((lesson,index)=>{
       const display=lessonDisplay(course,lesson,studyFor(lesson.id));
       return {id:lesson.id,index,title:display.title,group:display.group,subtitle:display.effort||'',done:completed.includes(lesson.id)};

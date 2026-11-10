@@ -27,5 +27,5 @@ test('new mates use the shared lesson flow, legal off-target feedback and indepe
 });
 test('metadata-based catalogs expose new training courses without overwriting opening entries',()=>{
  const opening={innerHTML:'Existing opening'},training={innerHTML:''},doc={getElementById:id=>id==='training'?training:opening};
- renderCatalogAdditions(COURSES,{category:'tactics',hostId:'training'},doc);assert.match(training.innerHTML,/\/learn\/mate-in-one\//);assert.match(training.innerHTML,/120 exercises/);assert.doesNotMatch(training.innerHTML,/Scotch Gambit/);assert.equal(opening.innerHTML,'Existing opening');
+ renderCatalogAdditions(COURSES,{category:'tactics',hostId:'training'},doc);assert.match(training.innerHTML,/\/learn\/calculation\//);assert.match(training.innerHTML,/120 exercises/);assert.doesNotMatch(training.innerHTML,/mate-in-one|Scotch Gambit/);assert.equal(opening.innerHTML,'Existing opening');
 });

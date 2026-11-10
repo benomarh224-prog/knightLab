@@ -43,14 +43,14 @@ export function createHomeExperience({openSample,doc=document,win=window}){
   get('home-review-back').onclick=()=>{index=Math.max(0,index-1);render();};
   get('home-review-next').onclick=()=>{index=Math.min(frames.length-1,index+1);render();};
   get('home-review-sample').onclick=()=>openSample();
-  const focuses={beginners:{course:'beginners',cover:'/assets/chess-play.png',alt:'Ivory king and pawn on a chessboard',text:'Get to know the board, move every piece, and build your first winning ideas.'},openings:{course:'learn',path:'/learn/?category=openings',title:'Openings with a plan',cover:'/assets/french-defense-cover.jpg',alt:'French Defense opening course',text:'French Defense, Italian Game, and Scotch Gambit. Learn why the opening moves belong together.'},tactics:{course:'tactics',cover:'/assets/tactical-vision-cover.jpg',alt:'Tactical Vision knight fork course cover',text:`${COURSES.tactics.lessons.length} positions. Compare checks, captures, and forcing ideas.`},mates:{course:'mates',cover:'/assets/mate-in-one.svg',alt:'Mate in One course cover',text:`${COURSES.mates.lessons.length} positions. Practice mating nets, pawn and minor-piece finishes, captures and promotions.`}};
+  const focuses={beginners:{course:'beginners',cover:'/assets/chess-play.png',alt:'Ivory king and pawn on a chessboard',text:'Get to know the board, move every piece, and build your first winning ideas.'},openings:{course:'learn',path:'/learn/?category=openings',title:'Openings with a plan',cover:'/assets/french-defense-cover.jpg',alt:'French Defense opening course',text:'French Defense, Italian Game, and Scotch Gambit. Learn why the opening moves belong together.'},tactics:{course:'tactics',cover:'/assets/tactical-vision-cover.jpg',alt:'Tactical Vision knight fork course cover',text:`${COURSES.tactics.lessons.length} positions. Compare checks, captures, and forcing ideas.`},calculation:{course:'calculation',cover:'/assets/calculation-lab.svg',alt:'Calculation Lab course cover',text:`${COURSES.calculation.lessons.length} distinct real-game challenges. Calculate 3–6 moves across ten themes, from challenging to expert.`}};
   for(const button of root.querySelectorAll('[data-home-focus]'))button.onclick=()=>{
     const chosen=focuses[button.dataset.homeFocus],course=COURSES[chosen.course],art=get('home-focus-art');
     for(const item of root.querySelectorAll('[data-home-focus]'))item.setAttribute('aria-pressed',String(item===button));
     art.src=chosen.cover;art.alt=chosen.alt;get('home-focus-title').textContent=chosen.title||course.title;get('home-focus-description').textContent=chosen.text;
     const link=get('home-focus-link');link.href=chosen.path||course.path;link.dataset.route=chosen.course;
   };
-  for(const count of root.querySelectorAll('[data-mate-count]'))count.textContent=String(COURSES.mates.lessons.length);
+  for(const count of root.querySelectorAll('[data-calculation-count]'))count.textContent=String(COURSES.calculation.lessons.length);
   const facts=homeLabFacts();get('home-lab-total').textContent=String(facts.total);
   get('home-lab-expert').textContent=`${facts.expert} expert`;
   // No content depends on animation or IntersectionObserver support.

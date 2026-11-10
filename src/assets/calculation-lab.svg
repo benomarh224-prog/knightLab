@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Calculation Lab</title><desc id="desc">A branching chess variation on a forest background. Three to six moves to calculate.</desc>
+  <rect width="1200" height="800" fill="#102c26"/>
+  <g fill="none" stroke="#90e3c4" stroke-width="4"><path d="M900 210v170l-160 130m160-130 160 130M740 510v100m320-100v100"/></g>
+  <g fill="#90e3c4"><circle cx="900" cy="210" r="18"/><circle cx="900" cy="380" r="14"/><circle cx="740" cy="510" r="14"/><circle cx="1060" cy="510" r="14"/></g>
+  <g fill="#eeeedd" font-family="Arial,sans-serif"><text x="72" y="130" font-size="24" letter-spacing="6">ROQVYN · REAL-GAME CHALLENGES</text><text x="68" y="310" font-size="94" font-weight="700">CALCULATION</text><text x="68" y="412" font-size="94" font-weight="700">LAB.</text><text x="74" y="560" font-size="34">See the reply.</text><text x="74" y="610" font-size="34">Calculate beyond it.</text><text x="74" y="730" font-size="26">120 positions · 3–6 moves to find</text></g>
+</svg>

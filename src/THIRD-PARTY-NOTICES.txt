@@ -33,3 +33,10 @@ See assets/pieces/maestro-bw/NOTICE.txt, license texts and SOURCES.json.
 Chess audio: CC0 recordings by mh2o (chess_move_on_alabaster.wav) and
 Alnotreally (Chess piece setting 1 / queen on a wooden board), edited by ROQVYN.
 See assets/audio/NOTICE.txt, SOURCES.json and scripts/prepare-foley-audio.mjs.
+
+Calculation Lab puzzles: Lichess puzzle database, CC0-1.0.
+Source and license: https://database.lichess.org/#puzzles
+Export dated 2026-11-09; 120 selected real-game positions, retrieved 2026-11-10.
+Original puzzle IDs, ratings, themes, setup moves and game URLs are retained in
+src/calculation-puzzles.json. Lines adapted into ROQVYN lessons and independently
+checked for legality and with Stockfish 19. See docs/calculation-challenges.md.

@@ -376,7 +376,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   };
   for(const button of document.querySelectorAll('[data-lesson-promotion]'))button.onclick=()=>{if(promotion){const target=promotion.to;attemptMove(promotion.from,target,button.dataset.lessonPromotion);const square=$('lesson-board').querySelector(`button[data-square="${target}"]`);(square||$('lesson-counter')).focus({preventScroll:true});}};
   $('lesson-promotion-cancel').onclick=()=>{const from=promotion?.from;promotion=null;selected=null;message='Promotion cancelled. Choose another move.';render();$('lesson-board').querySelector(`button[data-square="${from}"]`)?.focus({preventScroll:true});};
-  for(const button of document.querySelectorAll('[data-course-level]'))button.onclick=()=>{const visible=courseLessons(course,button.dataset.courseLevel),done=progress.read();if(visible.length){selectLesson((visible.find(lesson=>!done.includes(lesson.id))||visible[0]).id);focusStage();}};
+  $('course-levels').onclick=event=>{const button=event.target.closest('[data-course-level]');if(!button||!$('course-levels').contains(button))return;const visible=courseLessons(course,button.dataset.courseLevel),done=progress.read();if(visible.length){selectLesson((visible.find(lesson=>!done.includes(lesson.id))||visible[0]).id);focusStage();}};
   $('lesson-board').addEventListener('keydown',event=>{
     const delta={ArrowLeft:-1,ArrowRight:1,ArrowUp:-8,ArrowDown:8}[event.key];if(!delta)return;
     const tiles=[...$('lesson-board').querySelectorAll('button[data-square]')],index=tiles.indexOf(event.target);if(index<0)return;event.preventDefault();
