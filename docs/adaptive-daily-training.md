@@ -64,13 +64,15 @@ seen-ID sets are cached to avoid rebuilding the whole history per candidate.
 
 ## Verification
 
-- **401 automated tests passed**, including 14 new model/UI integration tests.
+- **403 automated tests passed**, including 16 new model/UI integration tests.
 - Covered live three-task adaptation, normal lesson evidence, hints, alternatives,
   illegal moves, promotion selection, solution review, entire multi-move solutions,
   replay protection, legacy drafts, legacy daily results, reloads, blocked/corrupt
   storage, reviewed-game scheduling, day rollover and a daylight-saving boundary.
 - DOM-based UI checks exercise actual difficulty selection and solve handlers,
   recap rendering, completed-task review and reload persistence.
+- A newly computed recommendation cannot replace the visibly selected exercise
+  during a click from either the Train list or the homepage preview.
 - Production build succeeds. Local HTTP checks return 200 for Train, Calculation
   Lab, JavaScript and CSS, with the scheduler and recap present.
 - Existing board layout and navigation remain shared. New recap text uses theme

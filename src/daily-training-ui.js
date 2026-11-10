@@ -6,6 +6,7 @@ const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<'
 export function createDailyTrainingUI({storage,courses,mistakes,go,practice,doc=document,now}){
   const $=id=>doc.getElementById(id),freshMemory=()=>createLearningMemory(storage,courses);
   const model=createDailyTraining({storage,courses,learningMemory:{review:()=>freshMemory().review(),last:()=>freshMemory().last()},now});
+  let displayedDay=null;
   function render(){
     const day=model.today({mistakes:mistakes()}),count=day.done.length,total=day.tasks.length,complete=count===total;
     $('daily-count').textContent=`${count} of ${total} exercises complete`;
@@ -29,7 +30,7 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice,doc=
       $('home-daily-summary').textContent=state.summary;$('home-daily-progress').max=state.total;$('home-daily-progress').value=state.done;
       $('home-daily-start-label').textContent=state.action;
     }
-    return day;
+    displayedDay=day;return day;
   }
   function open(date,task){
     if(!model.start(date,task.id))return;
@@ -42,8 +43,11 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice,doc=
   function advance(date){const task=model.next(date);if(task)open(date,task);else go('train');}
   $('daily-start').onclick=()=>{const day=render();advance(day.date);};
   $('home-daily-start').onclick=()=>{const day=render();if(day.done.length===day.tasks.length)go('train');else advance(day.date);};
-  $('home-daily-plan').onclick=event=>{const id=event.target.closest('[data-home-daily-task]')?.dataset.homeDailyTask;if(!id)return;const day=render(),task=day.tasks.find(item=>item.id===id);if(task)open(day.date,task);};
-  $('daily-tasks').onclick=event=>{const id=event.target.closest('[data-daily-task]')?.dataset.dailyTask;if(!id)return;const day=render(),task=day.tasks.find(item=>item.id===id);if(task)open(day.date,task);};
+  // Lock the visible selection before refreshing recommendations. A new result
+  // from elsewhere must not replace the exercise under the user's click.
+  const openDisplayed=id=>{const day=displayedDay||render(),task=day.tasks.find(item=>item.id===id);if(task)open(day.date,task);};
+  $('home-daily-plan').onclick=event=>{const id=event.target.closest('[data-home-daily-task]')?.dataset.homeDailyTask;if(id)openDisplayed(id);};
+  $('daily-tasks').onclick=event=>{const id=event.target.closest('[data-daily-task]')?.dataset.dailyTask;if(id)openDisplayed(id);};
   $('daily-level').onchange=()=>{model.setLevel($('daily-level').value);render();};
   return {render,context:(courseId,lessonId,query)=>model.context(courseId,lessonId,query),start:ctx=>model.start(ctx.date,ctx.task.id),
     observe:event=>model.observe(event),solved(ctx,outcome){model.solve(ctx.date,ctx.task.id,outcome);render();},complete:ctx=>model.done(ctx.date,ctx.task.id),advance:ctx=>advance(ctx.date),plan:()=>go('train'),

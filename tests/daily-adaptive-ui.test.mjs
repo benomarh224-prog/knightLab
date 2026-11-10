@@ -2,6 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {COURSES} from '../src/courses.js';
 import {LessonPlayer} from '../src/lesson-player.js';
 import {createDailyTrainingUI} from '../src/daily-training-ui.js';
+import {dailyPracticeTask} from '../src/daily-training.js';
 
 const storage=()=>{const map=new Map();return {getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v)};};
 function fixture(store=storage()){
@@ -29,4 +30,11 @@ test('the recap appears at session completion and completed tasks remain availab
   }
   f.ui.render();assert.equal(f.doc.getElementById('daily-start').hidden,true);assert.match(f.doc.getElementById('daily-report').innerHTML,/3 earlier results not measured/);
   assert.match(f.doc.getElementById('daily-tasks').innerHTML,/>Review<\/button>/);assert.match(f.doc.getElementById('daily-description').textContent,/Session complete/);
+});
+
+for(const origin of ['daily-tasks','home-daily-plan'])test(`${origin} opens the visibly selected task even if newer practice changed the recommendation`,()=>{
+  const f=fixture(),day=f.ui.render(),selected=day.tasks[1],lesson=COURSES.calculation.lessons.find(l=>l.level==='expert');
+  f.ui.observe({...dailyPracticeTask(COURSES,'calculation',lesson.id),kind:'complete',outcome:{}});
+  const attribute=origin==='daily-tasks'?'dailyTask':'homeDailyTask';f.doc.getElementById(origin).onclick({target:{closest:()=>({dataset:{[attribute]:selected.id}})}});
+  assert.equal(f.routes.length,1);assert.match(f.routes[0].search,new RegExp('task='+selected.id));assert.equal(day.opened.includes(selected.id),true);
 });
