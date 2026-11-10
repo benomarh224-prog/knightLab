@@ -30,6 +30,8 @@ COURSES.french.category=COURSES.opengames.category='openings';
 COURSES.tactics.category='tactics';
 COURSES.tactics.levels=['beginner','intermediate','advanced'];
 COURSES.tactics.presentation='tactical-themes';
+COURSES.tactics.training={adaptive:true,order:1,legacyLevels:true};
+COURSES.calculation.training={adaptive:true,order:2};
 COURSES.scotch.catalog={cover:'/assets/scotch-gambit.svg',alt:'Scotch Gambit course cover with the position after 4.Bc4',kicker:'PLAYING WHITE · ACTIVE OPENING PLAY',description:'Trade a little material for development. Learn the Scotch Gambit’s central breaks, forcing ideas, and practical replies to Black’s defenses.',benefits:['10 short lessons with guided board exercises and knowledge checks','Compare Bxf7+ with Nxc3 after the c3 pawn offer','Meet the declined gambit, …Bb4+, and …Nf6']};
 COURSES.beginners.practice={lessonId:'support-your-pawn',startPly:0,goal:'Bring your king closer, support your passed pawn, and watch the opposing king.'};
 COURSES.french.practice={lessonId:FRENCH_LESSONS[0].id,startPly:4,goal:'Challenge White’s center. Develop your pieces and look for the …c5 pawn break.'};

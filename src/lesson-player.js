@@ -36,9 +36,9 @@ export function lessonPlan(lesson,study={}){
 }
 
 export class LessonPlayer {
-  constructor({lesson,study,storage,progressKey,lessonIds,memory,courseId,orientation,draftKey}){
+  constructor({lesson,study,storage,progressKey,lessonIds,memory,courseId,orientation,draftKey,onPracticeEvent}){
     this.lesson=lesson;this.plan=lessonPlan(lesson,study);this.storage=storage;
-    this.memory=memory;this.courseId=courseId;this.challengeMode=false;this.questionReviewIndex=null;this.reviewSource=null;this.exploring=false;
+    this.memory=memory;this.courseId=courseId;this.onPracticeEvent=onPracticeEvent;this.challengeMode=false;this.questionReviewIndex=null;this.reviewSource=null;this.exploring=false;
     this.progress=createCourseProgress(storage,lessonIds||[lesson.id],progressKey);
     // Keep the existing v1 completion arrays unchanged. Partial work lives separately.
     this.storageKey=draftKey||`${progressKey}:lesson-player-v1:${lesson.id}`;
@@ -46,7 +46,7 @@ export class LessonPlayer {
     this.activities=this.plan.activities.map(data=>{
       const session=new OpeningLesson(data),review=new OpeningLesson(data);
       if(data.kind==='practice')session.practice({startPly:data.startPly});
-      return {data,session,review,challenge:null,challengeHelped:false,challengeMistakes:0,mistakes:0,hintCursor:-1,hintLevel:0,done:false};
+      return {data,session,review,challenge:null,challengeHelped:false,challengeMistakes:0,challengeAlternatives:0,alternatives:0,viewed:false,tracked:true,mistakes:0,hintCursor:-1,hintLevel:0,done:false};
     });
     this.orientationRevision=0;
     const restored=this.restore();
@@ -67,6 +67,7 @@ export class LessonPlayer {
   startExploring({fresh=false}={}){
     const session=this.session;if(!session)return false;
     if(this.challengeMode)this.activity.challengeHelped=true;
+    if(!session.completed){this.activity.viewed=true;this.practiceEvent('help');}
     if(fresh&&this.resumableExploration)this.activity.savedExploration=this.resumableExploration;
     if(fresh||!this.activity.exploration||this.activity.exploration.anchorFen!==session.fen)this.activity.exploration=new LessonExploration(session);
     this.exploring=true;this.stage='try';this.save();return true;
@@ -96,21 +97,24 @@ export class LessonPlayer {
   }
   selectActivity(index){this.activityIndex=bounded(index,this.activities.length-1);this.reviewing=false;this.challengeMode=false;this.exploring=false;this.save();}
   reviewEntry(kind='practice',index=this.activityIndex){return {courseId:this.courseId,lessonId:this.lesson.id,kind,index};}
+  practiceOutcome(){const a=this.activity;return {hints:this.challengeMode?Number(a?.challengeHelped):a?.session.hints||0,alternatives:this.challengeMode?a?.challengeAlternatives||0:a?.alternatives||0,reviewed:!this.challengeMode&&a?.viewed===true,known:this.challengeMode||a?.tracked===true};}
+  practiceEvent(kind){try{this.onPracticeEvent?.({...this.reviewEntry(),kind,outcome:this.practiceOutcome()});}catch{/* Training telemetry must never interrupt legal chess or progress. */}}
   get currentHint(){const a=this.activity;return !this.challengeMode&&!this.reviewing&&a?.hintCursor===this.session?.cursor?progressiveHint(this.session.expected,a.hintLevel,a.data.hints):null;}
   requestHint(){
     if(this.challengeMode||this.reviewing||this.activity?.data.kind!=='practice'||this.session.completed)return null;
     const a=this.activity;if(a.hintCursor!==this.session.cursor){a.hintCursor=this.session.cursor;a.hintLevel=0;}
     if(a.hintLevel<3){a.hintLevel++;this.session.hint();}
-    this.memory?.add({...this.reviewEntry(),reason:'hint'});this.save();return this.currentHint;
+    this.memory?.add({...this.reviewEntry(),reason:'hint'});this.save();this.practiceEvent('help');return this.currentHint;
   }
   startChallenge(index=this.activityIndex){
     this.selectActivity(index);const a=this.activity;if(a?.data.kind!=='practice')return false;
-    a.challenge=new OpeningLesson(a.data);a.challenge.practice({startPly:a.data.startPly});a.challengeHelped=false;a.challengeMistakes=0;
+    a.challenge=new OpeningLesson(a.data);a.challenge.practice({startPly:a.data.startPly});a.challengeHelped=false;a.challengeMistakes=0;a.challengeAlternatives=0;
     this.challengeMode=true;this.stage='try';this.save();return true;
   }
   endChallenge(){this.challengeMode=false;this.reviewSource=null;this.save();}
   startReview({restart=true}={}){
     if(!this.activity)return false;
+    if(!this.session.completed){this.activity.viewed=true;this.practiceEvent('help');}
     if(this.challengeMode)this.activity.challengeHelped=true;
     this.exploring=false;this.challengeMode=false;this.reviewing=this.activity.data.kind==='practice';this.stage='try';
     if(restart)this.session.watch();
@@ -127,6 +131,8 @@ export class LessonPlayer {
     if(result.status==='different'){
       result.move=new Chess(this.session.fen).move({from,to,promotion});
       result.feedback=offTargetFeedback(this.activity.data,result.move,this.session.expected);
+      if(this.challengeMode)this.activity.challengeAlternatives++;else this.activity.alternatives++;
+      this.practiceEvent('help');
     }
     if(result.status==='illegal'||result.status==='different'){
       if(this.challengeMode)this.activity.challengeMistakes++;else this.activity.mistakes++;
@@ -136,9 +142,9 @@ export class LessonPlayer {
       this.activity.done=true;
       if(this.challengeMode){if(!this.activity.challengeHelped&&this.activity.challengeMistakes===0)this.memory?.resolve(this.reviewEntry());}
     }
-    this.save();return result;
+    this.save();if(result.completed)this.practiceEvent('complete');return result;
   }
-  hint(){const move=!this.challengeMode&&this.session?.mode==='practice'&&!this.session.completed?this.session.hint():null;this.save();return move;}
+  hint(){const move=!this.challengeMode&&this.session?.mode==='practice'&&!this.session.completed?this.session.hint():null;this.save();if(move)this.practiceEvent('help');return move;}
   undo(){
     if(this.exploration){const undone=Boolean(this.exploration.undo());this.save();return undone;}
     if(this.reviewing||!this.session?.undo())return false;
@@ -150,7 +156,7 @@ export class LessonPlayer {
     if(this.exploration){this.exploration.reset();this.save();return;}
     const activity=this.activity;if(!activity)return;
     if(this.challengeMode){this.startChallenge();return;}
-    if(this.reviewing){activity.review.watch();}else if(activity.data.kind==='practice'){activity.session.practice({startPly:activity.data.startPly});activity.mistakes=0;activity.hintLevel=0;activity.hintCursor=-1;}else activity.session.watch();
+    if(this.reviewing){activity.review.watch();}else if(activity.data.kind==='practice'){activity.session.practice({startPly:activity.data.startPly});activity.mistakes=0;activity.alternatives=0;activity.viewed=false;activity.tracked=true;activity.hintLevel=0;activity.hintCursor=-1;}else activity.session.watch();
     // A retry does not revoke a solved exercise or a previously completed lesson.
     this.save();
   }
@@ -170,7 +176,7 @@ export class LessonPlayer {
   save(){
     if(this.boardComplete&&this.checksComplete&&(!this.plan.learnRequired||this.learned))this.progress.complete(this.lesson.id);
     try{this.storage?.setItem(this.storageKey,JSON.stringify({version:1,presentationRevision:1,signature:this.plan.signature,stage:this.stage,conceptIndex:this.conceptIndex,activityIndex:this.activityIndex,questionIndex:this.questionIndex,seen:this.seen,answers:this.answers,flipped:this.flipped,reviewing:this.reviewing,challengeMode:this.challengeMode,questionReviewIndex:this.questionReviewIndex,reviewSource:this.reviewSource,exploring:this.exploring,
-      orientationRevision:this.orientationRevision,activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,hintCursor:a.hintCursor,hintLevel:a.hintLevel,exploration:a.exploration?.snapshotMoves()||null,savedExploration:a.savedExploration?.snapshotMoves()||null,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
+      orientationRevision:this.orientationRevision,activities:this.activities.map(a=>({correct:a.session.correct,hints:a.session.hints,cursor:a.session.cursor,reviewCursor:a.review.cursor,done:a.done,mistakes:a.mistakes,alternatives:a.alternatives,viewed:a.viewed,tracked:a.tracked,hintCursor:a.hintCursor,hintLevel:a.hintLevel,exploration:a.exploration?.snapshotMoves()||null,savedExploration:a.savedExploration?.snapshotMoves()||null,challenge:a.challenge?{correct:a.challenge.correct,helped:a.challengeHelped,mistakes:a.challengeMistakes,alternatives:a.challengeAlternatives}:null}))}));}catch{/* Storage can be unavailable in private browsing. */}
   }
   restore(){
     try{
@@ -193,11 +199,12 @@ export class LessonPlayer {
         activity.review.jump(bounded(saved.reviewCursor,activity.data.moves.length));
         activity.exploration=LessonExploration.restore(activity.session,saved.exploration);
         activity.savedExploration=LessonExploration.restore(activity.session,saved.savedExploration);
-        activity.mistakes=bounded(saved.mistakes,10000);activity.hintCursor=Number.isInteger(saved.hintCursor)?saved.hintCursor:-1;activity.hintLevel=bounded(saved.hintLevel,3);
+        activity.mistakes=bounded(saved.mistakes,10000);activity.alternatives=bounded(saved.alternatives,10000);activity.viewed=saved.viewed===true;activity.tracked=saved.tracked===true;activity.hintCursor=Number.isInteger(saved.hintCursor)?saved.hintCursor:-1;activity.hintLevel=bounded(saved.hintLevel,3);
         if(saved.challenge&&activity.data.kind==='practice'){
           activity.challenge=new OpeningLesson(activity.data);activity.challenge.practice({startPly:activity.data.startPly});
           for(let i=0;i<bounded(saved.challenge.correct,activity.data.moves.length)&&activity.challenge.expected;i++){const move=activity.challenge.expected;activity.challenge.attempt(move.from,move.to,move.promotion);}
           activity.challengeHelped=saved.challenge.helped===true;activity.challengeMistakes=bounded(saved.challenge.mistakes,10000);
+          activity.challengeAlternatives=bounded(saved.challenge.alternatives,10000);
         }
       });
       this.flipped=data.flipped===true;this.reviewing=data.reviewing===true;this.exploring=data.exploring===true&&Boolean(this.activity?.exploration);

@@ -35,7 +35,7 @@ export class PracticeSession {
     this.reset();
   }
   get exercise() { return this.exercises[this.index]; }
-  reset() { this.status = 'playing'; this.selected = null; this.hint = false; this.promotion = null; this.answerFen = null; this.feedback = ''; }
+  reset() { this.status = 'playing'; this.selected = null; this.hint = false; this.promotion = null; this.answerFen = null; this.feedback = ''; this.currentAttempts=0; }
   submit(from, to, promotion) {
     if (this.status !== 'playing' || this.finished) return { status: 'locked' };
     const chess = new Chess(this.exercise.fen);
@@ -45,6 +45,7 @@ export class PracticeSession {
     let move;
     try { move = chess.move({ from, to, promotion }); } catch { return { status: 'illegal' }; }
     this.attempts++;
+    this.currentAttempts++;
     if (move.from + move.to + (move.promotion || '') !== this.exercise.solution) return { status: 'retry', san: move.san };
     this.status = 'correct'; this.solved++; this.answerFen = chess.fen();
     return { status: 'correct', san: move.san };

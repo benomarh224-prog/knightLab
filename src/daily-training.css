@@ -32,6 +32,10 @@ body[data-page] .daily-shortcut span { color:var(--ui-link); font-size:14px; }
 body[data-page] #lesson-daily-context { display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--ui-text); font-size:14px; margin:0 0 12px; padding:0; }
 body[data-page] #lesson-daily-plan { min-height:44px; padding:8px 12px; background:var(--ui-soft); border:1px solid var(--ui-control-border); border-radius:var(--ui-radius); color:var(--ui-text); font:inherit; }
 body[data-page] #daily-heading:focus { outline:none; }
+body[data-page] #daily-report { margin:20px 0 0; padding:20px 0 0; border-top:1px solid var(--ui-border); color:var(--ui-text); }
+body[data-page] #daily-report h3 { margin:0 0 12px; color:var(--ui-text); font:600 20px/1.3 'DM Sans',sans-serif; }
+body[data-page] #daily-report p { margin:8px 0; overflow-wrap:anywhere; font-size:16px; line-height:1.55; }
+body[data-page] #daily-report :is(.daily-report-next,.daily-report-note) { color:var(--ui-muted); font-size:14px; }
 body[data-page] :is(.daily-task-open,#daily-start,#daily-level,.daily-shortcut,#lesson-daily-plan):focus-visible { outline:3px solid var(--ui-link); outline-offset:3px; }
 @media(max-width:600px){
   body[data-page] .daily-training { padding:16px; }

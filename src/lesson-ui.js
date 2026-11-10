@@ -55,7 +55,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
   function getPlayer(lesson){
     const key=dailyContext?.draftKey||`${course.id}:${lesson.id}`;
     if(!players.has(key)){
-      const value=new LessonPlayer({lesson,study:studyFor(lesson.id),storage,progressKey:course.key,lessonIds:lessons.map(item=>item.id),memory,courseId:course.id,orientation:{toSolver:course.orientToSolver,revision:course.orientationRevision||0},draftKey:dailyContext?.draftKey});
+      const value=new LessonPlayer({lesson,study:studyFor(lesson.id),storage,progressKey:course.key,lessonIds:lessons.map(item=>item.id),memory,courseId:course.id,orientation:{toSolver:course.orientToSolver,revision:course.orientationRevision||0},draftKey:dailyContext?.draftKey,onPracticeEvent:event=>daily?.observe(event)});
       players.set(key,value);
     }
     return players.get(key);
@@ -343,7 +343,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     const result=player.attempt(from,to,promote);
     if(result.completed&&dailyContext&&player.activityIndex===dailyContext.task.index){
       if(!player.activity.mistakes&&!session.hints)memory.resolve(player.reviewEntry());
-      daily.solved(dailyContext);
+      daily.solved(dailyContext,player.practiceOutcome());
     }
     if(result.status==='correct'){clearTurn();markMate();const anchor=Object.create(session);anchor.cursor=cursor+1;stepEvidence=lessonStepInsight(anchor,{replyLimit:session.cursor-cursor-1});message=stepEvidence?.short||`${result.move.san} fits this study line.`;motion.play(lessonFrames(session,cursor));return;}
     else{promotion=null;message=result.status==='different'?result.feedback:illegalMoveReason(fen,from,to,promote);}
@@ -403,7 +403,7 @@ export function createLearningUI({storage,onAnalyze,onCourseComplete,onCoursePra
     dailyContext=daily?.context(requested.id,id,query)||null;
     if(course.id!==requested.id){course=requested;lessons=orderedLessons(course);progress=memoryFor(course);focus=false;}
     player=getPlayer(lessonEntry(course,{requestedId:id,rememberedId:memory.lastFor(course.id),completed:progress.read()}));
-    if(dailyContext){daily.start(dailyContext);player.selectActivity(dailyContext.task.index);player.setStage('try');}
+    if(dailyContext){daily.start(dailyContext);player.selectActivity(dailyContext.task.index);player.setStage('try');if(player.session.completed&&!daily.complete(dailyContext))daily.solved(dailyContext,player.practiceOutcome());}
     if(query.get('practice')==='squares'&&player.lesson.squarePractice){player.conceptIndex=0;player.setStage('learn');}
     clearTurn();query.set('lesson',player.lesson.id);history.replaceState({},'',`${course.path}?${query}`);render();
     const review=query.get('review'),rawIndex=query.get('exercise'),index=rawIndex!==null&&/^\d+$/.test(rawIndex)?Number(rawIndex):-1,source=`${review}:${index}`;

@@ -112,8 +112,8 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     }
     session.promotion = null;
     const accepted=result.status==='correct'?chess.move({from,to,promotion}):null;
-    if (result.status === 'correct') { session.feedback = 'Correct! You found Stockfish’s first choice.'; session.selected = null; practiceOptions.onSolved?.(session.exercise); }
-    else if (result.status === 'retry') { session.feedback = `${result.san} is legal, but it is not Stockfish’s first choice. Try another move.`; session.selected = null; }
+    if (result.status === 'correct') { session.feedback = 'Correct! You found Stockfish’s first choice.'; session.selected = null; practiceOptions.onSolved?.(session.exercise,{hints:Number(session.hint),alternatives:Math.max(0,session.currentAttempts-1),known:true}); }
+    else if (result.status === 'retry') { session.feedback = `${result.san} is legal, but it is not Stockfish’s first choice. Try another move.`; session.selected = null; practiceOptions.onHelp?.(session.exercise); }
     else session.feedback = 'That move is not legal. Choose a highlighted destination.';
     renderPractice(to);if(accepted)playSound(accepted);else if(['retry','illegal'].includes(result.status))feedbackSound('incorrect');
   }
@@ -150,12 +150,14 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
   $('practice-hint').onclick = () => {
     if (!session || session.status !== 'playing') return;
     session.hint = true; const piece = new Chess(session.exercise.fen).get(session.exercise.solution.slice(0,2));
+    practiceOptions.onHelp?.(session.exercise);
     session.feedback = `Look for a move with the highlighted ${pieceNames[piece.type]}.`; renderPractice();
   };
   $('practice-reveal').onclick = () => {
     if (!session || session.status !== 'playing') return;
     const chess = new Chess(session.exercise.fen), solution = session.exercise.solution;
     session.reveal();const accepted=chess.move({from:solution.slice(0,2),to:solution.slice(2,4),promotion:solution[4]});
+    practiceOptions.onHelp?.(session.exercise);
     session.feedback = 'Solution revealed. Study the move, then try the next position.'; renderPractice();playSound(accepted);$('practice-next').focus();
   };
   $('practice-next').onclick = () => { if (!session) return; session.next();renderPractice();if(session.finished)feedbackSound('complete'); if (!session.finished) $('practice-board').querySelector('[tabindex="0"]').focus(); };
