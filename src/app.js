@@ -809,7 +809,7 @@ async function loadOlder() {
   finally { button.disabled = false; button.innerHTML = 'Load older games <span>↓</span>'; }
 }
 
-function openImport() { coachDemo.pause();if ($('connect-dialog').open) $('connect-dialog').close(); $('import-error').hidden = true; $('import-dialog').showModal(); }
+function openImport() { coachDemo.pause();if ($('connect-dialog').open) $('connect-dialog').close(); modalPgn.clearError(); $('import-dialog').showModal(); }
 function showInfo(title, content) { coachDemo.pause();$('info-title').textContent = title; $('info-body').innerHTML = content; $('info-dialog').showModal(); }
 const instructions = '<div class="info-step"><b>1</b><div><strong>Bring your games</strong><p>Enter your public Chess.com username. No sign-in or password is needed. You can also import a single PGN game.</p></div></div><div class="info-step"><b>2</b><div><strong>Choose a game</strong><p>Your most recent completed standard chess games appear in the library. Filter by time control or load older games.</p></div></div><div class="info-step"><b>3</b><div><strong>Find your turning points</strong><p>Stockfish reviews the positions on your device. Explore the board, click the evaluation chart, and jump to mistakes. The best-move arrow shows the recommended move from the position currently on the board.</p></div></div><p>The public Chess.com API may take up to 24 hours to refresh. Live games and chess variants are not supported.</p>';
 const method = `<p>Each position is evaluated by <a href="https://github.com/nmrugg/stockfish.js/tree/v19.0.1" target="_blank" rel="noopener noreferrer">Stockfish 19 Lite</a>. A positive score favors White; a negative score favors Black. One pawn equals 100 centipawns. “M” means a forced mate.</p>
@@ -846,13 +846,11 @@ document.addEventListener('click',event=>{
   if(link&&event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.shiftKey)selectLearningCategory(link.dataset.learnCategoryLink);
 });
 $('games-nav').onclick = () => router.go('analyze');
-$('analysis-entry-paste').onclick=()=>{openImport();$('pgn-input').focus();};
-$('analysis-entry-upload').onclick=()=>{openImport();$('pgn-file').click();};
+$('analysis-entry-upload').onclick=()=>$('entry-pgn-file').click();
 $('analysis-entry-find').onclick=openConnect;
 function openSampleReview() {
   router.go('analysis',{search:'?sample=opera'});
 }
-$('analysis-entry-sample').onclick=openSampleReview;
 const homeExperience=createHomeExperience({openSample:openSampleReview});
 $('analysis-resume').onclick=()=>router.go('analysis');
 let trainGames=[],selectedTrainPgn=null;
@@ -872,7 +870,15 @@ function updateTrainSelection(){
   $('train-review').disabled=!selected;$('train-review-game').disabled=!selected;$('train-start').disabled=!selected?.exercises.length;
   $('train-setup').hidden=!selected;$('train-start').hidden=!selected;$('train-review-game').hidden=!selected;
   $('train-choose-game').textContent=selected?'Choose another game →':'Choose a game →';
-  $('train-status').textContent=!selected?'Review or import a game to create personal exercises.':`${selected.exercises.length} mistake position${selected.exercises.length===1?'':'s'} available for ${$('train-side').value==='both'?'both players':$('train-side').value==='w'?'White':'Black'}. ${selected.evaluations.filter(Boolean).length<selected.parsed.fens.length?'Provisional: open the review to analyze more positions.':'From the reviewed game.'}`;
+  if(!selected){
+    $('train-status').textContent='Review a game to practice its turning points here.';
+    return;
+  }
+  const side=$('train-side').selectedOptions[0].textContent;
+  const count=selected.exercises.length;
+  const complete=selected.parsed.fens.every((_,index)=>evaluationReady(selected.evaluations[index],state.mode));
+  const quality=!complete?'Provisional · Open the review to analyze more positions.':state.mode==='quick'?'Provisional · Fast preview.':'';
+  $('train-status').textContent=`${count} mistake position${count===1?'':'s'} · ${side}${quality?' · '+quality:''}`;
 }
 $('train-review').onchange=updateTrainSelection;$('train-side').onchange=updateTrainSelection;
 $('train-review-game').onclick=()=>{const selected=trainSelection();if(selected){setGame(selected.entry.game,{demo:selected.entry.demo,analyze:false});router.go('analysis');}};
@@ -883,23 +889,57 @@ $('how-it-works').onclick = () => showInfo('A better way to review', instruction
 $('analysis-method').onclick = () => showInfo('How move ratings work', method);
 document.querySelectorAll('.close-dialog').forEach(button => button.onclick = () => button.closest('dialog').close());
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close(); } }));
-$('pgn-file').addEventListener('change', async event => {
-  const file = event.target.files[0]; if (!file) return;
-  if (file.size > 250000) { $('import-error').hidden = false; $('import-error').textContent = 'Please choose a single game under 250 KB.'; return; }
-  try { $('pgn-input').value = await file.text(); $('import-error').hidden = true; }
-  catch { $('import-error').hidden = false; $('import-error').textContent = 'That file could not be read. Please try another PGN.'; }
-});
-$('import-submit').onclick = () => {
-  try {
-    const pgn = $('pgn-input').value.trim(); parseGame(pgn);
-    const game = {pgn};
-    state.request?.abort(); state.profile = null; state.username = ''; state.filter = 'all'; state.libraryPage = 0; state.archives = []; state.games = [game];
-    $('profile').hidden = true; $('game-filters').hidden = true; $('load-more').hidden = true;
-    searchBusy(false);
-    searchStatus('PGN imported. Enter a username any time to switch back to your Chess.com games.');
-    setGame(game); $('import-dialog').close(); scrollToSection(document.querySelector('.workspace')); toast('Game imported. Let’s find your turning points.');
-  } catch (error) { $('import-error').hidden = false; $('import-error').textContent = error.message; }
-};
+function importGame(pgn) {
+  parseGame(pgn);
+  const game = {pgn};
+  state.request?.abort(); state.profile = null; state.username = ''; state.filter = 'all'; state.libraryPage = 0; state.archives = []; state.games = [game];
+  $('profile').hidden = true; $('game-filters').hidden = true; $('load-more').hidden = true;
+  searchBusy(false);
+  searchStatus('PGN imported. Enter a username any time to switch back to your Chess.com games.');
+  setGame(game,{analyze:router.page==='analysis'});
+}
+
+function pgnInput(input,fileInput,error,dialog) {
+  function setError(message) {
+    error.textContent=message;
+    error.hidden=!message;
+    if(message)input.setAttribute('aria-invalid','true');
+    else input.removeAttribute('aria-invalid');
+  }
+  const clearError=()=>setError('');
+  input.addEventListener('input',clearError);
+  fileInput.addEventListener('change',async()=>{
+    const file=fileInput.files[0];
+    if(!file)return;
+    fileInput.value='';
+    if(file.size>250000){setError('Please choose a single game under 250 KB.');return;}
+    try {
+      input.value=await file.text();
+      clearError();
+      input.focus();
+    } catch {setError('That file could not be read. Please try another PGN.');}
+  });
+  return {clearError,submit(event){
+    event.preventDefault();
+    try {importGame(input.value.trim());}
+    catch(error){setError(error.message);input.focus();return;}
+    clearError();
+    dialog?.close();
+    scrollToSection(document.querySelector('.workspace'));
+    focusReview();
+    toast('Game imported. Let’s find your turning points.');
+  }};
+}
+
+const modalPgn=pgnInput($('pgn-input'),$('pgn-file'),$('import-error'),$('import-dialog'));
+const entryPgn=pgnInput($('entry-pgn'),$('entry-pgn-file'),$('entry-pgn-error'));
+$('import-submit').onclick=modalPgn.submit;
+$('entry-pgn-form').addEventListener('submit',entryPgn.submit);
+
+function focusReview() {
+  const title=$('workspace-title');
+  (title.getClientRects().length?title:$('board')).focus({preventScroll:true});
+}
 $('games-list').onclick = event => {
   const button = event.target.closest('[data-game]'); if (!button) return;
   try { setGame(state.games[Number(button.dataset.game)]); scrollToSection(document.querySelector('.workspace')); $('workspace-title').focus({ preventScroll: true }); }
@@ -1071,9 +1111,7 @@ router=createPageRouter(page=>{
         reviewOpened=true;
         saveReviewPosition();
       }
-      const title = $('workspace-title');
-      const focusTarget = title.getClientRects().length ? title : $('board');
-      focusTarget.focus({ preventScroll: true });
+      focusReview();
     }
     if(!state.running)startAnalysis();
     if(state.evaluations.some(Boolean))loadOpeningDatabase();
@@ -1083,7 +1121,8 @@ router=createPageRouter(page=>{
   if(page==='account'){account.open();$('account-title').focus({preventScroll:true});}
   if(page==='analyze'){
     $('analysis-resume').hidden=!reviewOpened;
-    $('analysis-resume').textContent=`Resume ${state.demo?'sample review':$('workspace-title').textContent} · Move ${Math.ceil(state.ply/2)}`;
+    $('analysis-resume-game').textContent=`${$('workspace-title').textContent} · ${state.ply?`Move ${Math.ceil(state.ply/2)}`:'Starting position'}`;
+    homeExperience.showSample($('entry-sample-board'),$('entry-sample-position'));
     $('analysis-entry-title').focus({preventScroll:true});
   }
   if(page==='train'){

@@ -1,0 +1,177 @@
+body[data-page] #explore-dialog {
+  --play-board-limit: clamp(220px, calc(100dvh - 204px), 540px);
+  --play-top: clamp(12px, 5dvh, 46px);
+  inset: var(--play-top) 0 auto;
+  width: min(960px, calc(100% - 24px));
+  max-height: calc(100dvh - var(--play-top) - 12px);
+  margin: 0 auto;
+  padding: clamp(14px, 2vw, 24px);
+  background: var(--ui-page);
+  border-color: var(--ui-border);
+  border-radius: 14px;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+#explore-dialog .play-header { align-items: center; gap: 8px; margin: 0 0 12px; }
+#explore-dialog .play-header h2 {
+  margin: 0;
+  font: 700 clamp(27px, 3vw, 36px)/1.05 'Cormorant Garamond', Georgia, serif;
+}
+body[data-page] #explore-dialog .explore-origin {
+  margin: 4px 0 0;
+  font: 500 14px/1.35 'DM Sans', sans-serif;
+  color: var(--ui-muted);
+}
+#explore-dialog .play-header-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+#explore-dialog .play-header-actions [data-icon] { display: inline-flex; width: 17px; height: 17px; }
+body[data-page] #explore-dialog .close-dialog {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--ui-control-border);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font-size: 24px;
+}
+#play-settings-open { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding-inline: 9px; }
+
+#explore-dialog .play-layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+#explore-dialog .play-board-pane { width: min(100%, var(--play-board-limit)); justify-self: center; }
+body[data-page] #explore-dialog .explore-score {
+  gap: 8px;
+  height: 44px;
+  min-height: 44px;
+  max-height: none;
+  margin: 0 0 5px;
+  padding: 0 8px;
+  justify-content: space-between;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface);
+}
+body[data-page] #explore-dialog #explore-turn {
+  min-width: 0;
+  color: var(--ui-text);
+  font: 650 14px/1.3 'DM Sans', sans-serif;
+  white-space: normal;
+}
+#explore-dialog #play-evaluation-perspective { flex: none; font-size: 12px; color: var(--ui-muted); }
+#explore-evaluation { margin-inline-start: 4px; color: var(--ui-text); font: 650 14px/1 'DM Sans', sans-serif; font-variant-numeric: tabular-nums; }
+body[data-page] #explore-dialog .practice-board-frame {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  border-color: var(--board-edge);
+  box-shadow: none;
+}
+#explore-dialog #explore-board { width: 100%; grid-template: repeat(8, minmax(0, 1fr)) / repeat(8, minmax(0, 1fr)); }
+
+#explore-dialog .play-board-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+#explore-dialog .play-board-actions button { padding-inline: 5px; }
+body[data-page] #explore-dialog :is(.play-board-actions button, #play-settings-open, #explore-reply, .play-game-menu button) {
+  min-height: 44px;
+  padding-block: 8px;
+  border: 1px solid var(--ui-control-border);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font: 600 14px/1.3 'DM Sans', sans-serif;
+}
+body[data-page] #explore-dialog :is(.play-board-actions button, #play-settings-open, #explore-reply, .play-game-menu button):enabled:hover { background: var(--ui-hover); }
+body[data-page] #explore-dialog :is(button:disabled, #play-hint:disabled) { color: var(--ui-disabled-text); border-color: var(--ui-border); }
+body[data-page] #explore-dialog .practice-feedback {
+  min-height: 0;
+  margin: 8px 0 0;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ui-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+body[data-page] #explore-dialog #explore-best {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-soft);
+  color: var(--ui-text);
+  font-size: 14px;
+  line-height: 1.4;
+}
+body[data-page] #explore-dialog #explore-reply { margin-top: 8px; }
+
+#explore-dialog .play-sidebar { display: grid; gap: 8px; }
+#explore-dialog .play-scoresheet, #explore-dialog .play-game-menu {
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-card-radius);
+  background: var(--ui-surface);
+}
+#explore-dialog .play-scoresheet h3 { margin: 0; font: 650 17px/1.3 'DM Sans', sans-serif; }
+#explore-dialog #play-moves-empty { margin: 6px 0 0; font-size: 14px; line-height: 1.45; }
+#explore-line { max-height: 210px; margin-top: 8px; overflow: auto; }
+#explore-line table { width: 100%; border-collapse: collapse; text-align: start; font-size: 14px; }
+#explore-line :is(th, td) { padding: 7px 8px; border-top: 1px solid var(--ui-rule); text-align: start; }
+#explore-line th { color: var(--ui-muted); font-weight: 500; }
+#explore-line td:first-child { color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+#explore-line td:not(:first-child) { font-weight: 600; }
+#explore-dialog .play-game-menu { padding: 0 12px; }
+#explore-dialog .play-game-menu summary { align-content: center; min-height: 44px; cursor: pointer; color: var(--ui-text); font-size: 15px; }
+#explore-dialog .play-game-menu > div { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 12px; }
+
+body[data-page] #play-settings {
+  width: min(510px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+}
+#play-settings h3 { margin: 0; font: 650 20px/1.3 'DM Sans', sans-serif; }
+body[data-page] #play-settings .play-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; gap: 12px; }
+body[data-page] #play-settings .play-settings-grid label { font-size: 14px; line-height: 1.4; }
+#play-settings .play-origin-field { grid-column: auto; }
+#play-settings .play-assist-field { min-height: 44px; }
+#play-settings .play-assist-field input { flex: none; }
+body[data-page] #play-settings .play-settings-grid > button {
+  grid-column: auto;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  min-height: 44px;
+}
+body[data-page] #play-settings-done { margin-top: 14px; }
+
+@media (max-width: 650px) {
+  body[data-page] #explore-dialog {
+    --play-top: max(6px, env(safe-area-inset-top));
+    width: calc(100% - 12px);
+    max-height: calc(100dvh - var(--play-top) - 6px);
+    padding: 12px 10px max(12px, env(safe-area-inset-bottom));
+  }
+  #explore-dialog .play-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  #explore-dialog .play-header { margin-bottom: 8px; }
+  #explore-dialog .play-header-actions #play-settings-open [data-icon] { display: none; }
+  body[data-page] #play-settings {
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    margin: 0 auto;
+    padding: 14px 16px max(16px, env(safe-area-inset-bottom));
+    border-radius: 14px 14px 0 0;
+  }
+}
+
+@media (min-width: 651px) and (max-height: 520px) {
+  body[data-page] #explore-dialog {
+    --play-board-limit: max(166px, calc(100dvh - 190px));
+    --play-top: 8px;
+    width: min(720px, calc(100% - 16px));
+    padding: 10px 14px;
+  }
+  #explore-dialog .play-header { margin-bottom: 7px; }
+  #explore-dialog .play-layout { grid-template-columns: minmax(0, var(--play-board-limit)) minmax(0, 330px); justify-content: center; }
+}

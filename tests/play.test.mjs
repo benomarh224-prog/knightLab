@@ -1,9 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Chess } from 'chess.js';
-import { PlaySession } from '../src/play.js';
+import { PlaySession, playMoveRows } from '../src/play.js';
 
 const start = new Chess().fen();
+test('the scoresheet keeps Black-first positions and undo in the proper move columns', () => {
+  const chess = new Chess();
+  for (const move of ['e4', 'e5', 'Nf3']) chess.move(move);
+  const play = new PlaySession(chess.fen());
+  assert.equal(play.play('b8', 'c6').status, 'played');
+  assert.equal(play.play('f1', 'b5').status, 'played');
+  assert.deepEqual(playMoveRows(play.moves), [
+    { number: 2, white: '', black: 'Nc6' },
+    { number: 3, white: 'Bb5', black: '' },
+  ]);
+  play.undoTurn();
+  assert.deepEqual(playMoveRows(play.moves), [{ number: 2, white: '', black: 'Nc6' }]);
+});
 test('computer mode locks the engine side and accepts its valid response', () => {
   const play = new PlaySession(start, {mode:'engine', color:'w'});
   assert.equal(play.engineTurn, false);

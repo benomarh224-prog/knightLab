@@ -26,6 +26,8 @@
   <link rel="stylesheet" href="/account.css"/>
   <link rel="stylesheet" href="/reliability.css"/>
   <link rel="stylesheet" href="/home-refresh.css"/>
+  <link rel="stylesheet" href="/studio.css"/>
+  <link rel="stylesheet" href="/play-workspace.css"/>
 </head>
 <body data-page="home">
   <div class="app-shell">
@@ -150,9 +152,61 @@
             </div>
           </div>
         </section>
-        <section class="entry-page" data-page-view="analyze" aria-labelledby="analysis-entry-title" hidden><div class="page-heading"><h1 id="analysis-entry-title" tabindex="-1">Analyze a game.</h1><p>Import a game or find your public games.</p></div><button id="analysis-resume" class="entry-resume" hidden>Resume your review</button><div class="entry-grid"><button id="analysis-entry-paste" class="entry-card"><strong>Paste PGN</strong><span>Copy the game notation from your chess app.</span></button><button id="analysis-entry-upload" class="entry-card"><strong>Upload PGN</strong><span>Choose a .pgn file from your device.</span></button><button id="analysis-entry-find" class="entry-card"><strong>Find public games</strong><span>Search by Chess.com username. No password needed.</span></button><button id="analysis-entry-sample" class="entry-card"><strong>Explore a sample game</strong><span>The Opera Game · Morphy, Paris 1858.</span></button></div></section>
+        <section class="entry-page studio-page" data-page-view="analyze" aria-labelledby="analysis-entry-title" hidden>
+          <header class="studio-heading">
+            <h1 id="analysis-entry-title" tabindex="-1">Analyze a game</h1>
+            <p>Review your moves and turn mistakes into positions to practice.</p>
+          </header>
+          <div class="studio-layout">
+            <div class="studio-review-tools">
+              <button type="button" id="analysis-resume" class="studio-row studio-resume" hidden>
+                <span><strong>Resume your review</strong><small id="analysis-resume-game"></small></span><span data-icon="arrow" aria-hidden="true"></span>
+              </button>
+              <form id="entry-pgn-form" class="studio-panel">
+                <label class="studio-panel-title" for="entry-pgn">Paste PGN</label>
+                <textarea id="entry-pgn" rows="5" maxlength="250000" aria-describedby="entry-pgn-help entry-pgn-error" placeholder="1. e4 e5 2. Nf3 Nc6 …" spellcheck="false" autocapitalize="off"></textarea>
+                <p id="entry-pgn-help" class="studio-meta">Use the notation from one standard chess game.</p>
+                <p id="entry-pgn-error" class="analysis-error" role="alert" hidden></p>
+                <div class="studio-import-actions">
+                  <button class="primary-button" type="submit">Analyze game <span data-icon="arrow"></span></button>
+                  <button id="analysis-entry-upload" class="studio-quiet" type="button"><span data-icon="upload"></span> Upload PGN</button>
+                  <input id="entry-pgn-file" type="file" accept=".pgn,.txt,text/plain" hidden/>
+                </div>
+              </form>
+              <button type="button" id="analysis-entry-find" class="studio-row studio-find">
+                <span><strong>Find my games</strong><small>Search by Chess.com username.</small></span><span data-icon="search" aria-hidden="true"></span>
+              </button>
+            </div>
+            <article class="studio-sample studio-panel" aria-labelledby="entry-sample-title">
+              <h2 id="entry-sample-title">The Opera Game</h2>
+              <p class="studio-meta">Sample review · Paul Morphy, Paris 1858</p>
+              <a id="analysis-entry-sample" class="studio-row studio-sample-action" href="/analysis/?sample=opera" data-route="analysis"><strong>Explore sample review</strong><span data-icon="arrow" aria-hidden="true"></span></a>
+              <div id="entry-sample-board" class="chess-board studio-sample-board" role="img" aria-label="Position from the Opera Game" hidden></div>
+              <p id="entry-sample-position" class="studio-meta" hidden></p>
+            </article>
+          </div>
+        </section>
 <section class="entry-page account-page" data-page-view="account" hidden aria-labelledby="account-title"><h1 id="account-title" tabindex="-1">Your chess, saved.</h1><p>Continue your lessons and practice on any device.</p><div id="account-panel"></div><p id="account-status" role="status" aria-live="polite" hidden></p></section>
-<section class="entry-page" data-page-view="train" aria-labelledby="train-title" hidden><div class="page-heading"><div><h1 id="train-title" tabindex="-1">Train.</h1><p>Choose a skill to practice.</p></div></div><section id="daily-training" class="daily-training" aria-labelledby="daily-heading"><div class="daily-heading"><h2 id="daily-heading" tabindex="-1">Daily training</h2><span id="daily-date"></span></div><p id="daily-description">Three focused exercises · About 10 minutes.</p><div class="daily-progress-row"><span id="daily-count" role="status" aria-live="polite">0 of 3 exercises complete</span><progress id="daily-progress" value="0" max="3" aria-label="Daily exercises completed"></progress></div><button type="button" id="daily-start">Start daily training →</button><details class="daily-options"><summary>Session options</summary><div class="daily-level-row"><label for="daily-level">Starting difficulty</label><select id="daily-level" aria-describedby="daily-level-help"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div><p id="daily-level-help"></p></details><ol id="daily-tasks"></ol><section id="daily-report" aria-labelledby="daily-report-title" hidden></section><p class="daily-storage-note">Your session is saved in this browser. A new plan is ready each day.</p></section><div class="entry-grid"><a class="entry-card" href="/learn/calculation/" data-route="calculation"><strong>Calculation Lab</strong><span>120 real-game challenges · 3–6 moves · Challenging to Expert.</span></a><a class="entry-card" href="/train/opening-test/" data-route="openingtest"><strong>Opening Test</strong><span>Recall the study moves in five positions from your completed lessons.</span></a><a class="entry-card lab-entry-card" href="/train/board-lab/" data-route="boardlab"><strong>Board Lab</strong><span>Remember the pieces. Find a safe knight route. Three levels.</span></a><a class="entry-card" href="/learn/tactical-vision/" data-route="tactics"><strong>Tactical exercises</strong><span>144 positions · Three levels · Hints when you need them.</span></a><a class="entry-card" href="/learn/chess-for-beginners/?lesson=board-and-first-move&amp;practice=squares" data-route="beginners"><strong>Coordinate practice</strong><span>Find squares like e4, with or without coordinates.</span></a></div><section class="train-mistakes"><h2>Practice reviewed mistakes.</h2><p>Choose a reviewed game and which side to practice. Incomplete reviews produce provisional exercises.</p><div id="train-setup"><label for="train-review">Reviewed game</label><select id="train-review"></select><label for="train-side">Practice mistakes by</label><select id="train-side"><option value="both">Both players</option><option value="w">White</option><option value="b">Black</option></select></div><p id="train-status" role="status"></p><div class="entry-actions"><button id="train-start" class="primary-button" disabled>Practice mistakes</button><button id="train-review-game" class="practice-secondary">Open game review</button><a id="train-choose-game" href="/analyze/" data-route="analyze">Choose a game →</a></div></section></section>
+<section class="entry-page studio-page" data-page-view="train" aria-labelledby="train-title" hidden>
+  <header class="studio-heading">
+    <h1 id="train-title" tabindex="-1">Training</h1>
+    <p>Start today’s plan or pick a skill to practice.</p>
+  </header>
+  <div class="studio-layout studio-training-layout">
+    <section id="daily-training" class="daily-training" aria-labelledby="daily-heading"><div class="daily-heading"><h2 id="daily-heading" tabindex="-1">Daily training</h2><span id="daily-date"></span></div><p id="daily-description">Three focused exercises · About 10 minutes.</p><div class="daily-progress-row"><span id="daily-count" role="status" aria-live="polite">0 of 3 exercises complete</span><progress id="daily-progress" value="0" max="3" aria-label="Daily exercises completed"></progress></div><button type="button" id="daily-start">Start daily training →</button><ol id="daily-tasks"></ol><details class="daily-options"><summary>Session options</summary><div class="daily-level-row"><label for="daily-level">Starting difficulty</label><select id="daily-level" aria-describedby="daily-level-help"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div><p id="daily-level-help"></p></details><section id="daily-report" aria-labelledby="daily-report-title" hidden></section></section>
+    <section class="studio-skills studio-panel" aria-labelledby="train-skills-title">
+      <h2 id="train-skills-title">Practice by skill</h2>
+      <ul class="studio-skill-list">
+        <li><a class="studio-row" href="/learn/tactical-vision/" data-route="tactics"><span><strong>Tactical Vision</strong><small>Spot checks, captures and threats.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
+        <li><a class="studio-row" href="/learn/calculation/" data-route="calculation"><span><strong>Calculation Lab</strong><small>Work through forcing lines several moves deep.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
+        <li><a class="studio-row" href="/train/opening-test/" data-route="openingtest"><span><strong>Opening Test</strong><small>Recall positions from your completed opening lessons.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
+        <li><a class="studio-row" href="/train/board-lab/" data-route="boardlab"><span><strong>Board Lab</strong><small>Remember piece positions or find a safe knight route.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
+        <li><a class="studio-row" href="/learn/chess-for-beginners/?lesson=board-and-first-move&amp;practice=squares" data-route="beginners"><span><strong>Coordinate practice</strong><small>Find squares like e4, with or without labels.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
+      </ul>
+    </section>
+    <section class="train-mistakes" aria-labelledby="train-mistakes-title"><h2 id="train-mistakes-title">Practice mistakes from your games</h2><p>Choose a reviewed game and which side to practice. Incomplete reviews produce provisional exercises.</p><div id="train-setup"><label for="train-review">Reviewed game</label><select id="train-review"></select><label for="train-side">Practice mistakes by</label><select id="train-side"><option value="both">Both players</option><option value="w">White</option><option value="b">Black</option></select></div><p id="train-status" role="status"></p><div class="entry-actions"><button id="train-start" class="primary-button" disabled>Practice mistakes</button><button id="train-review-game" class="practice-secondary">Open game review</button><a id="train-choose-game" href="/analyze/" data-route="analyze">Choose a game →</a></div></section>
+  </div>
+</section>
 <section class="entry-page opening-test-page" data-page-view="openingtest" aria-labelledby="opening-test-title" hidden>
   <header class="opening-test-heading">
     <a href="/train/" data-route="train">← Train</a>
@@ -299,10 +353,60 @@
   <dialog id="lesson-checkmate-dialog" class="lesson-result-dialog" aria-labelledby="lesson-checkmate-title" aria-describedby="lesson-checkmate-description"><button id="lesson-checkmate-close" class="lesson-result-close" aria-label="Close result and explore other moves">×</button><span class="lesson-result-mark" aria-hidden="true">♔</span><h2 id="lesson-checkmate-title">Checkmate!</h2><p id="lesson-checkmate-description"></p><div class="lesson-result-actions"><button id="lesson-checkmate-continue" class="primary-button">Continue lesson</button><button id="lesson-checkmate-explore">Done · Free play</button></div><small>Your earned lesson progress is saved.</small></dialog>
   <dialog id="focus-dialog" class="focus-dialog" aria-labelledby="focus-title"><div class="focus-header"><div><span class="section-label">ROQVYN</span><h2 id="focus-title">Focus mode</h2></div><button id="exit-focus" class="explore-launch" aria-label="Exit Focus Mode">✕ <span>Exit focus</span></button></div><div id="focus-body"></div></dialog>
   <dialog id="explore-dialog" class="practice-dialog explore-dialog play-dialog" aria-labelledby="explore-title">
-    <div class="dialog-header"><div><span class="eyebrow">YOUR CHESS PLAYGROUND</span><h2 id="explore-title">Play &amp; Explore</h2></div><button class="icon-button close-dialog" aria-label="Close play board">✕</button></div>
-    <p id="explore-origin" class="explore-origin"></p><section id="explore-course-practice" class="explore-course-practice" aria-label="Course practice" hidden><strong id="explore-course-goal"></strong><p id="explore-course-progress" role="status"></p><button id="explore-course-return">Back to lesson</button></section>
-    <details id="play-settings" class="play-settings"><summary><span id="play-settings-summary">Vs Stockfish · You play White</span><span>Settings ▾</span></summary><div class="play-settings-grid"><button type="button" data-audio-open>Sound settings</button><label>Opponent<select id="play-mode" aria-label="Play mode"><option value="engine">Vs Stockfish</option><option value="free">Free play (both sides)</option></select></label><label id="play-color-field">Your pieces<select id="play-color" aria-label="Your pieces"><option value="w">White</option><option value="b">Black</option></select></label><label id="play-difficulty-field">Opponent difficulty<select id="play-difficulty"><option value="beginner">Beginner</option><option value="casual" selected>Casual</option><option value="challenging">Challenging</option><option value="strong">Strong</option></select><small id="play-difficulty-description"></small></label><label class="play-assist-field"><input id="play-show-evaluation" type="checkbox"/> Show position evaluation</label><label class="play-origin-field">Starting position<select id="play-origin" aria-label="Starting position"><option value="new">New game</option><option value="current">Current analysis position</option></select><small>Changing the starting position restarts your play board.</small></label></div></details>
-    <div class="play-layout"><div class="play-board-pane"><div class="explore-score"><strong id="explore-evaluation">—</strong><div><span id="explore-turn">White to move</span><small id="explore-best">Evaluating this position</small></div><span id="play-evaluation-perspective" class="perspective-badge" hidden>WHITE'S VIEW</span></div><div class="practice-board-frame"><div id="explore-board" class="chess-board practice-board" role="group" aria-label="Play board: select a piece and destination"></div></div><div id="explore-promotion" class="practice-promotion" hidden><span>Promote to</span><button data-explore-promotion="q">Queen</button><button data-explore-promotion="r">Rook</button><button data-explore-promotion="b">Bishop</button><button data-explore-promotion="n">Knight</button></div><div id="explore-feedback" class="practice-feedback" role="status" aria-live="polite"></div></div><div class="play-sidebar"><span class="section-label">YOUR MOVES</span><p id="explore-line" class="explore-line"></p><button id="play-hint" class="practice-secondary">Hint</button><button id="explore-reply" class="primary-button" disabled>Play engine reply</button><div class="explore-actions"><button id="explore-undo" class="practice-secondary">Undo turn</button><button id="explore-reset" class="practice-secondary">Reset</button><button id="explore-flip" class="practice-secondary">Flip board</button></div><div class="play-extra-actions"><button id="play-new" class="practice-secondary">New game</button><button id="play-export" class="practice-secondary">Export PGN</button></div><p class="play-note">Tap a piece and its highlighted destination. Stockfish replies automatically in computer mode. Free play lets you control both sides.</p></div></div>
+    <header class="dialog-header play-header">
+      <div><h2 id="explore-title">Play chess</h2><p id="play-settings-summary" class="explore-origin"></p><p id="explore-origin" class="explore-origin" hidden></p></div>
+      <div class="play-header-actions">
+        <button type="button" id="play-settings-open" class="practice-secondary" aria-haspopup="dialog" aria-controls="play-settings"><span data-icon="analysis-gear"></span> Settings</button>
+        <button type="button" class="icon-button close-dialog" aria-label="Close play board">×</button>
+      </div>
+    </header>
+    <section id="explore-course-practice" class="explore-course-practice" aria-label="Course practice" hidden>
+      <strong id="explore-course-goal"></strong><p id="explore-course-progress" role="status"></p><button type="button" id="explore-course-return">Back to lesson</button>
+    </section>
+    <div class="play-layout">
+      <div class="play-board-pane">
+        <div class="explore-score"><span id="explore-turn">White to move</span><span id="play-evaluation-perspective" hidden>White’s view <strong id="explore-evaluation">—</strong></span></div>
+        <div class="practice-board-frame"><div id="explore-board" class="chess-board practice-board" role="group" aria-label="Play board: select a piece and destination"></div></div>
+        <div id="explore-promotion" class="practice-promotion" role="group" aria-label="Choose a promotion piece" hidden><span>Promote to</span><button data-explore-promotion="q">Queen</button><button data-explore-promotion="r">Rook</button><button data-explore-promotion="b">Bishop</button><button data-explore-promotion="n">Knight</button></div>
+        <div class="play-board-actions" role="group" aria-label="Board controls">
+          <button type="button" id="explore-undo" class="practice-secondary" aria-label="Undo turn">Undo</button>
+          <button type="button" id="play-hint" class="practice-secondary" aria-controls="explore-best">Hint</button>
+          <button type="button" id="explore-flip" class="practice-secondary" aria-label="Flip board">Flip</button>
+        </div>
+        <p id="explore-feedback" class="practice-feedback" role="status"></p>
+        <p id="explore-best" role="status" hidden></p>
+        <button type="button" id="explore-reply" class="practice-secondary" hidden>Play engine reply</button>
+      </div>
+      <aside class="play-sidebar" aria-labelledby="play-moves-title">
+        <div class="play-scoresheet">
+          <h3 id="play-moves-title">Moves</h3>
+          <p id="play-moves-empty">Your moves will appear here.</p>
+          <div id="explore-line" tabindex="0" role="region" aria-label="Move history" hidden>
+            <table><thead><tr><th scope="col">Move</th><th scope="col">White</th><th scope="col">Black</th></tr></thead><tbody id="play-move-rows"></tbody></table>
+          </div>
+        </div>
+        <details class="play-game-menu">
+          <summary>Game actions</summary>
+          <div>
+            <button type="button" id="play-new" class="practice-secondary">New game</button>
+            <button type="button" id="explore-reset" class="practice-secondary" hidden>Reset position</button>
+            <button type="button" id="play-export" class="practice-secondary">Export PGN</button>
+          </div>
+        </details>
+      </aside>
+    </div>
+    <dialog id="play-settings" class="play-settings" aria-labelledby="play-settings-title">
+      <header class="dialog-header"><h3 id="play-settings-title">Game settings</h3><button type="button" class="icon-button close-dialog" aria-label="Close game settings">×</button></header>
+      <div class="play-settings-grid">
+        <label>Opponent<select id="play-mode" aria-label="Play mode"><option value="engine">Vs Stockfish</option><option value="free">Free play (both sides)</option></select></label>
+        <label id="play-color-field">Your pieces<select id="play-color"><option value="w">White</option><option value="b">Black</option></select></label>
+        <label id="play-difficulty-field">Opponent difficulty<select id="play-difficulty" aria-describedby="play-difficulty-description"><option value="beginner">Beginner</option><option value="casual" selected>Casual</option><option value="challenging">Challenging</option><option value="strong">Strong</option></select><small id="play-difficulty-description"></small></label>
+        <label class="play-origin-field">Starting position<select id="play-origin"><option value="new">New game</option><option value="current">Current analysis position</option></select><small>Changing the starting position restarts your play board.</small></label>
+        <label class="play-assist-field"><input id="play-show-evaluation" type="checkbox"/> Show position evaluation</label>
+        <button type="button" class="practice-secondary" data-audio-open>Sound settings</button>
+      </div>
+      <button type="button" id="play-settings-done" class="primary-button">Back to board</button>
+    </dialog>
   </dialog>
   <p id="appearance-status" class="sr-only" role="status" aria-live="polite"></p>
   <div id="toast" class="toast" role="status" hidden></div>

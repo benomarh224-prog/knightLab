@@ -1,5 +1,15 @@
 import { Variation } from './variation.js';
 
+export function playMoveRows(moves) {
+  const rows = [];
+  for (const move of moves) {
+    const number = Number(move.before.split(' ')[5]);
+    if (rows.at(-1)?.number !== number) rows.push({ number, white: '', black: '' });
+    rows.at(-1)[move.color === 'w' ? 'white' : 'black'] = move.san;
+  }
+  return rows;
+}
+
 export class PlaySession extends Variation {
   constructor(fen, { mode = 'free', color = 'w' } = {}) {
     super(fen); this.configure(mode, color);

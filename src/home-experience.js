@@ -24,16 +24,22 @@ export function homeLabFacts(){
   const distances=LAB_PUZZLES.route.expert.map(p=>p.distance);
   return{total:all,expert,minHops:Math.min(...distances),maxHops:Math.max(...distances)};
 }
+function paintSampleBoard(board,frame){
+  const chess=new Chess(frame.fen);
+  board.innerHTML=squareGrid().map((square,i)=>{
+    const piece=chess.get(square),dark=(square.charCodeAt(0)-97+Number(square[1]))%2===1,last=[frame.move.from,frame.move.to].includes(square);
+    return `<span class="square${dark?' dark':''}${last?' last':''}" data-square="${square}">${i%8===0?`<span class="rank" aria-hidden="true">${square[1]}</span>`:''}${i>=56?`<span class="file" aria-hidden="true">${square[0]}</span>`:''}${piece?pieceSvg(piece):''}</span>`;
+  }).join('');
+  finishBoard(board,chess);
+  board.setAttribute('aria-label',`Sample Opera Game position after ${frame.label}`);
+}
+
 export function createHomeExperience({openSample,doc=document,win=window}){
   const root=doc.querySelector('[data-page-view="home"]');if(!root)return;
   const get=id=>doc.getElementById(id),frames=homeReviewFrames();let index=0,painted=null,initialized=false;
   function render(){
-    const frame=frames[index],chess=new Chess(frame.fen),board=get('home-review-board');
-    board.innerHTML=squareGrid().map((square,i)=>{
-      const piece=chess.get(square),dark=(square.charCodeAt(0)-97+Number(square[1]))%2===1,last=[frame.move.from,frame.move.to].includes(square);
-      return `<span class="square${dark?' dark':''}${last?' last':''}" data-square="${square}">${i%8===0?`<span class="rank" aria-hidden="true">${square[1]}</span>`:''}${i>=56?`<span class="file" aria-hidden="true">${square[0]}</span>`:''}${piece?pieceSvg(piece):''}</span>`;
-    }).join('');
-    finishBoard(board,chess);board.setAttribute('aria-label',`Sample Opera Game position after ${frame.label}`);
+    const frame=frames[index],board=get('home-review-board');
+    paintSampleBoard(board,frame);
     const next={game:parsed,fen:frame.fen,last:frame.move,flipped:false};animatePieces(board,moveTransitions(painted,next));painted=next;
     get('home-review-move').textContent=frame.label;
     get('home-review-explanation').textContent=frame.explanation;
@@ -51,5 +57,15 @@ export function createHomeExperience({openSample,doc=document,win=window}){
     const observer=new win.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('home-arrived');observer.unobserve(entry.target);}},{threshold:.12});
     for(const element of root.querySelectorAll('[data-home-reveal]'))observer.observe(element);
   }
-  return{activate(){if(initialized)return;initialized=true;render();root.classList.add('home-enhanced');}};
+  return{
+    activate(){if(initialized)return;initialized=true;render();root.classList.add('home-enhanced');},
+    showSample(board,caption){
+      if(!board.hidden)return;
+      const frame=frames[0];
+      paintSampleBoard(board,frame);
+      board.hidden=false;
+      caption.textContent=`${frame.label} · ${frame.explanation}`;
+      caption.hidden=false;
+    },
+  };
 }
