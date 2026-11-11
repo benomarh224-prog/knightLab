@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="theme-color" content="#24272b"/>
   <meta name="description" content="Learn chess from your first moves, practice openings and tactics, and review your Chess.com games with Stockfish."/>
-  <title>ROQVYN — Every game has a lesson.</title>
+  <title>ROQVYN — Chess analysis, lessons and training</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=roqvyn"/>
   <script src="/theme-init.js"></script>
   <link rel="stylesheet" href="/style.css"/>
@@ -45,32 +45,16 @@
       <main>
         <section class="home-page home-refresh" data-page-view="home" aria-labelledby="home-title">
           <section class="home-hero-band" aria-labelledby="home-title">
+            <div class="home-hero-art" aria-hidden="true">
+              <img src="/assets/roqvyn-ivory-knight.jpg" srcset="/assets/roqvyn-ivory-knight-mobile.jpg 768w, /assets/roqvyn-ivory-knight.jpg 1536w" sizes="(max-width: 720px) 100vw, (max-width: 986px) 750px, 76vw" width="1536" height="1024" alt="" fetchpriority="high" decoding="async"/>
+            </div>
             <div class="home-chapter home-hero-inner">
               <div class="home-hero-copy">
-                <h1 id="home-title">Every game<br/>has a lesson.</h1>
-                <p>Analyze your games with Stockfish, learn openings and practice daily.</p>
+                <h1 id="home-title">See the game<br/>differently.</h1>
+                <p>Review your games with Stockfish. Learn the ideas behind each move and put them to work on the board.</p>
                 <div class="home-hero-actions">
                   <a id="home-analyze" class="home-action" href="/analyze/" data-route="analyze">Analyze a game <span aria-hidden="true">→</span></a>
-                  <a class="home-inline-link" href="/learn/chess-for-beginners/" data-route="beginners">Learn chess <span aria-hidden="true">→</span></a>
-                </div>
-              </div>
-              <div class="home-replay-stage">
-                <div id="home-review-demo" class="home-review-demo" data-ui role="group" aria-labelledby="home-review-title">
-                  <div class="home-demo-heading">
-                    <div><h2 id="home-review-title">The Opera Game</h2><span>Morphy · Paris, 1858</span></div>
-                    <button id="home-review-sample" type="button" class="home-inline-link">Full review <span aria-hidden="true">→</span></button>
-                  </div>
-                  <div class="home-demo-coach" role="status" aria-live="polite" aria-atomic="true">
-                    <strong id="home-review-move">10. Nxb5</strong>
-                    <p id="home-review-explanation">White’s knight captures the pawn on b5.</p>
-                  </div>
-                  <div id="home-review-board" class="home-demo-board chess-board board-surface" role="img" aria-label="Sample Opera Game position after 10. Nxb5"></div>
-                  <div class="home-demo-controls">
-                    <button id="home-review-back" type="button" aria-label="Previous sample move" disabled>← Back</button>
-                    <span id="home-review-step">1 of 5</span>
-                    <button id="home-review-next" type="button" aria-label="Next sample move">Next →</button>
-                  </div>
-                  <noscript><p>Enable JavaScript to replay this position.</p></noscript>
+                  <a class="home-inline-link" href="/learn/" data-route="learn">Explore courses <span aria-hidden="true">→</span></a>
                 </div>
               </div>
             </div>
@@ -80,7 +64,7 @@
             <div class="home-chapter home-daily-layout">
               <header class="home-section-intro" data-home-reveal>
                 <h2 id="home-daily-title">Daily training</h2>
-                <p>Practice openings, tactics and positions from your reviewed games.</p>
+                <p>Revisit what you’re learning, practice tactics and find better moves in your reviewed games.</p>
               </header>
               <div class="home-daily-sheet" data-ui data-home-reveal>
                 <div class="home-daily-heading">
@@ -96,54 +80,74 @@
             </div>
           </section>
 
-          <section class="home-learn home-chapter" aria-labelledby="academy-discover-title">
-            <header class="home-section-heading" data-home-reveal>
-              <h2 id="academy-discover-title">Learn chess</h2>
-              <a class="home-inline-link" href="/learn/" data-route="learn">All courses <span aria-hidden="true">→</span></a>
-            </header>
-            <div id="home-learning-resume" class="home-learning-resume" role="region" aria-label="Continue learning" hidden>
-              <div class="academy-progress">
-                <strong>Continue learning</strong>
-                <span id="home-course-progress"></span>
-                <div role="progressbar" id="home-course-progressbar" aria-label="Lessons completed" aria-valuemin="0" aria-valuemax="28" aria-valuenow="0"><span id="home-course-progress-fill"></span></div>
-              </div>
-              <a id="home-continue" href="/learn/chess-for-beginners/" data-route="beginners" class="home-inline-link">Resume lesson <span aria-hidden="true">→</span></a>
-            </div>
-            <div class="home-course-layout">
-              <div class="home-course-index" role="group" aria-label="Choose a learning focus" data-home-reveal>
-                <button class="home-focus-option" type="button" data-home-focus="beginners" aria-pressed="true" aria-controls="home-course-preview"><img src="/assets/chess-play-preview.jpg" alt="" width="88" height="64" loading="lazy"/><span><strong>Beginners</strong><small id="home-beginner-progress">Guided beginner lessons</small></span></button>
-                <button class="home-focus-option" type="button" data-home-focus="openings" aria-pressed="false" aria-controls="home-course-preview"><img src="/assets/french-defense-cover.jpg" alt="" width="88" height="64" loading="lazy"/><span><strong>Openings</strong><small data-opening-course-names>French · Italian · Scotch · Sicilian</small></span></button>
-                <button class="home-focus-option" type="button" data-home-focus="tactics" aria-pressed="false" aria-controls="home-course-preview"><img src="/assets/tactical-vision-cover.jpg" alt="" width="88" height="64" loading="lazy"/><span><strong>Tactics</strong><small id="home-tactics-progress">144 exercises · 3 levels</small></span></button>
-                <button class="home-focus-option" type="button" data-home-focus="calculation" aria-pressed="false" aria-controls="home-course-preview"><img src="/assets/calculation-lab.svg" alt="" width="88" height="64" loading="lazy"/><span><strong>Calculation</strong><small><span data-calculation-count>120</span> challenges · 3–6 moves</small></span></button>
-              </div>
-              <div id="home-course-preview" class="home-course-preview" data-home-reveal>
-                <img id="home-focus-art" src="/assets/chess-play-preview.jpg" width="768" height="512" alt="Ivory king and pawn on a chessboard" loading="lazy" decoding="async"/>
-                <div class="home-course-copy" aria-live="polite" aria-atomic="true">
-                  <h3 id="home-focus-title">Chess for Beginners</h3>
-                  <p id="home-focus-description">Learn to read the board, move each piece and find your first checkmate.</p>
+          <section class="home-learn-band" aria-labelledby="academy-discover-title">
+            <div class="home-chapter home-learn">
+              <header class="home-section-heading" data-home-reveal>
+                <h2 id="academy-discover-title">Learn chess</h2>
+                <a class="home-inline-link" href="/learn/" data-route="learn">All courses <span aria-hidden="true">→</span></a>
+              </header>
+              <div id="home-learning-resume" class="home-learning-resume" role="region" aria-label="Continue learning" hidden>
+                <div class="academy-progress">
+                  <strong>Continue learning</strong>
+                  <span id="home-course-progress"></span>
+                  <div role="progressbar" id="home-course-progressbar" aria-label="Lessons completed" aria-valuemin="0" aria-valuemax="28" aria-valuenow="0"><span id="home-course-progress-fill"></span></div>
                 </div>
-                <a id="home-focus-link" class="home-inline-link" href="/learn/chess-for-beginners/" data-route="beginners">Open course <span aria-hidden="true">→</span></a>
+                <a id="home-continue" href="/learn/chess-for-beginners/" data-route="beginners" class="home-inline-link">Resume lesson <span aria-hidden="true">→</span></a>
+              </div>
+              <div class="home-course-shelf">
+                <a class="home-course-entry" href="/learn/chess-for-beginners/" data-route="beginners" data-home-reveal>
+                  <img src="/assets/chess-play-preview.jpg" width="768" height="512" alt="" loading="lazy" decoding="async"/>
+                  <div class="home-course-entry-copy"><h3>Chess for Beginners</h3><p id="home-beginner-progress">28 lessons · Guided board exercises</p></div>
+                  <span class="home-link-arrow" aria-hidden="true">→</span>
+                </a>
+                <a class="home-course-entry" href="/learn/?category=openings" data-route="learn" data-home-reveal>
+                  <img src="/assets/french-defense-cover.jpg" width="1280" height="853" alt="" loading="lazy" decoding="async"/>
+                  <div class="home-course-entry-copy"><h3>Openings</h3><p data-opening-course-names>French · Italian · Scotch · Sicilian</p></div>
+                  <span class="home-link-arrow" aria-hidden="true">→</span>
+                </a>
+                <a class="home-course-entry" href="/learn/tactical-vision/" data-route="tactics" data-home-reveal>
+                  <img src="/assets/tactical-vision-cover.jpg" width="1280" height="853" alt="" loading="lazy" decoding="async"/>
+                  <div class="home-course-entry-copy"><h3>Tactical Vision</h3><p id="home-tactics-progress">144 exercises · 3 levels</p></div>
+                  <span class="home-link-arrow" aria-hidden="true">→</span>
+                </a>
               </div>
             </div>
           </section>
 
-          <section class="home-training-band" aria-labelledby="home-lab-title">
-            <div class="home-chapter home-training-layout">
-              <header class="home-section-intro" data-home-reveal>
-                <h2 id="home-lab-title">Pick a skill</h2>
-                <a class="home-inline-link" href="/train/" data-route="train">All training <span aria-hidden="true">→</span></a>
-              </header>
-              <div class="home-training-art" aria-hidden="true" data-home-reveal>
-                <img src="/assets/roqvyn-knight-preview.png" width="390" height="426" loading="lazy" decoding="async" alt=""/>
-              </div>
-              <div class="home-training-index">
-                <a href="/train/opening-test/" data-route="openingtest" data-home-reveal><div><h3>Opening Test</h3><p>Recall moves from your completed opening lessons.</p></div><span aria-hidden="true">→</span></a>
-                <a href="/learn/calculation/" data-route="calculation" data-home-reveal><div><h3>Calculation Lab</h3><p>Find 3–6 moves in <span data-calculation-count>120</span> challenges.</p></div><span aria-hidden="true">→</span></a>
-                <a href="/train/board-lab/" data-route="boardlab" data-home-reveal><div><h3>Board Lab</h3><p>Memory and knight routes across <span id="home-lab-total">205</span> puzzles, including <span id="home-lab-expert">43 expert</span>.</p></div><span aria-hidden="true">→</span></a>
-                <a href="/train/?practice=mistakes" data-route="train" data-home-reveal><div><h3>Your mistakes</h3><p>Replay positions from your reviewed games.</p></div><span aria-hidden="true">→</span></a>
-              </div>
+          <div class="home-studio">
+            <div class="home-chapter home-studio-layout">
+              <section class="home-training" aria-labelledby="home-lab-title">
+                <header class="home-section-heading" data-home-reveal>
+                  <h2 id="home-lab-title">Pick a skill</h2>
+                  <a class="home-inline-link" href="/train/" data-route="train">All training <span aria-hidden="true">→</span></a>
+                </header>
+                <div class="home-training-index">
+                  <a href="/train/opening-test/" data-route="openingtest" data-home-reveal><div><h3>Opening Test</h3><p>Recall the lines you’ve studied.</p></div><span class="home-link-arrow" aria-hidden="true">→</span></a>
+                  <a href="/learn/calculation/" data-route="calculation" data-home-reveal><div><h3>Calculation Lab</h3><p>Find 3–6 moves in <span data-calculation-count>120</span> challenges.</p></div><span class="home-link-arrow" aria-hidden="true">→</span></a>
+                  <a href="/train/board-lab/" data-route="boardlab" data-home-reveal><div><h3>Board Lab</h3><p>Memory and knight routes. <span id="home-lab-total">205</span> puzzles, <span id="home-lab-expert">43 expert</span>.</p></div><span class="home-link-arrow" aria-hidden="true">→</span></a>
+                  <a href="/train/?practice=mistakes" data-route="train" data-home-reveal><div><h3>Your mistakes</h3><p>Try another move in your own positions.</p></div><span class="home-link-arrow" aria-hidden="true">→</span></a>
+                </div>
+              </section>
+
+              <section id="home-review-demo" class="home-review-demo" aria-labelledby="home-review-title" data-ui data-home-reveal>
+                <div class="home-demo-heading">
+                  <div><h2 id="home-review-title">The Opera Game</h2><span>Morphy · Paris, 1858</span></div>
+                  <button id="home-review-sample" type="button" class="home-inline-link">Full review <span aria-hidden="true">→</span></button>
+                </div>
+                <div class="home-demo-coach" role="status" aria-live="polite" aria-atomic="true">
+                  <strong id="home-review-move">10. Nxb5</strong>
+                  <p id="home-review-explanation">White’s knight captures the pawn on b5.</p>
+                </div>
+                <div id="home-review-board" class="home-demo-board chess-board board-surface" role="img" aria-label="Sample Opera Game position after 10. Nxb5"></div>
+                <div class="home-demo-controls">
+                  <button id="home-review-back" type="button" aria-label="Previous sample move" disabled>← Back</button>
+                  <span id="home-review-step">1 of 5</span>
+                  <button id="home-review-next" type="button" aria-label="Next sample move">Next →</button>
+                </div>
+                <noscript><p>Enable JavaScript to replay this position.</p></noscript>
+              </section>
             </div>
-          </section>
+          </div>
         </section>
         <section class="entry-page" data-page-view="analyze" aria-labelledby="analysis-entry-title" hidden><div class="page-heading"><h1 id="analysis-entry-title" tabindex="-1">Analyze a game.</h1><p>Import a game or find your public games.</p></div><button id="analysis-resume" class="entry-resume" hidden>Resume your review</button><div class="entry-grid"><button id="analysis-entry-paste" class="entry-card"><strong>Paste PGN</strong><span>Copy the game notation from your chess app.</span></button><button id="analysis-entry-upload" class="entry-card"><strong>Upload PGN</strong><span>Choose a .pgn file from your device.</span></button><button id="analysis-entry-find" class="entry-card"><strong>Find public games</strong><span>Search by Chess.com username. No password needed.</span></button><button id="analysis-entry-sample" class="entry-card"><strong>Explore a sample game</strong><span>The Opera Game · Morphy, Paris 1858.</span></button></div></section>
 <section class="entry-page account-page" data-page-view="account" hidden aria-labelledby="account-title"><h1 id="account-title" tabindex="-1">Your chess, saved.</h1><p>Continue your lessons and practice on any device.</p><div id="account-panel"></div><p id="account-status" role="status" aria-live="polite" hidden></p></section>

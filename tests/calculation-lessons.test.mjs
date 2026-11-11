@@ -99,7 +99,7 @@ test('level controls derive labels from metadata, preserve focused buttons and r
 
 test('featured training consistently opens hard challenges and source ratings are identified as puzzle ratings',()=>{
   const html=readFileSync(new URL('../src/index.html',import.meta.url),'utf8');
-  assert.match(html,/data-home-focus="calculation"/);assert.match(html,/href="\/learn\/calculation\/" data-route="calculation" data-home-reveal/);
+  assert.match(html,/href="\/learn\/calculation\/" data-route="calculation" data-home-reveal><div><h3>Calculation Lab/);
   assert.match(html,/Optional mate warm-ups/);assert.doesNotMatch(html,/new mate-in-one positions|Spot the only mating move/);
   assert.match(CALCULATION_REFERENCE,/CC0/);assert.match(CALCULATION_REFERENCE,/puzzle ratings, not player ratings/);
   for(const lesson of CALCULATION_LESSONS){assert.equal(lesson.quiz,undefined);assert.doesNotMatch(lesson.takeaway,/undefined/);assert.match(lesson.source,/https:\/\/lichess.org\/training\//);assert.equal(lesson.notes.length,lesson.moves.length);}
