@@ -3,6 +3,7 @@ import {finishBoard,enableBoardDrag} from './board-surface.js';
 import { Chess } from 'chess.js';
 import { pieceSvg } from './pieces.js';
 import { collectTraining, PracticeSession, moveLabel, pieceNames } from './training.js';
+import { evaluationReady } from './review-quality.js';
 
 const $ = id => document.getElementById(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
@@ -10,22 +11,28 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({ 
 export function createTrainingUI({ context, navigate, pause, resume, scrollToBoard, icon, playSound = () => {},feedbackSound=()=>{} }) {
   let painted=null;
   let data = { moments: [], exercises: [] }, session = null, savedContext = null, resumeReview = false;
-  let previousEvaluations = null, previousCount = -1,previousColor=null;
+  let previousEvaluations = null, previousColor = null, previousMode = null;
   let practiceOptions={};
   const dialog = $('practice-dialog');
 
   function reset() {
-    resumeReview = false; session = null; previousEvaluations = null; previousCount = -1;
+    resumeReview = false; session = null; previousEvaluations = null;
     data = { moments: [], exercises: [] };
     if (dialog.open) dialog.close();
   }
 
   function render() {
-    const { parsed, evaluations, color, running } = context();
+    const { parsed, evaluations, color, running, mode, ply } = context();
     const count = evaluations.filter(Boolean).length;
+    const complete = parsed.fens.every((_, index) => evaluationReady(evaluations[index], mode));
+    const provisional = mode === 'quick' || !complete;
     const practiceColor=$('practice-side').value==='both'?null:$('practice-side').value;
-    if (evaluations !== previousEvaluations || count !== previousCount||practiceColor!==previousColor) {
-      previousEvaluations = evaluations; previousCount = count;previousColor=practiceColor;
+    const evidenceChanged = !previousEvaluations || evaluations.length !== previousEvaluations.length ||
+      evaluations.some((score, index) => score !== previousEvaluations[index]);
+    if (evidenceChanged || practiceColor !== previousColor || mode !== previousMode) {
+      previousEvaluations = evaluations.slice();
+      previousColor = practiceColor;
+      previousMode = mode;
       data = collectTraining(parsed, evaluations, practiceColor);
       $('moments-list').innerHTML = data.moments.length ? data.moments.map(event => {
         const owner = color ? event.move.color === color ? 'You' : 'Opponent' : event.move.color === 'w' ? 'White' : 'Black';
@@ -34,13 +41,18 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
         return `<button class="moment-item" data-moment="${event.ply}"><span class="moment-number">${escape(moveLabel(event.move))}</span><span class="moment-copy"><strong>${owner} · ${event.rating.label}</strong><small>${detail}</small></span><span class="moment-arrow">${icon('arrow')}</span></button>`;
       }).join('') : `<p class="training-empty">${count < 2 ? 'Review the game to find its turning points.' : 'No major evaluation swings or standout moves in the reviewed positions.'}</p>`;
       const exercises = data.exercises.length;
+      $('start-practice-focus').hidden = !exercises;
+      $('start-practice-focus').textContent = provisional ? 'Practice biggest mistake found' : 'Practice biggest mistake';
       $('start-practice').disabled = !exercises;
-      $('start-practice').innerHTML = `${exercises ? `Practice ${exercises} position${exercises === 1 ? '' : 's'}` : count < parsed.fens.length ? 'Waiting for reviewed mistakes' : 'No mistakes to practice'} ${icon('arrow')}`;
-      $('practice-description').textContent = exercises ? `${practiceColor==='w'?'White’s mistakes':practiceColor==='b'?'Black’s mistakes':'Mistakes from both players'}, turned into positions to solve.${count<parsed.fens.length?' Provisional: review is incomplete.':''} The answer stays hidden until you try or reveal it.` : count === parsed.fens.length ? 'No reviewed inaccuracies, mistakes, or blunders with a valid engine alternative were found for this side.' : 'Positions appear as the engine reviews inaccuracies, mistakes, and blunders.';
+      $('start-practice').hidden = exercises === 1;
+      $('start-practice').innerHTML = `${exercises ? `Practice all ${exercises}` : !complete ? 'Waiting for reviewed mistakes' : 'No mistakes to practice'} ${icon('arrow')}`;
+      $('practice-description').textContent = exercises
+        ? (provisional ? 'From the positions reviewed so far. Results are provisional.' : 'Try a better move in a position from this game.')
+        : (complete ? 'No reviewed mistakes with a valid alternative were found for this side.' : 'Positions appear as the engine reviews the game.');
     }
     $('moments-status').textContent = running ? 'Updating as you review' : count === parsed.fens.length ? `${data.moments.length} moments found` : count ? 'From reviewed positions' : 'Awaiting review';
     document.querySelectorAll('[data-moment]').forEach(button => {
-      const current = Number(button.dataset.moment) === context().ply;
+      const current = Number(button.dataset.moment) === ply;
       button.classList.toggle('selected', current); button.setAttribute('aria-current', current ? 'step' : 'false');
     });
   }
@@ -122,7 +134,8 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     const button = event.target.closest('[data-moment]'); if (!button) return;
     navigate(Number(button.dataset.moment)); scrollToBoard();
   };
-  $('start-practice').onclick = start;
+  $('start-practice').onclick = () => start();
+  $('start-practice-focus').onclick = () => start(data.exercises.slice(0, 1));
   $('practice-side').onchange=()=>render();
   enableBoardDrag($('practice-board'),{read:()=>({chess:session?new Chess(session.exercise.fen):null,disabled:!session||session.status!=='playing'||Boolean(session.promotion)}),select:from=>{session.selected=from;renderPractice();},play:attempt});
   $('practice-board').onclick = event => {

@@ -3,7 +3,18 @@ import { build } from 'esbuild';
 import { mkdir, copyFile, readdir, readFile, writeFile,cp } from 'node:fs/promises';
 import { PAGE_PATHS } from '../src/routes.js';
 await mkdir('dist/engine', { recursive: true });
-await build({ entryPoints: ['src/app.js'], bundle: true, minify: true, sourcemap: true, outfile: 'dist/app.js', format: 'esm', target: ['es2022'],external:['/account-neon.js'] });
+await build({
+  entryPoints: ['src/app.js'],
+  bundle: true,
+  splitting: true,
+  minify: true,
+  sourcemap: true,
+  outdir: 'dist',
+  chunkNames: 'chunks/[name]-[hash]',
+  format: 'esm',
+  target: ['es2022'],
+  external: ['/account-neon.js'],
+});
 const authBuild=await build({entryPoints:['src/account-neon.js'],bundle:true,minify:true,outfile:'dist/account-neon.js',format:'esm',target:['es2022'],metafile:true});
 const licenseRoots=new Set(Object.keys(authBuild.metafile.inputs).flatMap(path=>{const marker=path.lastIndexOf('node_modules/');if(marker<0)return [];const parts=path.slice(marker+13).split('/');return [path.slice(0,marker+13)+parts.slice(0,parts[0].startsWith('@')?2:1).join('/')];}));
 const authLicenses=[];

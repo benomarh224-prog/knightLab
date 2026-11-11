@@ -4,7 +4,6 @@ import { Engine } from './engine.js';
 import { normalizeUsername, loadPlayer, loadArchive } from './api.js';
 import { pieceSvg } from './pieces.js';
 import { pageGames } from './library.js';
-import { identifyOpening } from './opening.js';
 import { evaluationReady, depthReady, positionSearch, strongerScore, DEFAULT_REVIEW_MODE, INSPECTION_DEPTH,PRECISION_DEPTH,STANDARD_DEPTH,loadReviewMode } from './review-quality.js';
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
@@ -85,6 +84,11 @@ const state = { parsed: null, selected: null, ply: 19, flipped: false, showArrow
 const compactLayout = matchMedia('(max-width: 860px)');
 state.analysisError=null;state.engineLoading=false;state.reviewPhase=null;state.reviewTask=null;
 let router;
+let identifyOpening;
+let openingLookup;
+let openingUnavailable = false;
+let openingPracticeReady = false;
+let openingPracticeScheduled = false;
 const navigation=createNavigation({compact:matchMedia('(max-width:1020px)'),nav:$('workspace-menu'),desktopSlot:$('desktop-navigation'),mobileSlot:$('mobile-navigation'),dialog:$('navigation-dialog'),toggle:$('workspace-menu-toggle'),closeButton:$('navigation-close')});
 function closeWorkspaceMenu(){navigation.close();}
 $('nav-import').onclick=()=>{closeWorkspaceMenu();$('sidebar-import').click();};
@@ -131,6 +135,7 @@ function positionOpeningCard() {
 }
 $('opening-card').addEventListener('toggle', () => {
   $('opening-toggle-label').textContent = $('opening-card').open ? 'Less' : 'Details';
+  if ($('opening-card').open) loadOpeningDatabase();
 });
 positionOpeningCard();
 const moveSounds=new MoveSounds({storage:reviewStorage,onState:audioState=>{
@@ -152,7 +157,7 @@ const autoplay=createAutoplay({read:()=>inline?.active?{source:inline.line,curso
   }});
 playbackButton.onclick=()=>coachDemo?.active?coachDemo.toggle():autoplay.toggle();
 const training = createTrainingUI({
-  context: () => ({ parsed: state.parsed, evaluations: state.evaluations, color: playerColor(), running: state.running, ply: state.ply }),
+  context: () => ({ parsed: state.parsed, evaluations: state.evaluations, color: playerColor(), running: state.running, ply: state.ply, mode: state.mode }),
   navigate: goTo,
   pause: pauseWorkspace,
   resume: startAnalysis,
@@ -313,13 +318,31 @@ function setGame(game, { demo = false, analyze = true,remember=true } = {}) {
   const { headers } = parsed;
   $('game-subtitle').textContent = demo ? 'Sample game · The Opera Game · Paris, 1858' : `${game.time_class ? game.time_class[0].toUpperCase() + game.time_class.slice(1) + ' · ' : ''}${headers.Event || 'Imported game'}${game.end_time ? ' · ' + new Date(game.end_time * 1000).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : ''}`;
   $('game-result').textContent = (headers.Result || '*').replaceAll('-', '–');
+  $('opening-card').open = false;
   renderOpening();
   updatePlayers(); renderMoveList(); render(); renderGames();
   saveReviewPosition();
   if (analyze) startAnalysis();
 }
 
+function loadOpeningDatabase() {
+  if (identifyOpening || openingLookup) return;
+  openingLookup = import('./opening.js').then(module => {
+    identifyOpening = module.identifyOpening;
+    renderOpening();
+  }, () => {
+    $('opening-name').textContent = 'Opening unavailable';
+    $('opening-detail').textContent = 'Reload the page to retry the opening lookup.';
+  });
+}
+
 function renderOpening() {
+  if (!identifyOpening) {
+    $('opening-name').textContent = 'Opening';
+    $('opening-detail').textContent = 'Opening details will appear during the review.';
+    for (const id of ['opening-eco', 'opening-line', 'opening-position']) $(id).hidden = true;
+    return;
+  }
   const opening = identifyOpening(state.parsed, state.selected);
   $('opening-name').textContent = opening.name || 'Unrecognized opening';
   $('opening-eco').textContent = opening.eco;
@@ -328,7 +351,6 @@ function renderOpening() {
   $('opening-line').textContent = opening.line;
   $('opening-line').hidden = !opening.line;
   $('opening-position').hidden = opening.ply === null;
-  $('opening-card').open = false;
   $('opening-position').onclick = () => {
     $('opening-card').open = false;
     goTo(opening.ply); selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace'));
@@ -336,6 +358,21 @@ function renderOpening() {
 }
 
 function renderOpeningPractice() {
+  if (router?.page !== 'analysis') return;
+  if (!openingPracticeReady) {
+    $('review-opening-practice').hidden = true;
+    if (!openingPracticeScheduled && (state.evaluations[state.ply] || state.analysisError || $('opening-card').open)) {
+      openingPracticeScheduled = true;
+      // Paint the first evaluation before building the opening lesson index.
+      requestAnimationFrame(() => setTimeout(() => {
+        openingPracticeScheduled = false;
+        if (router.page !== 'analysis') return;
+        openingPracticeReady = true;
+        renderOpeningPractice();
+      }, 0));
+    }
+    return;
+  }
   const match = inline.active || coachDemo.active ? null : openingTraining.review(state.parsed, state.ply);
   $('review-opening-practice').hidden = !match;
   if (!match) return;
@@ -681,6 +718,7 @@ async function startAnalysis() {
       const previous=state.evaluations[index];state.evaluations[index] = strongerScore(previous,score);state.reviewTask=null;
       if(score.interrupted){if(task.phase==='inspect')inspected.delete(request.ply+':'+index);else plan.retry(task);}
       render();
+      loadOpeningDatabase();
       if(++finished%8===0)reviewCache.save(parsed.pgn,state.mode,state.evaluations);
       await new Promise(resolve => setTimeout(resolve, 0));
     }
@@ -811,8 +849,11 @@ $('games-nav').onclick = () => router.go('analyze');
 $('analysis-entry-paste').onclick=()=>{openImport();$('pgn-input').focus();};
 $('analysis-entry-upload').onclick=()=>{openImport();$('pgn-file').click();};
 $('analysis-entry-find').onclick=openConnect;
-$('analysis-entry-sample').onclick=()=>{setGame({pgn:DEMO_PGN},{demo:true,analyze:false});router.go('analysis');};
-const homeExperience=createHomeExperience({openSample:()=>$('analysis-entry-sample').click()});
+function openSampleReview() {
+  router.go('analysis',{search:'?sample=opera'});
+}
+$('analysis-entry-sample').onclick=openSampleReview;
+const homeExperience=createHomeExperience({openSample:openSampleReview});
 $('analysis-resume').onclick=()=>router.go('analysis');
 let trainGames=[],selectedTrainPgn=null;
 function trainSelection(){
@@ -1022,7 +1063,21 @@ router=createPageRouter(page=>{
   for(const [id,active] of [['library-nav',page==='games'],['games-nav',['analyze','analysis'].includes(page)]]){
     if(active)$(id).setAttribute('aria-current','page');else $(id).removeAttribute('aria-current');
   }
-  if(page==='analysis'){if(!state.running)startAnalysis();}
+  if(page==='analysis'){
+    if(new URLSearchParams(location.search).get('sample')==='opera'){
+      if(!state.demo||state.selected.pgn!==DEMO_PGN){
+        setGame({pgn:DEMO_PGN},{demo:true,analyze:false});
+      } else if(!reviewOpened) {
+        reviewOpened=true;
+        saveReviewPosition();
+      }
+      const title = $('workspace-title');
+      const focusTarget = title.getClientRects().length ? title : $('board');
+      focusTarget.focus({ preventScroll: true });
+    }
+    if(!state.running)startAnalysis();
+    if(state.evaluations.some(Boolean))loadOpeningDatabase();
+  }
   else {if(coachDemo.active)finishCoachDemo({resume:false});saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
   if(page==='account'){account.open();$('account-title').focus({preventScroll:true});}

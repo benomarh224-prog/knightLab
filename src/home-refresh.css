@@ -166,6 +166,12 @@ html[data-theme="dark"] .home-refresh {
 }
 
 .home-refresh .home-hero-actions .home-action { min-height: 48px; }
+.home-refresh .home-sample-link {
+  margin-top: 4px;
+  color: var(--home-muted);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .home-refresh .home-daily-band { background: var(--home-plan); }
 
 .home-refresh .home-daily-layout,
@@ -463,9 +469,11 @@ body[data-page="home"] .footer a {
 }
 
 @media (min-width: 721px) and (max-height: 580px) {
-  .home-refresh .home-hero-band { min-height: clamp(350px, calc(100svh - 64px), 510px); }
-  .home-refresh .home-hero-inner { padding-block: 26px; }
-  .home-refresh h1 { font-size: clamp(52px, 7vw, 70px); }
+  .home-refresh .home-hero-band { min-height: clamp(330px, calc(100svh - 64px), 510px); }
+  .home-refresh .home-hero-inner { padding-block: 18px; }
+  .home-refresh h1 { font-size: clamp(48px, 6.6vw, 66px); }
+  .home-refresh .home-hero-copy > p,
+  .home-refresh .home-hero-actions { margin-top: 14px; }
   .home-refresh .home-hero-art img { object-position: center 38%; }
 }
 

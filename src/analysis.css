@@ -56,3 +56,20 @@
   .workspace .board-area { width:min(100%,380px); }
   .workspace .board-card { overflow:visible; }
 }
+.review-practice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 8px;
+}
+
+.review-practice-actions button {
+  flex: 1 1 150px;
+  min-height: 44px;
+}
+
+.practice-card label[for="practice-side"] {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
