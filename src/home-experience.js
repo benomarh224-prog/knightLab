@@ -44,7 +44,16 @@ export function createHomeExperience({openSample,doc=document,win=window}){
   get('home-review-next').onclick=()=>{index=Math.min(frames.length-1,index+1);render();};
   get('home-review-sample').onclick=()=>openSample();
   const openingCount=Object.values(COURSES).filter(course=>course.category==='openings').length;
-  const focuses={beginners:{course:'beginners',cover:'/assets/chess-play.png',alt:'Ivory king and pawn on a chessboard',text:'Get to know the board, move every piece, and build your first winning ideas.'},openings:{course:'learn',path:'/learn/?category=openings',title:'Openings with a plan',cover:'/assets/french-defense-cover.jpg',alt:'French Defense opening course',text:`Study ${openingCount} openings and learn why the moves belong together.`},tactics:{course:'tactics',cover:'/assets/tactical-vision-cover.jpg',alt:'Tactical Vision knight fork course cover',text:`${COURSES.tactics.lessons.length} positions. Compare checks, captures, and forcing ideas.`},calculation:{course:'calculation',cover:'/assets/calculation-lab.svg',alt:'Calculation Lab course cover',text:`${COURSES.calculation.lessons.length} distinct real-game challenges. Calculate 3–6 moves across ten themes, from challenging to expert.`}};
+  const focuses={
+    beginners:{course:'beginners',cover:'/assets/chess-play-preview.jpg',alt:'Ivory king and pawn on a chessboard',
+      text:'Learn to read the board, move each piece and find your first checkmate.'},
+    openings:{course:'learn',path:'/learn/?category=openings',title:'Openings with a plan',cover:'/assets/french-defense-cover.jpg',
+      alt:'French Defense opening course',text:`Study ${openingCount} openings and learn why the moves belong together.`},
+    tactics:{course:'tactics',cover:'/assets/tactical-vision-cover.jpg',alt:'Tactical Vision knight fork course cover',
+      text:`${COURSES.tactics.lessons.length} positions. Compare checks, captures, and forcing ideas.`},
+    calculation:{course:'calculation',cover:'/assets/calculation-lab.svg',alt:'Calculation Lab course cover',
+      text:`${COURSES.calculation.lessons.length} real-game challenges. Calculate 3–6 moves across ten themes.`}
+  };
   for(const button of root.querySelectorAll('[data-home-focus]'))button.onclick=()=>{
     const chosen=focuses[button.dataset.homeFocus],course=COURSES[chosen.course],art=get('home-focus-art');
     for(const item of root.querySelectorAll('[data-home-focus]'))item.setAttribute('aria-pressed',String(item===button));

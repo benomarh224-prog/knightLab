@@ -790,8 +790,6 @@ function openConnect() { coachDemo.pause();$('connect-dialog').showModal(); $('u
 $('focus-username').onclick = openConnect;
 $('open-connect').onclick = openConnect;
 $('games-search').onclick=openConnect;
-function homeAnalyze(){router.go('analyze');}
-$('home-analyze').onclick=homeAnalyze;
 for(const id of ['home-tactics','home-tactics-art'])if($(id))$(id).onclick=()=>{
   router.go('tactics');
 };
@@ -1040,8 +1038,8 @@ router=createPageRouter(page=>{
       const heading=document.querySelector('.train-mistakes h2');heading.tabIndex=-1;heading.focus({preventScroll:true});heading.scrollIntoView({block:'center',behavior:'instant'});
     });
   }
-  if(page==='learn'||page==='home'){learning.refresh();daily.render();}
   if(page==='home')homeExperience.activate();
+  if(page==='learn'||page==='home'){learning.refresh();daily.render();}
   if(page==='learn'){
     let saved;try{saved=reviewStorage?.getItem('knightlab-learning-category');}catch{}
     selectLearningCategory(learningCategory(COURSES,new URLSearchParams(location.search).get('category'),saved));
