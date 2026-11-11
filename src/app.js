@@ -45,6 +45,7 @@ import{createAccountStorage}from'./account-storage.js';
 import{createAccountUI}from'./account-ui.js';
 import { createOpeningTraining, openingPracticeLink } from './opening-training.js';
 import { createOpeningTestUI } from './opening-test-ui.js';
+import { createOpeningReview } from './opening-review.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -991,9 +992,10 @@ try {
 function dailyMistakes(){
   return reviewedDailyMistakes(reviewMemory.list(),(pgn,total)=>state.cache.get(pgn+'precise')||reviewCache.load(pgn,'precise',total));
 }
-const daily=createDailyTrainingUI({storage:reviewStorage,courses:COURSES,mistakes:dailyMistakes,go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options)});
+const openingReview=createOpeningReview({training:openingTraining,storage:reviewStorage});
+const daily=createDailyTrainingUI({storage:reviewStorage,courses:COURSES,mistakes:dailyMistakes,openingReview,go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options)});
 const boardLab=createBoardLabUI({storage:reviewStorage,playSound,feedbackSound});
-const openingTest=createOpeningTestUI({training:openingTraining,storage:reviewStorage,playSound});
+const openingTest=createOpeningTestUI({training:openingTraining,storage:reviewStorage,playSound,openingReview,daily});
 const learning=createLearningUI({storage:reviewStorage,playSound,feedbackSound,daily,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
@@ -1014,7 +1016,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){coachDemo.
 document.addEventListener('click',event=>{if(autoplay.active&&!event.target.closest('#autoplay-moves,#board-actions-toggle'))autoplay.stop();},true);
 router=createPageRouter(page=>{
   boardLab.setActive(page==='boardlab');
-  openingTest.setActive(page==='openingtest');
+  openingTest.setActive(page==='openingtest',page==='openingtest'?new URLSearchParams(location.search):null);
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   closeWorkspaceMenu();
   $('library-nav').classList.toggle('active',page==='games');

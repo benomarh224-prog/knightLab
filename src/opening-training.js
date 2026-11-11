@@ -5,7 +5,7 @@ import { lessonPlan } from './lesson-player.js';
 export const OPENING_TEST_SIZE = 5;
 
 // Ignore the move counters. Side to move, castling, and en passant all matter.
-const positionKey = fen => fen.split(' ', 4).join(' ');
+export const openingPositionKey = fen => fen.split(' ', 4).join(' ');
 const moveKey = move => `${move.from}${move.to}${move.promotion || ''}`;
 const lessonKey = entry => `${entry.courseId}/${entry.lessonId}`;
 
@@ -38,11 +38,11 @@ export function createOpeningTraining(courses) {
             const entry = {
               courseId: course.id, courseTitle: course.title, path: course.path,
               lessonId: lesson.id, title: study?.title || lesson.title, activityIndex,
-              fen: line.positions[ply], move, note: line.notes[ply], studyPly: ply
+              fen: line.positions[ply], move, note: line.notes[ply], studyPly: ply, sequence: line.verboseMoves
             };
             decisions.push(entry);
             if (ply === session.cursor) {
-              const key = positionKey(entry.fen);
+              const key = openingPositionKey(entry.fen);
               if (!starts.has(key)) starts.set(key, entry);
             }
           }
@@ -61,7 +61,7 @@ export function createOpeningTraining(courses) {
         const matches = new Map();
         let best = null;
         for (let at = 2; at < parsed.fens.length; at++) {
-          const entry = starts.get(positionKey(parsed.fens[at]));
+          const entry = starts.get(openingPositionKey(parsed.fens[at]));
           if (!entry) continue;
           const match = {...entry, ply: at};
           matches.set(at, match);
@@ -81,14 +81,34 @@ export function createOpeningTraining(courses) {
       for (const entry of positions().decisions) {
         // The opening test uses one tap or drag per answer, so omit promotion decisions.
         if (entry.move.promotion || !completed.get(entry.courseId).has(entry.lessonId)) continue;
-        const key = positionKey(entry.fen);
-        if (!questions.has(key)) questions.set(key, {fen: entry.fen, answers: []});
+        const key = openingPositionKey(entry.fen);
+        if (!questions.has(key)) questions.set(key, {fen: entry.fen, answers: [], sources: []});
         const question = questions.get(key);
+        question.sources.push(entry);
         if (!question.answers.some(answer => moveKey(answer.move) === moveKey(entry.move))) question.answers.push(entry);
       }
       return [...questions.values()];
     }
   };
+}
+
+export function relatedOpeningPosition(question, candidates) {
+  let best = null, bestScore = -1;
+  for (const candidate of candidates) {
+    if (openingPositionKey(candidate.fen) === openingPositionKey(question.fen)) continue;
+    for (const source of question.sources) for (const target of candidate.sources) {
+      if (source.courseId !== target.courseId || source.move.color !== target.move.color) continue;
+      const length = Math.min(source.studyPly, target.studyPly);
+      const distance = Math.abs(source.studyPly - target.studyPly);
+      let shared = 0;
+      while (shared < length && moveKey(source.sequence[shared]) === moveKey(target.sequence[shared])) shared++;
+      // Require a shared move order beyond the opening's first few moves.
+      if (shared < 4 || shared < length * 0.75 || distance > 6) continue;
+      const score = 10 * shared / length - distance + (moveKey(source.move) === moveKey(target.move) ? 12 : 0);
+      if (score > bestScore) { best = candidate; bestScore = score; }
+    }
+  }
+  return best;
 }
 
 export function pickOpeningTest(questions, random = Math.random) {

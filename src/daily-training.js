@@ -6,11 +6,21 @@ import {collectTraining} from './training.js';
 import {depthReady,PRECISION_DEPTH} from './review-quality.js';
 import {createAdaptiveTraining} from './adaptive-training.js';
 import {localTrainingDate} from './training-calendar.js';
+import {OpeningTestSession} from './opening-training.js';
 export {localTrainingDate} from './training-calendar.js';
 
 const KEY='roqvyn-daily-training-v1';
 export const DAILY_LEVELS=['beginner','intermediate','advanced'];
 const hash=text=>{let n=2166136261;for(const char of text){n^=char.charCodeAt(0);n=Math.imul(n,16777619);}return (n>>>0).toString(36);};
+const openingTaskId=(position,source)=>`opening-${hash(position+(source?'|'+source:''))}`;
+const isPosition=value=>typeof value==='string'&&/^[prnbqkPRNBQK1-8/]+ [wb] (?:-|[KQkq]+) (?:-|[a-h][36])$/.test(value);
+const isMove=value=>typeof value==='string'&&/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(value);
+function openingTask(item){
+  if(!item)return null;
+  const {position,source}=item;
+  return {id:openingTaskId(position,source),kind:'opening',position,source,title:source?'Try a related position':'Opening recall',
+    detail:'Opening review',reason:source?'Use what you learned in a new position':'Recall a position from your Opening Test'};
+}
 export function reviewedDailyMistakes(entries,load){
   return entries.filter(entry=>!entry.demo).flatMap(entry=>{
     try{
@@ -41,10 +51,11 @@ export function dailyPracticeTask(courses,courseId,lessonId,index=0){
 }
 function taskValid(task,courses){
   if(task?.kind==='mistake')return validDailyMistake(task.exercise)&&task.id===`mistake-${hash(task.exercise.fen+task.exercise.solution)}`;
+  if(task?.kind==='opening')return isPosition(task.position)&&(task.source===null||isPosition(task.source)&&task.source!==task.position)&&task.id===openingTaskId(task.position,task.source);
   const current=dailyPracticeTask(courses,task?.courseId,task?.lessonId,task?.index);
   return Boolean(current&&current.id===task.id&&current.signature===task.signature);
 }
-export function createDailyTraining({storage,courses,learningMemory,now=()=>new Date()}){
+export function createDailyTraining({storage,courses,learningMemory,openingReview,now=()=>new Date()}){
   let state;try{state=JSON.parse(storage?.getItem(KEY)||'null');}catch{}
   const adaptive=createAdaptiveTraining({storage,courses,now});
   state={version:1,level:adaptive.bands.some(b=>b.value===state?.level)?state.level:null,days:Array.isArray(state?.days)?state.days.filter(day=>/^\d{4}-\d{2}-\d{2}$/.test(day?.date)&&Array.isArray(day.tasks)&&day.tasks.length>0&&day.tasks.length<=(day.merged?24:3)&&day.tasks.every(task=>taskValid(task,courses))).slice(-35).map(day=>({...day,done:Array.isArray(day.done)?day.done.filter(id=>day.tasks.some(task=>task.id===id)):[],started:day.started===true,
@@ -83,10 +94,12 @@ export function createDailyTraining({storage,courses,learningMemory,now=()=>new 
   }
   function today({mistakes=[]}={}){
     const date=localTrainingDate(now());let day=state.days.find(item=>item.date===date);
+    const recall=!day?.started&&!day?.tasks.some(task=>task.kind==='opening')?openingTask(openingReview?.due(date)):null;
     if(day){
       if(!day.started){const band=adaptive.recommendation().band;for(let i=0;i<day.tasks.length;i++){const task=day.tasks[i];if(courses[task.courseId]?.training?.adaptive&&`${task.courseId}:${task.level}`!==band?.id){const replacement=challenge(date,day.tasks);if(replacement)day.tasks[i]=replacement;}}}
+      if(recall){if(day.tasks.length<3)day.tasks.unshift(recall);else if(day.tasks[0].kind==='practice')day.tasks[0]=recall;}
       const personal=personalFor(mistakes,date);
-      if(!day.started&&personal&&!day.tasks.some(task=>task.kind==='mistake')){
+      if(!day.started&&personal&&day.tasks.at(-1)?.kind!=='opening'&&!day.tasks.some(task=>task.kind==='mistake')){
         day.tasks[day.tasks.length-1]={id:`mistake-${hash(personal.fen+personal.solution)}`,kind:'mistake',title:'A moment from your game',detail:'Your reviewed mistakes',reason:'Find the engine’s alternative',exercise:personal};save();
       }
       save();return day;
@@ -95,7 +108,8 @@ export function createDailyTraining({storage,courses,learningMemory,now=()=>new 
     const add=task=>{if(task&&!used.has(task.id)){used.add(task.id);tasks.push(task);}};
     const pending=learningMemory?.review()||[];
     const tracked=adaptive.trackedIds(),due=adaptive.due(date)[0]||pending.filter(entry=>entry.kind==='practice').map(entry=>dailyPracticeTask(courses,entry.courseId,entry.lessonId,entry.index)).find(task=>task&&!tracked.has(task.id));
-    if(due)add({...due,reason:'Spaced review · Try the idea again'});
+    if(recall)add(recall);
+    else if(due)add({...due,reason:'Spaced review · Try the idea again'});
     else if(adaptive.recommendation().band?.id!==adaptive.bands[0]?.id)add(challenge(date));
     else add(choose(Object.values(courses).find(course=>course.category==='beginners'),date));
     add(challenge(date,tasks));
@@ -114,7 +128,7 @@ export function createDailyTraining({storage,courses,learningMemory,now=()=>new 
     setLevel(value){const day=state.days.find(item=>item.date===localTrainingDate(now()));if(day?.started||value!=='auto'&&!adaptive.setBand(value))return false;state.level=value==='auto'?null:value;state.days=state.days.filter(item=>item!==day);save();const next=today();next.choice=value;save();return true;},
     get(date){return state.days.find(day=>day.date===date)||null;},
     start(date,id){const day=state.days.find(item=>item.date===date);if(!day?.tasks.some(task=>task.id===id))return false;day.started=true;if(!day.opened.includes(id))day.opened.push(id);save();return true;},
-    solve(date,id,outcome){const day=state.days.find(item=>item.date===date),task=day?.tasks.find(t=>t.id===id);if(!day?.started||!task)return false;if(day.done.includes(id))return true;day.done.push(id);
+    solve(date,id,outcome){const day=state.days.find(item=>item.date===date),task=day?.tasks.find(t=>t.id===id);if(!day?.started||!task||task.kind==='opening')return false;if(day.done.includes(id))return true;day.done.push(id);
       const evidence=outcome?adaptive.record(task,outcome):adaptive.result(task,date);
       if(date===localTrainingDate(now())&&evidence&&evidence.quality!=='unknown'&&adaptive.meta(task)?.band){
         const index=day.tasks.findIndex(t=>t.kind==='practice'&&!day.done.includes(t.id)&&!day.opened.includes(t.id));
@@ -124,10 +138,33 @@ export function createDailyTraining({storage,courses,learningMemory,now=()=>new 
       save();return true;},
     observe(event){const task=dailyPracticeTask(courses,event.courseId,event.lessonId,event.index);if(!task)return null;return event.kind==='help'?adaptive.help(task):event.kind==='complete'?adaptive.record(task,event.outcome):null;},
     helpTask(date,id){const task=state.days.find(day=>day.date===date)?.tasks.find(task=>task.id===id);return task?adaptive.help(task):false;},
-    report(date){const day=state.days.find(d=>d.date===date);return day?adaptive.summary(date,day.done):null;},
+    report(date){const day=state.days.find(d=>d.date===date);if(!day)return null;
+      const opening=day.tasks.filter(task=>task.kind==='opening'&&day.done.includes(task.id));
+      return {...adaptive.summary(date,day.done.filter(id=>!opening.some(task=>task.id===id))),
+        opening:opening.length, openingMatched:opening.filter(task=>day.openingAnswers?.[task.id]?.matched===true).length};},
     done(date,id){return Boolean(state.days.find(day=>day.date===date)?.done.includes(id));},
     next(date){const day=state.days.find(item=>item.date===date);return day?.tasks.find(task=>!day.done.includes(task.id))||null;},
     context(courseId,lessonId,query){const day=state.days.find(item=>item.date===query.get('daily')),task=day?.tasks.find(item=>item.id===query.get('task'));return task?.kind==='practice'&&task.courseId===courseId&&task.lessonId===lessonId?{date:day.date,task,draftKey:`${KEY}:draft:${day.date}:${task.id}`}:null;},
-    link(date,task){const query=new URLSearchParams({lesson:task.lessonId,daily:date,task:task.id});return `${courses[task.courseId].path}?${query}`;},
+    openingContext(query){
+      const day=state.days.find(item=>item.date===query.get('daily')),task=day?.tasks.find(item=>item.id===query.get('task'));
+      const question=task?.kind==='opening'?openingReview?.question(task.position):null;
+      if(!question)return null;
+      return {date:day.date,task,question,answer:day.openingAnswers?.[task.id]||null,complete:day.done.includes(task.id)};
+    },
+    solveOpening(context,move){
+      const day=state.days.find(item=>item.date===context.date),task=day?.tasks.find(item=>item.id===context.task.id);
+      if(task?.kind!=='opening'||!day.opened.includes(task.id)||!isMove(move))return null;
+      if(day.done.includes(task.id))return day.openingAnswers?.[task.id]||null;
+      const question=openingReview?.question(task.position);
+      const result=question&&new OpeningTestSession([question]).attempt(move.slice(0,2),move.slice(2,4),move[4]);
+      if(!result)return null;
+      const schedule=openingReview.record(question,result,{source:task.source});
+      const answer={move,matched:result.matched,schedule};
+      day.openingAnswers={...day.openingAnswers,[task.id]:answer};day.done.push(task.id);save();
+      return answer;
+    },
+    link(date,task){const query=new URLSearchParams({daily:date,task:task.id});
+      if(task.kind==='opening')return `/train/opening-test/?${query}`;
+      query.set('lesson',task.lessonId);return `${courses[task.courseId].path}?${query}`;},
   };
 }

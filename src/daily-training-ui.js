@@ -3,9 +3,9 @@ import { createLearningMemory } from './learning-memory.js';
 import {homePlanState,homePlanRows} from './home-daily-plan.js';
 import {dailyLearningReport} from './daily-learning-report.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-export function createDailyTrainingUI({storage,courses,mistakes,go,practice,doc=document,now}){
+export function createDailyTrainingUI({storage,courses,mistakes,go,practice,openingReview,doc=document,now}){
   const $=id=>doc.getElementById(id),freshMemory=()=>createLearningMemory(storage,courses);
-  const model=createDailyTraining({storage,courses,learningMemory:{review:()=>freshMemory().review(),last:()=>freshMemory().last()},now});
+  const model=createDailyTraining({storage,courses,learningMemory:{review:()=>freshMemory().review(),last:()=>freshMemory().last()},openingReview,now});
   let displayedDay=null;
   function render(){
     const day=model.today({mistakes:mistakes()}),count=day.done.length,total=day.tasks.length,complete=count===total;
@@ -38,7 +38,7 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice,doc=
       go('train');
       practice([task.exercise],{onHelp:()=>model.helpTask(date,task.id),onSolved:(_exercise,outcome)=>{model.solve(date,task.id,outcome);render();},onClose:()=>{render();($('daily-start').hidden?$('daily-heading'):$('daily-start')).focus({preventScroll:true});}});
     }
-    else go(task.courseId,{search:'?'+model.link(date,task).split('?')[1]});
+    else go(task.kind==='opening'?'openingtest':task.courseId,{search:'?'+model.link(date,task).split('?')[1]});
   }
   function advance(date){const task=model.next(date);if(task)open(date,task);else go('train');}
   $('daily-start').onclick=()=>{const day=render();advance(day.date);};
@@ -50,6 +50,7 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice,doc=
   $('daily-tasks').onclick=event=>{const id=event.target.closest('[data-daily-task]')?.dataset.dailyTask;if(id)openDisplayed(id);};
   $('daily-level').onchange=()=>{model.setLevel($('daily-level').value);render();};
   return {render,context:(courseId,lessonId,query)=>model.context(courseId,lessonId,query),start:ctx=>model.start(ctx.date,ctx.task.id),
+    openingContext:query=>model.openingContext(query),solveOpening: (ctx,move)=>model.solveOpening(ctx,move),
     observe:event=>model.observe(event),solved(ctx,outcome){model.solve(ctx.date,ctx.task.id,outcome);render();},complete:ctx=>model.done(ctx.date,ctx.task.id),advance:ctx=>advance(ctx.date),plan:()=>go('train'),
     label(ctx){const day=model.get(ctx.date);return `Daily training · ${day.tasks.findIndex(task=>task.id===ctx.task.id)+1} of ${day.tasks.length}`;}};
 }

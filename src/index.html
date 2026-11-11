@@ -80,9 +80,14 @@
   </header>
   <div id="opening-test-intro" class="opening-test-panel">
     <p>Play one move in each of five positions from completed opening lessons. The opening and study move are revealed after your answer.</p>
+    <p>Positions you miss can come back in Daily training.</p>
     <p id="opening-test-ready" role="status"></p>
     <button id="opening-test-start" class="primary-button" type="button">Start test</button>
     <a id="opening-test-learn" href="/learn/?category=openings" data-route="learn">Browse openings</a>
+  </div>
+  <div id="opening-test-unavailable" class="opening-test-panel" hidden>
+    <p>This opening review is no longer available here.</p>
+    <a href="/train/" data-route="train">Back to Daily training</a>
   </div>
   <div id="opening-test-workspace" class="opening-test-workspace" hidden>
     <div class="opening-test-panel" aria-labelledby="opening-test-prompt">
@@ -98,6 +103,7 @@
       <h2 id="opening-test-verdict" role="status"></h2>
       <p id="opening-test-move"></p>
       <p id="opening-test-note"></p>
+      <p id="opening-test-schedule" hidden></p>
       <a id="opening-test-lesson"></a>
       <button id="opening-test-next" class="primary-button" type="button">Next position</button>
     </section>

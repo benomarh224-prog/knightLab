@@ -7,10 +7,14 @@ import { OPENING_TEST_SIZE, OpeningTestSession, pickOpeningTest } from './openin
 const pieceNames = {p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king'};
 const sideName = color => color === 'w' ? 'White' : 'Black';
 
-export function createOpeningTestUI({training, storage, playSound = () => {}}) {
-  const $ = id => document.getElementById(`opening-test-${id}`);
+export function createOpeningTestUI({training, storage, openingReview, daily, playSound = () => {}, doc = document, random = Math.random}) {
+  const $ = id => doc.getElementById(`opening-test-${id}`);
   const board = $('board');
   let session = null;
+  let testSession = null;
+  let dailyMode = false;
+  let dailyContext = null;
+  let schedule = null;
   let active = false;
   let selected = null;
   let chess = null;
@@ -51,10 +55,12 @@ export function createOpeningTestUI({training, storage, playSound = () => {}}) {
 
   function render() {
     const question = session?.question;
-    $('intro').hidden = Boolean(session);
+    $('title').textContent = dailyMode ? 'Opening review' : 'Opening Test';
+    $('intro').hidden = dailyMode || Boolean(session);
+    $('unavailable').hidden = !dailyMode || Boolean(session);
     $('workspace').hidden = !question;
     $('summary').hidden = !session?.complete;
-    if (!session) {
+    if (!session && !dailyMode) {
       const count = training.completedPositions(storage).length;
       $('ready').textContent = count >= OPENING_TEST_SIZE
         ? `${count} positions available from your completed lessons.`
@@ -63,8 +69,9 @@ export function createOpeningTestUI({training, storage, playSound = () => {}}) {
       $('learn').hidden = count >= OPENING_TEST_SIZE;
     } else if (question) {
       const result = session.result;
-      $('round').textContent = `Position ${session.index + 1} of ${OPENING_TEST_SIZE}`;
+      $('round').textContent = dailyMode ? (dailyContext.task.source ? 'Daily training · Related position' : 'Daily training · Opening recall') : `Position ${session.index + 1} of ${OPENING_TEST_SIZE}`;
       $('prompt').textContent = `${sideName(question.fen.split(' ')[1])} to move`;
+      $('instruction').textContent = dailyContext?.task.source ? 'Apply what you learned in this related position.' : 'Find the move from your lesson.';
       $('answer').hidden = !result;
       $('message').textContent = '';
       if (result) {
@@ -72,7 +79,10 @@ export function createOpeningTestUI({training, storage, playSound = () => {}}) {
         $('move').textContent = result.matched ? `Study move: ${result.move.san}` : `You played ${result.move.san}. The board shows the study move ${result.study.move.san}.`;
         $('note').textContent = result.study.note;
         lessonLink($('lesson'), result.study);
-        $('next').textContent = session.index === OPENING_TEST_SIZE - 1 ? 'See results' : 'Next position';
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(schedule?.due) ? new Date(`${schedule.due}T12:00:00`) : null;
+        $('schedule').hidden = !date || Number.isNaN(date.valueOf());
+        $('schedule').textContent = $('schedule').hidden ? '' : `Next recall: ${date.toLocaleDateString(undefined,{month:'short',day:'numeric'})}.${schedule.related?' A related position is also queued.':''}`;
+        $('next').textContent = dailyMode ? 'Back to Daily training' : session.index === OPENING_TEST_SIZE - 1 ? 'See results' : 'Next position';
       } else {
         $('lesson').textContent = '';
         $('lesson').removeAttribute('href');
@@ -81,14 +91,14 @@ export function createOpeningTestUI({training, storage, playSound = () => {}}) {
         $('note').textContent = '';
       }
       renderBoard();
-    } else {
+    } else if (session) {
       const matched = session.results.filter(result => result.matched).length;
       $('score').textContent = `${matched} of ${OPENING_TEST_SIZE} matched the study lines`;
       $('results').replaceChildren(...session.results.map((result, index) => {
-        const row = document.createElement('li');
-        const detail = document.createElement('p');
+        const row = doc.createElement('li');
+        const detail = doc.createElement('p');
         detail.textContent = `Position ${index + 1} · ${result.matched ? 'Matched' : `Played ${result.move.san}, study move ${result.study.move.san}`}`;
-        const link = document.createElement('a');
+        const link = doc.createElement('a');
         lessonLink(link, result.study);
         row.append(detail, link);
         return row;
@@ -97,10 +107,11 @@ export function createOpeningTestUI({training, storage, playSound = () => {}}) {
   }
 
   function start() {
-    const rounds = pickOpeningTest(training.completedPositions(storage));
-    if (!rounds.length) { session = null; render(); return; }
-    session = new OpeningTestSession(rounds);
+    const rounds = pickOpeningTest(training.completedPositions(storage),random);
+    if (!rounds.length) { session = testSession = null; render(); return; }
+    session = testSession = new OpeningTestSession(rounds);
     selected = null;
+    schedule = null;
     render();
     focusBoard();
   }
@@ -114,6 +125,10 @@ export function createOpeningTestUI({training, storage, playSound = () => {}}) {
       return;
     }
     selected = null;
+    schedule = dailyContext
+      ? daily.solveOpening(dailyContext,`${result.move.from}${result.move.to}${result.move.promotion || ''}`)?.schedule
+      : openingReview?.record(session.question,result);
+    result.schedule = schedule;
     render();
     playSound(result.study.move, {eventId: `opening-test-${++soundId}`});
     $('next').focus();
@@ -148,16 +163,31 @@ export function createOpeningTestUI({training, storage, playSound = () => {}}) {
   $('start').onclick = start;
   $('restart').onclick = start;
   $('next').onclick = () => {
+    if (dailyMode) { daily.plan(); return; }
     session.next();
     selected = null;
+    schedule = null;
     render();
     if (session.complete) $('score').focus({preventScroll: true});
     else focusBoard();
   };
   return {
-    setActive(value) {
+    setActive(value, query = new URLSearchParams()) {
       active = value;
       if (!value) return;
+      dailyMode = query.has('daily') || query.has('task');
+      dailyContext = dailyMode ? daily?.openingContext(query) : null;
+      if (dailyMode) {
+        doc.title = 'Opening review · ROQVYN';
+        session = dailyContext && daily.start(dailyContext) ? new OpeningTestSession([dailyContext.question]) : null;
+        schedule = dailyContext?.answer?.schedule;
+        const move = dailyContext?.answer?.move;
+        if (session && dailyContext.complete && !(typeof move === 'string' && session.attempt(move.slice(0,2),move.slice(2,4),move[4]))) session = null;
+      } else {
+        session = testSession;
+        schedule = testSession?.result?.schedule;
+      }
+      selected = null;
       render();
       $('title').focus({preventScroll: true});
     }

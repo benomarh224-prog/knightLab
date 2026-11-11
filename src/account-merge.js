@@ -13,7 +13,10 @@ function draft(a,b,key){
 }
 function day(a,b){
   const done=union(a.done,b.done),opened=union(a.opened||[],b.opened||[]),tasks=unique([...(b.tasks||[]),...(a.tasks||[])],t=>t.id);
-  return {...b,tasks,done:done.filter(id=>tasks.some(t=>t.id===id)),opened:opened.filter(id=>tasks.some(t=>t.id===id)),started:a.started||b.started,merged:tasks.length>3||a.merged||b.merged};
+  const openingAnswers={...b.openingAnswers,...a.openingAnswers};
+  for(const [id,answer] of Object.entries(b.openingAnswers||{}))if(answer?.matched===false)openingAnswers[id]=answer;
+  return {...b,tasks,done:done.filter(id=>tasks.some(t=>t.id===id)),opened:opened.filter(id=>tasks.some(t=>t.id===id)),started:a.started||b.started,merged:tasks.length>3||a.merged||b.merged,
+    ...(Object.keys(openingAnswers).length?{openingAnswers}:{})};
 }
 function adaptive(a,b){
   const events=unique([...(a.events||[]),...(b.events||[])],e=>`${e.date}:${e.key}`);
@@ -36,11 +39,13 @@ export function mergeAccountValue(key,local,remote){
     }
     if(key==='roqvyn-daily-training-v1'){const days=unique([...(b.days||[]).filter(d=>d.started),...(a.days||[])],d=>d.date);for(let i=0;i<days.length;i++){const x=a.days?.find(d=>d.date===days[i].date),y=b.days?.find(d=>d.date===days[i].date);if(x&&y)days[i]=x.started||y.started?day(x,y):x;}return JSON.stringify({...a,days:days.sort((x,y)=>x.date.localeCompare(y.date)).slice(-35)});}
     if(key==='roqvyn-adaptive-training-v1')return JSON.stringify(adaptive(a,b));
+    if(key===OPENING_REVIEW_KEY)return JSON.stringify(mergeOpeningReviews(a,b));
     if(key.startsWith('roqvyn-board-lab-v1:'))return JSON.stringify({...a,best:Math.max(a.best||0,b.best||0)});
   }catch{/* Preserve the local item if an older/corrupted value cannot merge. */}
   return local;
 }
 import {COURSES} from './courses.js';
 import {lessonPlan} from './lesson-player.js';
+import {OPENING_REVIEW_KEY,mergeOpeningReviews} from './opening-review.js';
 const questionCache=new Map();
 function correctAnswers(key){if(!questionCache.has(key)){let found;for(const course of Object.values(COURSES)){found=course.lessons.find(lesson=>key===`${course.key}:lesson-player-v1:${lesson.id}`||key.endsWith(`-${lesson.id}-0`));if(found){found=lessonPlan(found,course.study?.(found.id)).questions.map(q=>q.answer);break;}}questionCache.set(key,found||[]);}return questionCache.get(key);}

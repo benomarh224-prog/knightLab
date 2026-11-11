@@ -14,7 +14,7 @@ export function createAccountStorage(raw){
   function mark(key,patch){const meta=metadata();meta[key]={...meta[key],...patch};put(metadataKey(),JSON.stringify(meta));}
   const api={
     get user(){return user;},getItem:key=>get(physical(key)),
-    setItem(key,value){value=String(value);const path=physical(key),previous=get(path);if(user&&accountKey(key)&&(/-course-v1$/.test(key)||key.includes(':lesson-player-v1:')||key.includes(':draft:')||key.includes(':square-practice-v1:')||key==='roqvyn-daily-training-v1'||key==='knightlab-review-evidence-v1'||key.startsWith('roqvyn-board-lab-v1:')))value=mergeAccountValue(key,value,previous);if(previous===value)return;put(path,value);if(user&&accountKey(key)){mark(key,{pending:true});for(const listener of listeners)listener(key);}},
+    setItem(key,value){value=String(value);const path=physical(key),previous=get(path);if(user&&accountKey(key)&&(/-course-v1$/.test(key)||key.includes(':lesson-player-v1:')||key.includes(':draft:')||key.includes(':square-practice-v1:')||['roqvyn-daily-training-v1','knightlab-review-evidence-v1','roqvyn-opening-review-v1'].includes(key)||key.startsWith('roqvyn-board-lab-v1:')))value=mergeAccountValue(key,value,previous);if(previous===value)return;put(path,value);if(user&&accountKey(key)){mark(key,{pending:true});for(const listener of listeners)listener(key);}},
     removeItem(key){if(user&&accountKey(key))return;try{raw?.removeItem(key);}catch{}fallback.delete(key);},
     keys:()=>keys(),
     guestEntries:()=>Object.fromEntries(keys(null).map(key=>[key,get(key)])),
