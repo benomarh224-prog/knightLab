@@ -43,6 +43,8 @@ import {reviewedDailyMistakes} from './daily-training.js';
 import{createBoardLabUI}from'./board-lab-ui.js';
 import{createAccountStorage}from'./account-storage.js';
 import{createAccountUI}from'./account-ui.js';
+import { createOpeningTraining, openingPracticeLink } from './opening-training.js';
+import { createOpeningTestUI } from './opening-test-ui.js';
 
 const $ = id => document.getElementById(id);
 const iconPaths = {
@@ -93,6 +95,7 @@ state.mode=loadReviewMode(reviewStorage);
 $('analysis-speed').value=state.mode;
 const reviewMemory=createReviewMemory(reviewStorage);
 const reviewCache=createReviewCache(reviewStorage);
+const openingTraining=createOpeningTraining(COURSES);
 let reviewOpened=false;
 let paintedPosition=null, stripPosition=null, stripSource=null, stripSignature='';
 function saveReviewPosition() {
@@ -331,6 +334,19 @@ function renderOpening() {
   };
 }
 
+function renderOpeningPractice() {
+  const match = inline.active || coachDemo.active ? null : openingTraining.review(state.parsed, state.ply);
+  $('review-opening-practice').hidden = !match;
+  if (!match) return;
+  const move = state.parsed.moves[match.ply - 1];
+  const moveLabel = `${move.before.split(' ')[5]}${move.color === 'w' ? '.' : '…'}${move.san}`;
+  $('review-opening-match').textContent = match.ply === state.ply ? 'Matches this position' : `After ${moveLabel} in this game`;
+  $('review-opening-lesson').textContent = `${match.courseTitle} · ${match.title}`;
+  const link = $('review-opening-link');
+  link.href = openingPracticeLink(match);
+  link.dataset.route = match.courseId;
+}
+
 function updatePlayers() {
   const headers = state.parsed.headers;
   const top = state.flipped ? 'white' : 'black';
@@ -432,6 +448,7 @@ function playerColor() {
 function render() {
   if (!state.parsed) return;
   renderBoard(); renderChart();
+  renderOpeningPractice();
   const view=boardView(), score = view.score;
   $('evaluation').textContent = formatEvaluation(score);
   $('position-verdict').textContent = coachDemo.active?'Coach demonstration · compare the moves on the board':!score ? 'Waiting for the engine' : score.terminal ? (score.cp ? 'Checkmate' : 'Drawn position') : score.mate !== null ? `${score.cp > 0 ? 'White' : 'Black'} has forced mate` : Math.abs(score.cp) < 50 ? 'A balanced position' : `${score.cp > 0 ? 'White' : 'Black'} ${Math.abs(score.cp) > 200 ? 'is winning' : 'has the advantage'}`;
@@ -976,6 +993,7 @@ function dailyMistakes(){
 }
 const daily=createDailyTrainingUI({storage:reviewStorage,courses:COURSES,mistakes:dailyMistakes,go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options)});
 const boardLab=createBoardLabUI({storage:reviewStorage,playSound,feedbackSound});
+const openingTest=createOpeningTestUI({training:openingTraining,storage:reviewStorage,playSound});
 const learning=createLearningUI({storage:reviewStorage,playSound,feedbackSound,daily,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
   setGame({pgn},{analyze:false});router.go('analysis');
 }});
@@ -996,6 +1014,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){coachDemo.
 document.addEventListener('click',event=>{if(autoplay.active&&!event.target.closest('#autoplay-moves,#board-actions-toggle'))autoplay.stop();},true);
 router=createPageRouter(page=>{
   boardLab.setActive(page==='boardlab');
+  openingTest.setActive(page==='openingtest');
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   closeWorkspaceMenu();
   $('library-nav').classList.toggle('active',page==='games');
