@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseGame } from '../src/game.js';
-import { assessPlayGame, estimateLevelTestElo, formatLevelTestElo, reviewPlayGame } from '../src/play-assessment.js';
+import { assessLevelTestElo, assessPlayGame, formatLevelTestElo, reviewPlayGame } from '../src/play-assessment.js';
 import { readLevelTestResult, restoreLevelTestAttempt } from '../src/level-test.js';
 import { LEVEL_TEST_DIFFICULTY, playSearch } from '../src/play-settings.js';
 import { pageFromPath } from '../src/routes.js';
@@ -71,15 +71,16 @@ test('Level Test uses full skill and estimates from either color’s post-openin
     const full = { ...ratingGame, color, difficulty:LEVEL_TEST_DIFFICULTY };
     const losses = ratingGame.fens.map((_, index) => score(index % 2 ? -12 : 0));
     if (color === 'b') losses.forEach((entry, index) => { entry.cp = index % 2 ? 0 : 12; });
-    const rating = estimateLevelTestElo(full, losses);
+    const { decisions, rating } = assessLevelTestElo(full, losses);
+    assert.equal(decisions, 17);
     assert.deepEqual(rating, { elo:2000, bound:null });
     assert.equal(formatLevelTestElo(rating), '≈ 2000 Elo');
-    assert.equal(estimateLevelTestElo(full, losses.slice(0, -1)), null);
-    assert.equal(estimateLevelTestElo({ ...full, assisted:true }, losses), null);
-    assert.equal(estimateLevelTestElo({ ...full, difficulty:'beginner' }, losses), null);
+    assert.deepEqual(assessLevelTestElo(full, losses.slice(0, -1)), { decisions:null, rating:null });
+    assert.equal(assessLevelTestElo({ ...full, assisted:true }, losses).rating, null);
+    assert.equal(assessLevelTestElo({ ...full, difficulty:'beginner' }, losses).rating, null);
     const tooFew = losses.map((entry, index) => index >= 24 ? score(400) : entry);
-    assert.equal(estimateLevelTestElo(full, tooFew), null);
-    assert.equal(estimateLevelTestElo(full, losses, 32), null);
+    assert.deepEqual(assessLevelTestElo(full, tooFew), { decisions:4, rating:null });
+    assert.deepEqual(assessLevelTestElo(full, losses, 32), { decisions:9, rating:null });
   }
 });
 
@@ -87,9 +88,9 @@ test('Level Test describes performance beyond the Elo benchmark boundaries witho
   const full = { ...ratingGame, color:'w', difficulty:LEVEL_TEST_DIFFICULTY };
   const precise = ratingGame.fens.map(() => score(0));
   const costly = ratingGame.fens.map((_, index) => score(index % 2 ? -200 : 0));
-  assert.equal(estimateLevelTestElo({ ...game, color:'w', difficulty:LEVEL_TEST_DIFFICULTY }, precise), null);
-  assert.equal(formatLevelTestElo(estimateLevelTestElo(full, precise)), 'Above 2700 Elo');
-  assert.equal(formatLevelTestElo(estimateLevelTestElo(full, costly)), 'Below 1600 Elo');
+  assert.deepEqual(assessLevelTestElo({ ...game, color:'w', difficulty:LEVEL_TEST_DIFFICULTY }, precise), { decisions:2, rating:null });
+  assert.equal(formatLevelTestElo(assessLevelTestElo(full, precise).rating), 'Above 2700 Elo');
+  assert.equal(formatLevelTestElo(assessLevelTestElo(full, costly).rating), 'Below 1600 Elo');
 });
 
 test('retry keeps prior scores and a canceled review cannot apply a late response', async () => {

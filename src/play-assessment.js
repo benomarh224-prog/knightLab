@@ -5,7 +5,7 @@ import { evaluationReady } from './review-quality.js';
 
 export const MIN_ASSESSMENT_MOVES = 10;
 const OPENING_MOVES = 8;
-const MIN_RATING_DECISIONS = 10;
+export const MIN_RATING_DECISIONS = 10;
 export const MIN_LEVEL_TEST_MOVES = OPENING_MOVES + MIN_RATING_DECISIONS;
 
 // Observed scaled average differences from the 2006–2009 benchmark in Regan & Haworth.
@@ -18,9 +18,9 @@ function scaledEvaluation(score) {
   return Math.sign(pawns) * Math.log1p(Math.abs(pawns));
 }
 
-export function estimateLevelTestElo(game, scores, bookPly = 0) {
+export function assessLevelTestElo(game, scores, bookPly = 0) {
   if (game.assisted || game.difficulty !== LEVEL_TEST_DIFFICULTY ||
-      !game.fens.every((_, index) => evaluationReady(scores[index], 'quick'))) return null;
+      !game.fens.every((_, index) => evaluationReady(scores[index], 'quick'))) return { decisions:null, rating:null };
 
   const seen = new Set();
   const side = game.color === 'w' ? 1 : -1;
@@ -37,9 +37,10 @@ export function estimateLevelTestElo(game, scores, bookPly = 0) {
     totalLoss += Math.max(0, side * (scaledEvaluation(before) - scaledEvaluation(scores[index + 1])));
     decisions++;
   }
-  if (decisions < MIN_RATING_DECISIONS) return null;
+  return { decisions, rating:decisions < MIN_RATING_DECISIONS ? null : eloFromLoss(totalLoss / decisions) };
+}
 
-  const loss = totalLoss / decisions;
+function eloFromLoss(loss) {
   const [lowLoss, highElo] = ELO_BENCHMARKS[0];
   const [highLoss, lowElo] = ELO_BENCHMARKS.at(-1);
   if (loss < lowLoss) return { elo: highElo, bound:'above' };

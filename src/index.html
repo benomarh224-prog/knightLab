@@ -237,7 +237,7 @@
       <div class="level-test-fields">
         <label for="level-test-color">Play as<select id="level-test-color"><option value="w">White</option><option value="b">Black</option></select></label>
       </div>
-      <p class="studio-meta">Play at least <span id="level-test-minimum">18</span> moves of your own to unlock Finish &amp; score. Your Elo estimate needs ten eligible decisions beyond the opening.</p>
+      <p class="studio-meta">You can check your Elo after <span id="level-test-minimum">18</span> moves of your own. If fewer than ten decisions qualify, you can keep playing the same match.</p>
       <button type="submit" class="primary-button" id="level-test-start">Start level test <span data-icon="arrow" aria-hidden="true"></span></button>
     </form>
     <section class="studio-panel studio-sample level-test-last" aria-labelledby="level-test-result-title">
@@ -429,7 +429,7 @@
             <button type="button" id="explore-flip" class="practice-secondary" aria-label="Flip board">Flip</button>
           </div>
         </div>
-        <div id="play-resign-confirmation" hidden><p>Resigning ends the game as a loss.</p><button type="button" id="play-resign-confirm" class="practice-secondary">Confirm resignation</button><button type="button" id="play-resign-cancel" class="practice-secondary">Keep playing</button></div>
+        <div id="play-resign-confirmation" hidden><p id="play-resign-description">Resigning ends the game as a loss.</p><button type="button" id="play-resign-confirm" class="practice-secondary">Confirm resignation</button><button type="button" id="play-resign-cancel" class="practice-secondary">Keep playing</button></div>
         <p id="explore-feedback" class="practice-feedback" role="status"></p>
         <p id="explore-best" role="status" hidden></p>
         <button type="button" id="explore-reply" class="practice-secondary" hidden>Play engine reply</button>
@@ -459,7 +459,7 @@
       <header class="play-report-heading"><h2 id="play-report-title" tabindex="-1"></h2><p id="play-report-game"></p></header>
       <div class="play-report-content">
         <dl class="play-report-results">
-          <div id="play-report-elo-card" class="play-elo-metric" hidden><dt>Estimated Elo</dt><dd id="play-report-elo">—</dd></div>
+          <div id="play-report-elo-card" class="play-elo-metric" hidden><dt>Estimated Elo</dt><dd><span id="play-report-elo">—</span><small id="play-report-sample" hidden></small></dd></div>
           <div><dt>Estimated accuracy</dt><dd id="play-report-accuracy">—</dd></div>
           <div><dt>Performance level</dt><dd id="play-report-level">—</dd></div>
         </dl>

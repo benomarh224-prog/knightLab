@@ -1,4 +1,4 @@
-import { formatLevelTestElo, MIN_ASSESSMENT_MOVES, MIN_LEVEL_TEST_MOVES } from './play-assessment.js';
+import { formatLevelTestElo, MIN_ASSESSMENT_MOVES, MIN_LEVEL_TEST_MOVES, MIN_RATING_DECISIONS } from './play-assessment.js';
 import { LEVEL_TEST_DIFFICULTY, PLAY_LEVELS } from './play-settings.js';
 import { PlaySession } from './play.js';
 import { Chess } from 'chess.js';
@@ -78,9 +78,11 @@ export function createLevelTestUI({ storage, start, doc = document }) {
     get('level-test-result-meta').textContent = `${outcome} · ${opponent} · ${last.moves} of your moves`;
     get('level-test-result-accuracy').textContent = `${last.accuracy}%`;
     get('level-test-result-level').textContent = last.level;
-    get('level-test-result-elo').textContent = formatLevelTestElo(last.rating);
+    get('level-test-result-elo').textContent = last.rating ? formatLevelTestElo(last.rating) : 'Unavailable';
+    const decisions = Number.isInteger(last.decisions) && last.decisions >= 0 && last.decisions <= last.moves ? last.decisions : null;
     get('level-test-result-next').textContent = last.rating ? 'Approximate performance in this match.' :
-      last.rating === undefined || last.difficulty !== LEVEL_TEST_DIFFICULTY ? 'Start a new Level Test for an Elo estimate.' : 'Too few eligible decisions for an Elo estimate.';
+      decisions != null ? `${decisions} of ${MIN_RATING_DECISIONS} eligible moves.` :
+        last.rating === undefined || last.difficulty !== LEVEL_TEST_DIFFICULTY ? 'Start a new Level Test for an Elo estimate.' : 'Too few eligible decisions for an Elo estimate.';
     get('level-test-result-storage').textContent = saved ? 'Saved in this browser.' : 'Available for this visit.';
   }
 
