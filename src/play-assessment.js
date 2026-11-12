@@ -6,6 +6,7 @@ import { evaluationReady } from './review-quality.js';
 export const MIN_ASSESSMENT_MOVES = 10;
 const OPENING_MOVES = 8;
 export const MIN_RATING_DECISIONS = 10;
+export const MIN_PROVISIONAL_DECISIONS = 6;
 export const MIN_LEVEL_TEST_MOVES = OPENING_MOVES + MIN_RATING_DECISIONS;
 
 // Observed scaled average differences from the 2006–2009 benchmark in Regan & Haworth.
@@ -13,8 +14,8 @@ export const MIN_LEVEL_TEST_MOVES = OPENING_MOVES + MIN_RATING_DECISIONS;
 // Their tournament sample used a different engine and longer games; this is a rough comparison.
 const ELO_BENCHMARKS = [[.056, 2700], [.074, 2400], [.092, 2200], [.115, 2000], [.137, 1600]];
 
-function scaledEvaluation(score) {
-  const pawns = score.mate == null ? Math.max(-4, Math.min(4, score.cp / 100)) : 4 * Math.sign(score.cp || score.mate);
+function scaledEvaluation(score, limit = 4) {
+  const pawns = score.mate == null ? Math.max(-limit, Math.min(limit, score.cp / 100)) : limit * Math.sign(score.cp || score.mate);
   return Math.sign(pawns) * Math.log1p(Math.abs(pawns));
 }
 
@@ -25,6 +26,7 @@ export function assessLevelTestElo(game, scores, bookPly = 0) {
   const seen = new Set();
   const side = game.color === 'w' ? 1 : -1;
   let ownMoves = 0, decisions = 0, totalLoss = 0;
+  let sampleDecisions = 0, competitive = 0, competitiveLoss = 0, weightedLoss = 0, totalWeight = 0;
   for (const [index, move] of game.moves.entries()) {
     const fen = game.fens[index];
     const position = fen.split(' ', 4).join(' ');
@@ -33,11 +35,33 @@ export function assessLevelTestElo(game, scores, bookPly = 0) {
     if (move.color !== game.color) continue;
     ownMoves++;
     const before = scores[index];
-    if (ownMoves <= OPENING_MOVES || index < bookPly || repeated || before.mate != null || Math.abs(before.cp) > 300 || new Chess(fen).moves().length < 2) continue;
-    totalLoss += Math.max(0, side * (scaledEvaluation(before) - scaledEvaluation(scores[index + 1])));
-    decisions++;
+    if (index < bookPly || (bookPly == null && ownMoves <= OPENING_MOVES) || repeated || before.mate != null || new Chess(fen).moves().length < 2) continue;
+    const after = scores[index + 1];
+    const isCompetitive = Math.abs(before.cp) <= 300;
+    const loss = Math.max(0, side * (scaledEvaluation(before) - scaledEvaluation(after)));
+    if (isCompetitive) {
+      competitive++;
+      competitiveLoss += loss;
+      if (ownMoves > OPENING_MOVES) { decisions++; totalLoss += loss; }
+    }
+    // A move in a decided position adds weaker evidence. A wider scale still
+    // catches mistakes in those positions instead of flattening every score.
+    const weight = isCompetitive ? 1 : 0.25;
+    const sampleLoss = isCompetitive ? loss : Math.max(0, side * (scaledEvaluation(before, 8) - scaledEvaluation(after, 8)));
+    sampleDecisions++;
+    weightedLoss += weight * sampleLoss;
+    totalWeight += weight;
   }
-  return { decisions, rating:decisions < MIN_RATING_DECISIONS ? null : eloFromLoss(totalLoss / decisions) };
+  if (decisions >= MIN_RATING_DECISIONS) return { decisions, rating:eloFromLoss(totalLoss / decisions) };
+  if (ownMoves >= MIN_ASSESSMENT_MOVES && sampleDecisions >= MIN_PROVISIONAL_DECISIONS && competitive) {
+    // Accurate moves after a decisive mistake cannot lift the early estimate.
+    const loss = Math.max(competitiveLoss / competitive, weightedLoss / totalWeight);
+    const rating = eloFromLoss(loss);
+    if (competitive >= 3 || rating.bound === 'below') {
+      return { decisions, sampleDecisions, rating:{ ...rating, provisional:true } };
+    }
+  }
+  return { decisions, sampleDecisions, rating:null };
 }
 
 function eloFromLoss(loss) {

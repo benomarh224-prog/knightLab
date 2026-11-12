@@ -7,7 +7,7 @@ import { formatEvaluation, terminalEvaluation, uciToSan } from './game.js';
 import { pieceSvg } from './pieces.js';
 import { pieceNames } from './training.js';
 import { LEVEL_TEST_DIFFICULTY, PLAY_LEVELS, playSearch } from './play-settings.js';
-import { assessLevelTestElo, assessPlayGame, formatLevelTestElo, MIN_ASSESSMENT_MOVES, MIN_LEVEL_TEST_MOVES, MIN_RATING_DECISIONS, reviewPlayGame } from './play-assessment.js';
+import { assessLevelTestElo, assessPlayGame, formatLevelTestElo, MIN_ASSESSMENT_MOVES, MIN_LEVEL_TEST_MOVES, MIN_PROVISIONAL_DECISIONS, reviewPlayGame } from './play-assessment.js';
 import { restoreLevelTestAttempt } from './level-test.js';
 
 const $ = id => document.getElementById(id);
@@ -86,16 +86,20 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
   function renderAssessment() {
     const { game, scores, state, checkingElo } = assessment;
     const report = assessment.result;
+    const provisional = report.rating?.provisional === true;
+    const canSaveProvisional = state === 'done' && checkingElo && provisional;
     const outcome = game.ending === 'Resignation' ? 'You resigned' : { win: 'You won', loss: 'Stockfish won', draw: 'Game drawn' }[report.outcome];
     $('play-report-title').textContent = checkingElo ? 'Elo check' : testMode ? 'Your test results' : outcome;
     const reason = ['Checkmate','Stalemate'].includes(game.ending) ? `${game.ending} · ` : '';
     const opponent = testMode ? legacyTestDifficulty ? 'Earlier test format' : 'Full-strength Stockfish' : `Stockfish ${PLAY_LEVELS[game.difficulty].label}`;
     $('play-report-game').textContent = `${testMode && !checkingElo ? `${outcome} · ` : ''}${reason}${opponent} · ${report.moves} of your moves`;
     $('play-report-elo-card').hidden = !testMode;
-    $('play-report-elo').textContent = state === 'done' && !report.rating ? 'Unavailable' : formatLevelTestElo(report.rating);
+    $('play-report-elo-label').textContent = provisional ? 'Provisional Elo' : 'Estimated Elo';
+    $('play-report-elo').textContent = state === 'done' && !report.rating ? 'More evidence needed' : formatLevelTestElo(report.rating);
     const sample = $('play-report-sample');
     sample.hidden = report.decisions == null || state !== 'done';
-    if (!sample.hidden) sample.textContent = report.rating ? `${report.decisions} eligible moves` : `${report.decisions} of ${MIN_RATING_DECISIONS} eligible moves`;
+    if (!sample.hidden) sample.textContent = report.rating && !provisional ? `${report.decisions} eligible moves` :
+      `${report.sampleDecisions} decisions outside known theory`;
     $('play-report-accuracy').textContent = report.accuracy == null ? '—' : `${report.accuracy}%`;
     $('play-report-level').textContent = report.level || '—';
     const progress = $('play-report-progress');
@@ -107,9 +111,12 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     let status = '';
     if (state === 'running') status = 'Stockfish is reviewing the game…';
     else if (state === 'error') status = 'The review stopped. Retry to analyze the remaining positions.';
-    else if (checkingElo) status = 'Your match is still in progress. Keep playing to add eligible moves.';
+    else if (canSaveProvisional) status = 'This estimate uses a limited sample. Save it or keep playing for more evidence.';
+    else if (checkingElo) status = report.sampleDecisions < MIN_PROVISIONAL_DECISIONS
+      ? `Keep playing. A provisional estimate needs at least ${MIN_PROVISIONAL_DECISIONS} decisions outside known theory.`
+      : 'The sample needs decisions from positions where the outcome was still in doubt. Keep playing or start a fresh test.';
     else if (testMode && !report.rating) status = legacyTestDifficulty ? 'Start a fresh test against full-strength Stockfish for an Elo estimate.'
-      : 'An Elo estimate needs ten decisions beyond the opening in positions that are still competitive.';
+      : 'This match ended with too little evidence for an Elo estimate.';
     else if (game.assisted) status = 'For a performance level, finish a game without hints, live evaluation, undo or mid-game settings changes.';
     else if (report.moves < MIN_ASSESSMENT_MOVES) status = `Play at least ${MIN_ASSESSMENT_MOVES} moves of your own for a performance level.`;
     if ($('play-report-status').textContent !== status) $('play-report-status').textContent = status;
@@ -117,17 +124,29 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     $('play-report-next').hidden = testMode || !report.recommended;
     $('play-report-next').textContent = report.recommended ? `Recommended opponent: Stockfish ${PLAY_LEVELS[report.recommended].label}.` : '';
     $('play-report-test-method').hidden = !testMode;
+    $('play-report-test-method').textContent = provisional
+      ? 'Approximate performance in this match. Moves made after a big advantage or disadvantage carry less weight.'
+      : 'Elo is a rough estimate for this match based on Stockfish’s evaluation of your decisions beyond the opening.';
     $('play-report-standard-method').hidden = testMode;
     const again = $('play-report-again');
     again.textContent = !testMode && report.recommended ? `Play again · ${PLAY_LEVELS[report.recommended].label}` : 'Play again';
     again.hidden = testMode && (state !== 'done' || checkingElo);
     again.disabled = again.hidden;
     $('play-report-done').hidden = !testMode;
+    $('play-report-save-elo').hidden = !canSaveProvisional;
     const back = $('play-report-back');
     back.textContent = checkingElo ? 'Keep playing' : 'Back to board';
-    back.classList.toggle('primary-button', checkingElo);
-    back.classList.toggle('practice-secondary', !checkingElo);
+    back.classList.toggle('primary-button', checkingElo && !canSaveProvisional);
+    back.classList.toggle('practice-secondary', !checkingElo || canSaveProvisional);
     $('play-report-done').textContent = state === 'done' && !checkingElo ? 'Done' : 'Continue later';
+  }
+  function finishScoredTest(current) {
+    if (!variation.resign()) return;
+    current.game.result = variation.result;
+    current.game.ending = variation.ending;
+    Object.assign(current.result, assessPlayGame(current.game, current.scores));
+    current.checkingElo = false;
+    render();
   }
   async function runAssessment() {
     const current = assessment;
@@ -143,19 +162,13 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
       current.result = assessPlayGame(current.game, current.scores);
       if (current.result.accuracy == null) { current.state = 'error'; return; }
       if (testMode) {
-        const opening = current.result.moves >= MIN_LEVEL_TEST_MOVES && current.game.difficulty === LEVEL_TEST_DIFFICULTY
+        const opening = current.result.moves >= MIN_ASSESSMENT_MOVES && current.game.difficulty === LEVEL_TEST_DIFFICULTY
           ? await import('./opening.js').catch(() => null) : null;
         if (!active()) return;
-        const bookPly = opening?.identifyOpening(current.game).ply ?? 0;
+        const bookPly = opening ? opening.identifyOpening(current.game).ply ?? 0 : null;
         const elo = assessLevelTestElo(current.game, current.scores, bookPly);
-        if (current.checkingElo && elo.rating && variation.resign()) {
-          current.game.result = variation.result;
-          current.game.ending = variation.ending;
-          current.result = assessPlayGame(current.game, current.scores);
-          current.checkingElo = false;
-          render();
-        }
         Object.assign(current.result, elo);
+        if (current.checkingElo && elo.rating && !elo.rating.provisional) finishScoredTest(current);
         if (!current.checkingElo) onLevelTestResult(current.game, current.result);
       }
       current.state = 'done';
@@ -443,7 +456,7 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
   function showResignation(trigger) {
     resignTrigger = trigger;
     const checkingElo = trigger.id === 'play-test-finish' && !legacyTestDifficulty;
-    $('play-resign-description').textContent = checkingElo ? 'Stockfish will check your moves. The match ends if there are enough eligible moves for an Elo estimate.' : 'Resigning ends the game as a loss.';
+    $('play-resign-description').textContent = checkingElo ? 'A full estimate finishes the match. You can save a provisional estimate or keep playing.' : 'Resigning ends the game as a loss.';
     $('play-resign-confirm').textContent = checkingElo ? 'Check Elo' : 'Confirm resignation';
     $('play-resign-confirmation').hidden = false;
     trigger.setAttribute('aria-expanded', 'true');
@@ -475,6 +488,14 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     if (assessment?.checkingElo) { clearAssessment(); render(); }
     else setReportView(false);
     focusBoard();
+  };
+  $('play-report-save-elo').onclick = () => {
+    if (!assessment?.checkingElo || assessment.state !== 'done' || !assessment.result.rating?.provisional) return;
+    finishScoredTest(assessment);
+    if (assessment.checkingElo) return;
+    onLevelTestResult(assessment.game, assessment.result);
+    renderAssessment();
+    $('play-report-title').focus({ preventScroll:true });
   };
   $('play-report-done').onclick = () => leaveLevelTest({ focus:true });
   $('play-export').onclick = () => {

@@ -34,7 +34,8 @@ export function readLevelTestResult(storage) {
         ['win','loss','draw'].includes(result.outcome)) {
       const rating = result.rating;
       if (rating != null && (result.difficulty !== LEVEL_TEST_DIFFICULTY || !Number.isInteger(rating.elo) ||
-          rating.elo < 1600 || rating.elo > 2700 || rating.elo % 100 || ![null,'above','below'].includes(rating.bound))) {
+          rating.elo < 1600 || rating.elo > 2700 || rating.elo % 100 || ![null,'above','below'].includes(rating.bound) ||
+          (rating.provisional !== undefined && typeof rating.provisional !== 'boolean'))) {
         return { ...result, rating:null };
       }
       return result;
@@ -78,10 +79,13 @@ export function createLevelTestUI({ storage, start, doc = document }) {
     get('level-test-result-meta').textContent = `${outcome} · ${opponent} · ${last.moves} of your moves`;
     get('level-test-result-accuracy').textContent = `${last.accuracy}%`;
     get('level-test-result-level').textContent = last.level;
-    get('level-test-result-elo').textContent = last.rating ? formatLevelTestElo(last.rating) : 'Unavailable';
+    get('level-test-result-elo-label').textContent = last.rating?.provisional ? 'Provisional Elo' : 'Estimated Elo';
+    get('level-test-result-elo').textContent = last.rating ? formatLevelTestElo(last.rating) : 'More evidence needed';
     const decisions = Number.isInteger(last.decisions) && last.decisions >= 0 && last.decisions <= last.moves ? last.decisions : null;
-    get('level-test-result-next').textContent = last.rating ? 'Approximate performance in this match.' :
-      decisions != null ? `${decisions} of ${MIN_RATING_DECISIONS} eligible moves.` :
+    const sample = Number.isInteger(last.sampleDecisions) && last.sampleDecisions >= 0 && last.sampleDecisions <= last.moves ? last.sampleDecisions : null;
+    get('level-test-result-next').textContent = last.rating ? last.rating.provisional ? 'Approximate performance from a limited sample.' : 'Approximate performance in this match.' :
+      sample != null ? `${sample} decisions outside known theory.` :
+        decisions != null ? `${decisions} of ${MIN_RATING_DECISIONS} eligible moves.` :
         last.rating === undefined || last.difficulty !== LEVEL_TEST_DIFFICULTY ? 'Start a new Level Test for an Elo estimate.' : 'Too few eligible decisions for an Elo estimate.';
     get('level-test-result-storage').textContent = saved ? 'Saved in this browser.' : 'Available for this visit.';
   }

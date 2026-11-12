@@ -19,6 +19,8 @@ test('the dedicated Level Test route and its saved result work on a fresh visit'
   assert.equal(readLevelTestResult(storage({ ...result, recommended:'invalid' })), null);
   const rated = { ...result, difficulty:LEVEL_TEST_DIFFICULTY, rating:{ elo:2000, bound:null } };
   assert.deepEqual(readLevelTestResult(storage(rated)), rated);
+  const provisional = { ...rated, rating:{ ...rated.rating, provisional:true } };
+  assert.deepEqual(readLevelTestResult(storage(provisional)), provisional);
   assert.equal(readLevelTestResult(storage({ ...rated, rating:{ elo:2001, bound:null } })).rating, null);
   assert.equal(readLevelTestResult({ getItem() { throw Error('storage blocked'); } }), null);
 });
@@ -79,8 +81,10 @@ test('Level Test uses full skill and estimates from either color’s post-openin
     assert.equal(assessLevelTestElo({ ...full, assisted:true }, losses).rating, null);
     assert.equal(assessLevelTestElo({ ...full, difficulty:'beginner' }, losses).rating, null);
     const tooFew = losses.map((entry, index) => index >= 24 ? score(400) : entry);
-    assert.deepEqual(assessLevelTestElo(full, tooFew), { decisions:4, rating:null });
-    assert.deepEqual(assessLevelTestElo(full, losses, 32), { decisions:9, rating:null });
+    const limited = assessLevelTestElo(full, tooFew);
+    assert.equal(limited.decisions, 4);
+    assert.equal(limited.rating.provisional, true);
+    assert.deepEqual(assessLevelTestElo(full, losses, 32), { decisions:9, sampleDecisions:9, rating:{ elo:2000, bound:null, provisional:true } });
   }
 });
 
@@ -88,9 +92,27 @@ test('Level Test describes performance beyond the Elo benchmark boundaries witho
   const full = { ...ratingGame, color:'w', difficulty:LEVEL_TEST_DIFFICULTY };
   const precise = ratingGame.fens.map(() => score(0));
   const costly = ratingGame.fens.map((_, index) => score(index % 2 ? -200 : 0));
-  assert.deepEqual(assessLevelTestElo({ ...game, color:'w', difficulty:LEVEL_TEST_DIFFICULTY }, precise), { decisions:2, rating:null });
+  assert.deepEqual(assessLevelTestElo({ ...game, color:'w', difficulty:LEVEL_TEST_DIFFICULTY }, precise, game.moves.length), { decisions:0, sampleDecisions:0, rating:null });
   assert.equal(formatLevelTestElo(assessLevelTestElo(full, precise).rating), 'Above 2700 Elo');
   assert.equal(formatLevelTestElo(assessLevelTestElo(full, costly).rating), 'Below 1600 Elo');
+});
+
+test('a meaningful mistake before move eight still yields a provisional estimate in an otherwise decided match', () => {
+  for (const color of ['w','b']) {
+    const full = { ...ratingGame, color, difficulty:LEVEL_TEST_DIFFICULTY };
+    const firstDecision = color === 'w' ? 6 : 7;
+    const perspective = color === 'w' ? 1 : -1;
+    const scores = full.fens.map((_, index) => score(index <= firstDecision ? 0 : -480 * perspective));
+    assert.deepEqual(assessLevelTestElo(full, scores, 6), {
+      decisions:0, sampleDecisions:22, rating:{ elo:1600, bound:'below', provisional:true },
+    });
+    const alreadyDecided = full.fens.map(() => score(-480 * perspective));
+    assert.deepEqual(assessLevelTestElo(full, alreadyDecided, 6), { decisions:0, sampleDecisions:22, rating:null });
+    const oneGoodMove = alreadyDecided.slice();
+    oneGoodMove[firstDecision] = score(0);
+    oneGoodMove[firstDecision + 1] = score(0);
+    assert.equal(assessLevelTestElo(full, oneGoodMove, 6).rating, null);
+  }
 });
 
 test('retry keeps prior scores and a canceled review cannot apply a late response', async () => {

@@ -215,7 +215,7 @@ body[data-page] #play-settings-done { margin-top: 14px; }
   #level-test-play #play-surface .play-layout { grid-template-columns: minmax(0, 1fr); }
   #level-test-play #play-surface .play-sidebar { width: min(100%, var(--play-board-limit)); justify-self: center; }
   #level-test-play .play-report-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  #level-test-play :is(#play-report-again, #play-report-retry) { grid-column: 1 / -1; }
+  #level-test-play :is(#play-report-again, #play-report-retry, #play-report-save-elo) { grid-column: 1 / -1; }
   #play-surface .play-header { margin-bottom: 8px; }
   #play-surface .play-header-actions #play-settings-open [data-icon] { display: none; }
   body[data-page] #play-settings {

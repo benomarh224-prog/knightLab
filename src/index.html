@@ -237,7 +237,7 @@
       <div class="level-test-fields">
         <label for="level-test-color">Play as<select id="level-test-color"><option value="w">White</option><option value="b">Black</option></select></label>
       </div>
-      <p class="studio-meta">You can check your Elo after <span id="level-test-minimum">18</span> moves of your own. If fewer than ten decisions qualify, you can keep playing the same match.</p>
+      <p class="studio-meta">Check your Elo after <span id="level-test-minimum">18</span> moves of your own. You can save a provisional estimate or keep playing to give Stockfish more moves to assess.</p>
       <button type="submit" class="primary-button" id="level-test-start">Start level test <span data-icon="arrow" aria-hidden="true"></span></button>
     </form>
     <section class="studio-panel studio-sample level-test-last" aria-labelledby="level-test-result-title">
@@ -248,7 +248,7 @@
       <div id="level-test-result" hidden>
         <p class="studio-meta" id="level-test-result-meta"></p>
         <dl class="play-report-results">
-          <div class="play-elo-metric"><dt>Estimated Elo</dt><dd id="level-test-result-elo">—</dd></div>
+          <div class="play-elo-metric"><dt id="level-test-result-elo-label">Estimated Elo</dt><dd id="level-test-result-elo">—</dd></div>
           <div><dt>Estimated accuracy</dt><dd id="level-test-result-accuracy"></dd></div>
           <div><dt>Performance level</dt><dd id="level-test-result-level"></dd></div>
         </dl>
@@ -459,7 +459,7 @@
       <header class="play-report-heading"><h2 id="play-report-title" tabindex="-1"></h2><p id="play-report-game"></p></header>
       <div class="play-report-content">
         <dl class="play-report-results">
-          <div id="play-report-elo-card" class="play-elo-metric" hidden><dt>Estimated Elo</dt><dd><span id="play-report-elo">—</span><small id="play-report-sample" hidden></small></dd></div>
+          <div id="play-report-elo-card" class="play-elo-metric" hidden><dt id="play-report-elo-label">Estimated Elo</dt><dd><span id="play-report-elo">—</span><small id="play-report-sample" hidden></small></dd></div>
           <div><dt>Estimated accuracy</dt><dd id="play-report-accuracy">—</dd></div>
           <div><dt>Performance level</dt><dd id="play-report-level">—</dd></div>
         </dl>
@@ -472,6 +472,7 @@
       </div>
       <div class="play-report-actions">
         <button type="button" id="play-report-again" class="primary-button">Play again</button>
+        <button type="button" id="play-report-save-elo" class="primary-button" hidden>Finish &amp; save estimate</button>
         <button type="button" id="play-report-retry" class="practice-secondary" hidden>Retry review</button>
         <button type="button" id="play-report-back" class="practice-secondary">Back to board</button>
         <button type="button" id="play-report-done" class="practice-secondary" hidden>Done</button>
