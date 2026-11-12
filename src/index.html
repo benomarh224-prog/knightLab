@@ -225,9 +225,9 @@
 <section class="entry-page studio-page level-test-page" data-page-view="leveltest" aria-labelledby="level-test-title" hidden>
   <header class="studio-heading">
     <h1 id="level-test-title" tabindex="-1">Level Test</h1>
-    <p>Play Stockfish to see your accuracy, performance level and suggested difficulty.</p>
+    <p id="level-test-intro">Play Stockfish to see your accuracy, performance level and suggested difficulty.</p>
   </header>
-  <div class="studio-layout level-test-layout">
+  <div id="level-test-setup" class="studio-layout level-test-layout">
     <section id="level-test-resume-panel" class="studio-panel" aria-labelledby="level-test-resume-title" hidden>
       <h2 id="level-test-resume-title" tabindex="-1">Test in progress</h2>
       <p id="level-test-resume-meta" class="studio-meta"></p>
@@ -255,6 +255,7 @@
       </div>
     </section>
   </div>
+  <div id="level-test-play" hidden></div>
 </section>
 <section class="entry-page opening-test-page" data-page-view="openingtest" aria-labelledby="opening-test-title" hidden>
   <header class="opening-test-heading">
@@ -402,11 +403,13 @@
   <dialog id="lesson-checkmate-dialog" class="lesson-result-dialog" aria-labelledby="lesson-checkmate-title" aria-describedby="lesson-checkmate-description"><button id="lesson-checkmate-close" class="lesson-result-close" aria-label="Close result and explore other moves">×</button><span class="lesson-result-mark" aria-hidden="true">♔</span><h2 id="lesson-checkmate-title">Checkmate!</h2><p id="lesson-checkmate-description"></p><div class="lesson-result-actions"><button id="lesson-checkmate-continue" class="primary-button">Continue lesson</button><button id="lesson-checkmate-explore">Done · Free play</button></div><small>Your earned lesson progress is saved.</small></dialog>
   <dialog id="focus-dialog" class="focus-dialog" aria-labelledby="focus-title"><div class="focus-header"><div><span class="section-label">ROQVYN</span><h2 id="focus-title">Focus mode</h2></div><button id="exit-focus" class="explore-launch" aria-label="Exit Focus Mode">✕ <span>Exit focus</span></button></div><div id="focus-body"></div></dialog>
   <dialog id="explore-dialog" class="practice-dialog explore-dialog play-dialog" aria-labelledby="explore-title">
+    <div id="play-surface">
     <header class="dialog-header play-header">
       <div><h2 id="explore-title">Play chess</h2><p id="play-settings-summary" class="explore-origin"></p><p id="explore-origin" class="explore-origin" hidden></p></div>
       <div class="play-header-actions">
         <button type="button" id="play-settings-open" class="practice-secondary" aria-haspopup="dialog" aria-controls="play-settings"><span data-icon="analysis-gear"></span> Settings</button>
         <button type="button" class="icon-button close-dialog" aria-label="Close play board">×</button>
+        <button type="button" id="level-test-exit" class="practice-secondary">Save &amp; exit</button>
       </div>
     </header>
     <section id="explore-course-practice" class="explore-course-practice" aria-label="Course practice" hidden>
@@ -417,12 +420,14 @@
         <div class="explore-score"><span id="explore-turn">White to move</span><span id="play-evaluation-perspective" hidden>White’s view <strong id="explore-evaluation">—</strong></span></div>
         <div class="practice-board-frame"><div id="explore-board" class="chess-board practice-board" role="group" aria-label="Play board: select a piece and destination"></div></div>
         <div id="explore-promotion" class="practice-promotion" role="group" aria-label="Choose a promotion piece" hidden><span>Promote to</span><button data-explore-promotion="q">Queen</button><button data-explore-promotion="r">Rook</button><button data-explore-promotion="b">Bishop</button><button data-explore-promotion="n">Knight</button></div>
-        <div class="play-board-actions" role="group" aria-label="Board controls">
-          <button type="button" id="explore-undo" class="practice-secondary" aria-label="Undo turn">Undo</button>
-          <button type="button" id="play-hint" class="practice-secondary" aria-controls="explore-best">Hint</button>
-          <button type="button" id="explore-flip" class="practice-secondary" aria-label="Flip board">Flip</button>
+        <div class="play-match-actions">
+          <div id="play-test-progress" hidden><p id="play-test-count"></p><button type="button" id="play-test-finish" class="primary-button" aria-controls="play-resign-confirmation" aria-expanded="false" hidden>Finish &amp; score</button></div>
+          <div class="play-board-actions" role="group" aria-label="Board controls">
+            <button type="button" id="explore-undo" class="practice-secondary" aria-label="Undo turn">Undo</button>
+            <button type="button" id="play-hint" class="practice-secondary" aria-controls="explore-best">Hint</button>
+            <button type="button" id="explore-flip" class="practice-secondary" aria-label="Flip board">Flip</button>
+          </div>
         </div>
-        <div id="play-test-progress" hidden><p id="play-test-count"></p><button type="button" id="play-test-finish" class="primary-button" aria-controls="play-resign-confirmation" aria-expanded="false" hidden>Finish &amp; score</button></div>
         <div id="play-resign-confirmation" hidden><p>Resigning ends the game as a loss.</p><button type="button" id="play-resign-confirm" class="practice-secondary">Confirm resignation</button><button type="button" id="play-resign-cancel" class="practice-secondary">Keep playing</button></div>
         <p id="explore-feedback" class="practice-feedback" role="status"></p>
         <p id="explore-best" role="status" hidden></p>
@@ -450,7 +455,7 @@
       </aside>
     </div>
     <section id="play-report" aria-labelledby="play-report-title" hidden>
-      <header class="play-report-heading"><h3 id="play-report-title" tabindex="-1"></h3><p id="play-report-game"></p></header>
+      <header class="play-report-heading"><h2 id="play-report-title" tabindex="-1"></h2><p id="play-report-game"></p></header>
       <div class="play-report-content">
         <dl class="play-report-results"><div><dt>Estimated accuracy</dt><dd id="play-report-accuracy">—</dd></div><div><dt>Performance level</dt><dd id="play-report-level">—</dd></div></dl>
         <progress id="play-report-progress" value="0" max="1" aria-label="Game report progress"></progress>
@@ -466,6 +471,7 @@
         <button type="button" id="play-report-done" class="practice-secondary" hidden>Done</button>
       </div>
     </section>
+    </div>
     <dialog id="play-settings" class="play-settings" aria-labelledby="play-settings-title">
       <header class="dialog-header"><h3 id="play-settings-title">Game settings</h3><button type="button" class="icon-button close-dialog" aria-label="Close game settings">×</button></header>
       <div class="play-settings-grid">

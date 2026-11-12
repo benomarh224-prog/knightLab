@@ -167,5 +167,5 @@ body[data-page] .level-test-fields select { width: 100%; min-width: 0; max-width
 @media (max-width: 740px) {
   .studio-layout { grid-template-columns: minmax(0,1fr); }
   .studio-layout > :is(.studio-review-tools, .daily-training, .studio-sample, .studio-skills) { grid-column: 1; }
-  .level-test-layout > :is(form, #level-test-resume-panel) { grid-column: 1; }
+  .level-test-layout > :is(form, #level-test-resume-panel, .level-test-last) { grid-column: 1; }
 }

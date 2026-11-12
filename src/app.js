@@ -1112,6 +1112,7 @@ document.addEventListener('click',event=>{if(autoplay.active&&!event.target.clos
 router=createPageRouter(page=>{
   boardLab.setActive(page==='boardlab');
   openingTest.setActive(page==='openingtest',page==='openingtest'?new URLSearchParams(location.search):null);
+  if(page!=='leveltest')explorer.leaveLevelTest();
   for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();
   closeWorkspaceMenu();
   $('library-nav').classList.toggle('active',page==='games');

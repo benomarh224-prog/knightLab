@@ -13,18 +13,18 @@ body[data-page] #explore-dialog {
   scrollbar-gutter: stable;
 }
 
-#explore-dialog .play-header { align-items: center; gap: 8px; margin: 0 0 12px; }
-#explore-dialog .play-header h2 {
+#play-surface .play-header { align-items: center; gap: 8px; margin: 0 0 12px; }
+#play-surface .play-header h2 {
   margin: 0;
   font: 700 clamp(27px, 3vw, 36px)/1.05 'Cormorant Garamond', Georgia, serif;
 }
-body[data-page] #explore-dialog .explore-origin {
+body[data-page] #play-surface .explore-origin {
   margin: 4px 0 0;
   font: 500 14px/1.35 'DM Sans', sans-serif;
   color: var(--ui-muted);
 }
-#explore-dialog .play-header-actions { display: flex; align-items: center; gap: 6px; flex: none; }
-#explore-dialog .play-header-actions [data-icon] { display: inline-flex; width: 17px; height: 17px; }
+#play-surface .play-header-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+#play-surface .play-header-actions [data-icon] { display: inline-flex; width: 17px; height: 17px; }
 body[data-page] #explore-dialog .close-dialog {
   flex: none;
   width: 44px;
@@ -36,9 +36,9 @@ body[data-page] #explore-dialog .close-dialog {
 }
 #play-settings-open { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding-inline: 9px; }
 
-#explore-dialog .play-layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; align-items: start; }
-#explore-dialog .play-board-pane { width: min(100%, var(--play-board-limit)); justify-self: center; }
-body[data-page] #explore-dialog .explore-score {
+#play-surface .play-layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+#play-surface .play-board-pane { width: min(100%, var(--play-board-limit)); justify-self: center; }
+body[data-page] #play-surface .explore-score {
   gap: 8px;
   height: 44px;
   min-height: 44px;
@@ -50,26 +50,26 @@ body[data-page] #explore-dialog .explore-score {
   border-radius: var(--ui-radius);
   background: var(--ui-surface);
 }
-body[data-page] #explore-dialog #explore-turn {
+body[data-page] #play-surface #explore-turn {
   min-width: 0;
   color: var(--ui-text);
   font: 650 14px/1.3 'DM Sans', sans-serif;
   white-space: normal;
 }
-#explore-dialog #play-evaluation-perspective { flex: none; font-size: 12px; color: var(--ui-muted); }
+#play-surface #play-evaluation-perspective { flex: none; font-size: 12px; color: var(--ui-muted); }
 #explore-evaluation { margin-inline-start: 4px; color: var(--ui-text); font: 650 14px/1 'DM Sans', sans-serif; font-variant-numeric: tabular-nums; }
-body[data-page] #explore-dialog .practice-board-frame {
+body[data-page] #play-surface .practice-board-frame {
   width: 100%;
   max-width: none;
   padding: 0;
   border-color: var(--board-edge);
   box-shadow: none;
 }
-#explore-dialog #explore-board { width: 100%; grid-template: repeat(8, minmax(0, 1fr)) / repeat(8, minmax(0, 1fr)); }
+#play-surface #explore-board { width: 100%; grid-template: repeat(8, minmax(0, 1fr)) / repeat(8, minmax(0, 1fr)); }
 
-#explore-dialog .play-board-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
-#explore-dialog .play-board-actions button { padding-inline: 5px; }
-body[data-page] #explore-dialog :is(.play-board-actions button, #play-settings-open, #explore-reply, .play-game-menu button, #play-resign-confirmation button) {
+#play-surface .play-board-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+#play-surface .play-board-actions button { padding-inline: 5px; }
+body[data-page] #play-surface :is(.play-board-actions button, #play-settings-open, #level-test-exit, #explore-reply, .play-game-menu button, #play-resign-confirmation button) {
   min-height: 44px;
   padding-block: 8px;
   border: 1px solid var(--ui-control-border);
@@ -77,9 +77,9 @@ body[data-page] #explore-dialog :is(.play-board-actions button, #play-settings-o
   color: var(--ui-text);
   font: 600 14px/1.3 'DM Sans', sans-serif;
 }
-body[data-page] #explore-dialog :is(.play-board-actions button, #play-settings-open, #explore-reply, .play-game-menu button, #play-resign-confirmation button):enabled:hover { background: var(--ui-hover); }
-body[data-page] #explore-dialog :is(button:disabled, #play-hint:disabled) { color: var(--ui-disabled-text); border-color: var(--ui-border); }
-body[data-page] #explore-dialog .practice-feedback {
+body[data-page] #play-surface :is(.play-board-actions button, #play-settings-open, #level-test-exit, #explore-reply, .play-game-menu button, #play-resign-confirmation button):enabled:hover { background: var(--ui-hover); }
+body[data-page] #play-surface :is(button:disabled, #play-hint:disabled) { color: var(--ui-disabled-text); border-color: var(--ui-border); }
+body[data-page] #play-surface .practice-feedback {
   min-height: 0;
   margin: 8px 0 0;
   padding: 2px 0;
@@ -89,7 +89,7 @@ body[data-page] #explore-dialog .practice-feedback {
   font-size: 14px;
   line-height: 1.4;
 }
-body[data-page] #explore-dialog #explore-best {
+body[data-page] #play-surface #explore-best {
   margin: 8px 0 0;
   padding: 8px 10px;
   border-radius: var(--ui-radius);
@@ -98,33 +98,32 @@ body[data-page] #explore-dialog #explore-best {
   font-size: 14px;
   line-height: 1.4;
 }
-body[data-page] #explore-dialog #explore-reply { margin-top: 8px; }
+body[data-page] #play-surface #explore-reply { margin-top: 8px; }
 
-#explore-dialog .play-sidebar { display: grid; gap: 8px; }
-#explore-dialog .play-scoresheet, #explore-dialog .play-game-menu {
+#play-surface .play-sidebar { display: grid; gap: 8px; }
+#play-surface .play-scoresheet, #play-surface .play-game-menu {
   padding: 12px;
   border: 1px solid var(--ui-border);
   border-radius: var(--ui-card-radius);
   background: var(--ui-surface);
 }
-#explore-dialog .play-scoresheet h3 { margin: 0; font: 650 17px/1.3 'DM Sans', sans-serif; }
-#explore-dialog #play-moves-empty { margin: 6px 0 0; font-size: 14px; line-height: 1.45; }
+#play-surface .play-scoresheet h3 { margin: 0; font: 650 17px/1.3 'DM Sans', sans-serif; }
+#play-surface #play-moves-empty { margin: 6px 0 0; font-size: 14px; line-height: 1.45; }
 #explore-line { max-height: 210px; margin-top: 8px; overflow: auto; }
 #explore-line table { width: 100%; border-collapse: collapse; text-align: start; font-size: 14px; }
 #explore-line :is(th, td) { padding: 7px 8px; border-top: 1px solid var(--ui-rule); text-align: start; }
 #explore-line th { color: var(--ui-muted); font-weight: 500; }
 #explore-line td:first-child { color: var(--ui-muted); font-variant-numeric: tabular-nums; }
 #explore-line td:not(:first-child) { font-weight: 600; }
-#explore-dialog .play-game-menu { padding: 0 12px; }
-#explore-dialog .play-game-menu summary { align-content: center; min-height: 44px; cursor: pointer; color: var(--ui-text); font-size: 15px; }
-#explore-dialog .play-game-menu > div { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 12px; }
+#play-surface .play-game-menu { padding: 0 12px; }
+#play-surface .play-game-menu summary { align-content: center; min-height: 44px; cursor: pointer; color: var(--ui-text); font-size: 15px; }
+#play-surface .play-game-menu > div { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 12px; }
 
-#explore-dialog #play-report-open { width: 100%; margin-top: 10px; }
+#play-surface #play-report-open { width: 100%; margin-top: 10px; }
 #play-level-test-link { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; gap: 8px; color: var(--ui-link); font-weight: 600; }
-#explore-dialog[data-level-test="true"] .play-board-actions { grid-template-columns: minmax(64px, auto); justify-content: end; }
 #play-test-progress, #play-resign-confirmation { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px; padding: 8px; border-radius: var(--ui-radius); background: var(--ui-soft); }
 #play-test-progress { min-height: 48px; }
-#explore-dialog #play-test-count { margin: 0; color: var(--ui-text); font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+#play-surface #play-test-count { margin: 0; color: var(--ui-text); font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
 #play-resign-confirmation p { flex-basis: 100%; margin: 0; font-size: 14px; }
 #play-report {
   width: min(100%, 650px);
@@ -134,19 +133,41 @@ body[data-page] #explore-dialog #explore-reply { margin-top: 8px; }
   border-radius: var(--ui-card-radius);
   background: var(--ui-surface);
 }
-.play-report-heading h3 { margin: 0; font: 700 clamp(30px, 5vw, 44px)/1.05 'Cormorant Garamond', Georgia, serif; }
+.play-report-heading h2 { margin: 0; font: 700 clamp(30px, 5vw, 44px)/1.05 'Cormorant Garamond', Georgia, serif; }
 #play-report-title:focus { outline: none; }
-#explore-dialog #play-report p { margin: 8px 0 0; font-size: 15px; line-height: 1.5; }
-#explore-dialog #play-report-status:empty { margin: 0; }
+#play-surface #play-report p { margin: 8px 0 0; font-size: 15px; line-height: 1.5; }
+#play-surface #play-report-status:empty { margin: 0; }
 .play-report-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 16px 0 12px; border-radius: var(--ui-radius); overflow: hidden; background: var(--ui-border); }
 .play-report-results > div { padding: 12px; background: var(--ui-soft); }
 .play-report-results dt { color: var(--ui-muted); font-size: 14px; }
 .play-report-results dd { margin: 4px 0 0; color: var(--ui-text); font-size: clamp(20px, 5vw, 32px); font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 #play-report-progress { width: 100%; height: 8px; accent-color: var(--ui-progress); }
-#explore-dialog #play-report #play-report-next { color: var(--ui-text); font-weight: 650; }
-#explore-dialog #play-report .play-report-method { font-size: 14px; }
+#play-surface #play-report #play-report-next { color: var(--ui-text); font-weight: 650; }
+#play-surface #play-report .play-report-method { font-size: 14px; }
 .play-report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .play-report-actions button { min-height: 44px; }
+
+#play-surface:not([data-level-test]) #level-test-exit,
+#level-test-play :is(#explore-title, #play-settings-open, .play-header .close-dialog),
+#level-test-play #play-surface:has(#play-report:not([hidden])) .play-header { display: none; }
+
+body[data-page] .level-test-page:has(#level-test-play:not([hidden])) .studio-heading { margin-bottom: 10px; }
+#level-test-play {
+  --play-board-limit: clamp(200px, calc(100dvh - 235px), 560px);
+}
+#level-test-play #play-surface .play-header { margin-bottom: 12px; }
+#level-test-play #play-surface .explore-origin { margin: 0; font-size: 15px; }
+#level-test-play #play-surface .play-layout {
+  grid-template-columns: minmax(0, var(--play-board-limit)) minmax(0, 1fr);
+  gap: clamp(12px, 3vw, 28px);
+}
+#level-test-play .play-match-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+#level-test-play #play-test-progress { flex: 1; margin-top: 0; }
+#level-test-play #play-surface .play-board-actions { grid-template-columns: minmax(54px, auto); margin-top: 0; }
+#level-test-play #play-report { width: min(100%, 760px); margin-inline: 0; }
+#level-test-play .play-report-results dd { font-weight: 550; }
+#level-test-play #play-report-next { text-wrap: pretty; }
+.level-test-page :is(button:not(.square), #level-test-result-title) { scroll-margin-block-start: 84px; }
 
 body[data-page] #play-settings {
   width: min(510px, calc(100% - 24px));
@@ -173,6 +194,12 @@ body[data-page] #play-settings .play-settings-grid > button {
 }
 body[data-page] #play-settings-done { margin-top: 14px; }
 
+@media (min-width: 651px) {
+  body[data-page] .level-test-page:has(#level-test-play:not([hidden])) { --level-test-top: 20px; position: relative; padding-block-start: var(--level-test-top); }
+  .level-test-page:has(#level-test-play:not([hidden])) .studio-heading { display: flex; align-items: center; min-height: 44px; }
+  #level-test-play #play-surface .play-header { position: absolute; inset: var(--level-test-top) 0 auto auto; gap: 16px; margin: 0; }
+}
+
 @media (max-width: 650px) {
   body[data-page] #explore-dialog {
     --play-top: max(6px, env(safe-area-inset-top));
@@ -180,9 +207,14 @@ body[data-page] #play-settings-done { margin-top: 14px; }
     max-height: calc(100dvh - var(--play-top) - 6px);
     padding: 12px 10px max(12px, env(safe-area-inset-bottom));
   }
-  #explore-dialog .play-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  #explore-dialog .play-header { margin-bottom: 8px; }
-  #explore-dialog .play-header-actions #play-settings-open [data-icon] { display: none; }
+  #play-surface .play-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  #level-test-play { --play-board-limit: clamp(250px, calc(100dvh - 192px), 560px); }
+  #level-test-play #play-surface .play-layout { grid-template-columns: minmax(0, 1fr); }
+  #level-test-play #play-surface .play-sidebar { width: min(100%, var(--play-board-limit)); justify-self: center; }
+  #level-test-play .play-report-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #level-test-play :is(#play-report-again, #play-report-retry) { grid-column: 1 / -1; }
+  #play-surface .play-header { margin-bottom: 8px; }
+  #play-surface .play-header-actions #play-settings-open [data-icon] { display: none; }
   body[data-page] #play-settings {
     inset: auto 0 0;
     width: 100%;
@@ -201,6 +233,8 @@ body[data-page] #play-settings-done { margin-top: 14px; }
     width: min(720px, calc(100% - 16px));
     padding: 10px 14px;
   }
-  #explore-dialog .play-header { margin-bottom: 7px; }
+  #play-surface .play-header { margin-bottom: 7px; }
   #explore-dialog .play-layout { grid-template-columns: minmax(0, var(--play-board-limit)) minmax(0, 330px); justify-content: center; }
+  body[data-page] .level-test-page:has(#level-test-play:not([hidden])) { --level-test-top: 8px; }
+  #level-test-play { --play-board-limit: max(165px, calc(100dvh - 205px)); }
 }
