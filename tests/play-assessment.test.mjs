@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseGame } from '../src/game.js';
-import { assessPlayGame, reviewPlayGame } from '../src/play-assessment.js';
+import { assessPlayGame, estimateLevelTestElo, formatLevelTestElo, reviewPlayGame } from '../src/play-assessment.js';
 import { readLevelTestResult, restoreLevelTestAttempt } from '../src/level-test.js';
+import { LEVEL_TEST_DIFFICULTY, playSearch } from '../src/play-settings.js';
 import { pageFromPath } from '../src/routes.js';
 
 const game = parseGame('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 *');
+const ratingGame = parseGame('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. a4 Bg4 10. h3 Bxf3 11. Qxf3 Na5 12. Bc2 c5 13. d3 b4 14. Nd2 Nd7 15. Nf1 Bg5 16. Qg3 Bxc1 17. Raxc1 Nc6 18. Ne3 Rb8 19. Rf1 Nf6 20. Bd1 Ne7 21. h4 Kh8 22. h5 bxc3 23. bxc3 h6 24. f4 exf4 25. Qxf4 d5 *');
 const score = cp => ({ cp, mate: null, depth: 14 });
 
 test('the dedicated Level Test route and its saved result work on a fresh visit', () => {
@@ -15,6 +17,9 @@ test('the dedicated Level Test route and its saved result work on a fresh visit'
   assert.deepEqual(readLevelTestResult(storage(result)), result);
   assert.equal(readLevelTestResult(storage({ ...result, moves:2 })), null);
   assert.equal(readLevelTestResult(storage({ ...result, recommended:'invalid' })), null);
+  const rated = { ...result, difficulty:LEVEL_TEST_DIFFICULTY, rating:{ elo:2000, bound:null } };
+  assert.deepEqual(readLevelTestResult(storage(rated)), rated);
+  assert.equal(readLevelTestResult(storage({ ...rated, rating:{ elo:2001, bound:null } })).rating, null);
   assert.equal(readLevelTestResult({ getItem() { throw Error('storage blocked'); } }), null);
 });
 
@@ -58,6 +63,33 @@ test('unfinished evidence, short games, and assisted play never assign a perform
   const short = { ...full, moves:game.moves.slice(0, 18), fens:game.fens.slice(0, 19) };
   assert.equal(assessPlayGame(short, scores.slice(0, 19)).moves, 9);
   assert.equal(assessPlayGame(short, scores.slice(0, 19)).level, null);
+});
+
+test('Level Test uses full skill and estimates from either color’s post-opening decisions', () => {
+  assert.equal(playSearch(LEVEL_TEST_DIFFICULTY).skill, 20);
+  for (const color of ['w','b']) {
+    const full = { ...ratingGame, color, difficulty:LEVEL_TEST_DIFFICULTY };
+    const losses = ratingGame.fens.map((_, index) => score(index % 2 ? -12 : 0));
+    if (color === 'b') losses.forEach((entry, index) => { entry.cp = index % 2 ? 0 : 12; });
+    const rating = estimateLevelTestElo(full, losses);
+    assert.deepEqual(rating, { elo:2000, bound:null });
+    assert.equal(formatLevelTestElo(rating), '≈ 2000 Elo');
+    assert.equal(estimateLevelTestElo(full, losses.slice(0, -1)), null);
+    assert.equal(estimateLevelTestElo({ ...full, assisted:true }, losses), null);
+    assert.equal(estimateLevelTestElo({ ...full, difficulty:'beginner' }, losses), null);
+    const tooFew = losses.map((entry, index) => index >= 24 ? score(400) : entry);
+    assert.equal(estimateLevelTestElo(full, tooFew), null);
+    assert.equal(estimateLevelTestElo(full, losses, 32), null);
+  }
+});
+
+test('Level Test describes performance beyond the Elo benchmark boundaries without extrapolating', () => {
+  const full = { ...ratingGame, color:'w', difficulty:LEVEL_TEST_DIFFICULTY };
+  const precise = ratingGame.fens.map(() => score(0));
+  const costly = ratingGame.fens.map((_, index) => score(index % 2 ? -200 : 0));
+  assert.equal(estimateLevelTestElo({ ...game, color:'w', difficulty:LEVEL_TEST_DIFFICULTY }, precise), null);
+  assert.equal(formatLevelTestElo(estimateLevelTestElo(full, precise)), 'Above 2700 Elo');
+  assert.equal(formatLevelTestElo(estimateLevelTestElo(full, costly)), 'Below 1600 Elo');
 });
 
 test('retry keeps prior scores and a canceled review cannot apply a late response', async () => {

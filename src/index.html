@@ -56,12 +56,10 @@
                 <h1 id="home-title">See the game<br/>differently.</h1>
                 <p>Review your games with Stockfish. Learn the ideas behind each move and put them to work on the board.</p>
                 <div class="home-hero-actions">
-                  <a id="home-analyze" class="home-action" href="/analyze/" data-route="analyze">Analyze a game <span aria-hidden="true">→</span></a>
-                  <a class="home-inline-link" href="/learn/" data-route="learn">Explore courses <span aria-hidden="true">→</span></a>
-                </div>
-                <div class="home-shortcuts">
-                  <a id="home-try-sample" class="home-inline-link home-sample-link" href="/analysis/?sample=opera" data-route="analysis">Try a sample game <span aria-hidden="true">→</span></a>
-                  <a class="home-inline-link home-sample-link home-level-test" href="/train/level-test/" data-route="leveltest">Test your level <span aria-hidden="true">→</span></a>
+                  <a id="home-analyze" class="home-action" href="/analyze/" data-route="analyze">Analyze a game <span data-icon="arrow" aria-hidden="true"></span></a>
+                  <a class="home-action home-action-outline" href="/learn/" data-route="learn">Explore courses <span data-icon="arrow" aria-hidden="true"></span></a>
+                  <a id="home-try-sample" class="home-inline-link home-hero-shortcut" href="/analysis/?sample=opera" data-route="analysis"><span data-icon="notes" aria-hidden="true"></span> Sample game</a>
+                  <a class="home-inline-link home-hero-shortcut home-level-test" href="/train/level-test/" data-route="leveltest"><span data-icon="chart-bars" aria-hidden="true"></span> Test your level</a>
                 </div>
               </div>
             </div>
@@ -211,7 +209,7 @@
     <section class="studio-skills studio-panel" aria-labelledby="train-skills-title">
       <h2 id="train-skills-title">Practice by skill</h2>
       <ul class="studio-skill-list">
-        <li><a class="studio-row" href="/train/level-test/" data-route="leveltest"><span><strong>Level Test</strong><small>Play Stockfish and get your accuracy and a suggested difficulty.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
+        <li><a class="studio-row" href="/train/level-test/" data-route="leveltest"><span><strong>Level Test</strong><small>Play full-strength Stockfish for an Elo estimate.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/learn/tactical-vision/" data-route="tactics"><span><strong>Tactical Vision</strong><small>Spot checks, captures and threats.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/learn/calculation/" data-route="calculation"><span><strong>Calculation Lab</strong><small>Work through forcing lines several moves deep.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/train/opening-test/" data-route="openingtest"><span><strong>Opening Test</strong><small>Recall positions from your completed opening lessons.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
@@ -225,7 +223,7 @@
 <section class="entry-page studio-page level-test-page" data-page-view="leveltest" aria-labelledby="level-test-title" hidden>
   <header class="studio-heading">
     <h1 id="level-test-title" tabindex="-1">Level Test</h1>
-    <p id="level-test-intro">Play Stockfish to see your accuracy, performance level and suggested difficulty.</p>
+    <p id="level-test-intro">Play full-strength Stockfish for an estimated Elo based on your moves.</p>
   </header>
   <div id="level-test-setup" class="studio-layout level-test-layout">
     <section id="level-test-resume-panel" class="studio-panel" aria-labelledby="level-test-resume-title" hidden>
@@ -237,10 +235,9 @@
     <form id="level-test-form" class="studio-panel" aria-labelledby="level-test-setup-title">
       <h2 id="level-test-setup-title">Set up your match</h2>
       <div class="level-test-fields">
-        <label for="level-test-difficulty">Opponent difficulty<select id="level-test-difficulty"></select></label>
         <label for="level-test-color">Play as<select id="level-test-color"><option value="w">White</option><option value="b">Black</option></select></label>
       </div>
-      <p class="studio-meta">Play at least <span id="level-test-minimum">10</span> moves of your own for a level. Hints, live evaluation and undo are off during the test.</p>
+      <p class="studio-meta">Play at least <span id="level-test-minimum">18</span> moves of your own to unlock Finish &amp; score. Your Elo estimate needs ten eligible decisions beyond the opening.</p>
       <button type="submit" class="primary-button" id="level-test-start">Start level test <span data-icon="arrow" aria-hidden="true"></span></button>
     </form>
     <section class="studio-panel studio-sample level-test-last" aria-labelledby="level-test-result-title">
@@ -250,7 +247,11 @@
       </div>
       <div id="level-test-result" hidden>
         <p class="studio-meta" id="level-test-result-meta"></p>
-        <dl class="play-report-results"><div><dt>Estimated accuracy</dt><dd id="level-test-result-accuracy"></dd></div><div><dt>Performance level</dt><dd id="level-test-result-level"></dd></div></dl>
+        <dl class="play-report-results">
+          <div class="play-elo-metric"><dt>Estimated Elo</dt><dd id="level-test-result-elo">—</dd></div>
+          <div><dt>Estimated accuracy</dt><dd id="level-test-result-accuracy"></dd></div>
+          <div><dt>Performance level</dt><dd id="level-test-result-level"></dd></div>
+        </dl>
         <p id="level-test-result-next"></p><p class="studio-meta" id="level-test-result-storage"></p>
       </div>
     </section>
@@ -457,12 +458,17 @@
     <section id="play-report" aria-labelledby="play-report-title" hidden>
       <header class="play-report-heading"><h2 id="play-report-title" tabindex="-1"></h2><p id="play-report-game"></p></header>
       <div class="play-report-content">
-        <dl class="play-report-results"><div><dt>Estimated accuracy</dt><dd id="play-report-accuracy">—</dd></div><div><dt>Performance level</dt><dd id="play-report-level">—</dd></div></dl>
+        <dl class="play-report-results">
+          <div id="play-report-elo-card" class="play-elo-metric" hidden><dt>Estimated Elo</dt><dd id="play-report-elo">—</dd></div>
+          <div><dt>Estimated accuracy</dt><dd id="play-report-accuracy">—</dd></div>
+          <div><dt>Performance level</dt><dd id="play-report-level">—</dd></div>
+        </dl>
         <progress id="play-report-progress" value="0" max="1" aria-label="Game report progress"></progress>
         <p id="play-report-count" hidden></p>
         <p id="play-report-status" role="status"></p>
         <p id="play-report-next" hidden></p>
-        <p class="play-report-method">Accuracy uses the Lichess winning-chance method with Stockfish evaluations. The performance level describes this match.</p>
+        <p id="play-report-standard-method" class="play-report-method">Accuracy uses the Lichess winning-chance method with Stockfish evaluations. The performance level describes this match.</p>
+        <p id="play-report-test-method" class="play-report-method" hidden>Elo is a rough estimate for this match, rounded to the nearest 100. It uses Stockfish’s evaluation of your decisions beyond the opening.</p>
       </div>
       <div class="play-report-actions">
         <button type="button" id="play-report-again" class="primary-button">Play again</button>

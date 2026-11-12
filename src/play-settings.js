@@ -4,4 +4,5 @@ export const PLAY_LEVELS={
   challenging:{label:'Challenging',skill:12,depth:12,milliseconds:800,description:'Stronger calculation and fewer forgiving replies.'},
   strong:{label:'Strong',skill:20,depth:18,milliseconds:1500,description:'Full skill with a longer search.'},
 };
+export const LEVEL_TEST_DIFFICULTY = 'strong';
 export function playSearch(level='casual'){const value=PLAY_LEVELS[level];if(!value)throw new Error('Unknown opponent difficulty');return {skill:value.skill,depth:value.depth,milliseconds:value.milliseconds};}

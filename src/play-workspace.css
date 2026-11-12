@@ -141,6 +141,8 @@ body[data-page] #play-surface #explore-reply { margin-top: 8px; }
 .play-report-results > div { padding: 12px; background: var(--ui-soft); }
 .play-report-results dt { color: var(--ui-muted); font-size: 14px; }
 .play-report-results dd { margin: 4px 0 0; color: var(--ui-text); font-size: clamp(20px, 5vw, 32px); font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.play-report-results .play-elo-metric { grid-column: 1 / -1; background: var(--ui-surface); }
+.play-report-results .play-elo-metric dd { font-size: clamp(28px, 7vw, 42px); letter-spacing: -.025em; }
 #play-report-progress { width: 100%; height: 8px; accent-color: var(--ui-progress); }
 #play-surface #play-report #play-report-next { color: var(--ui-text); font-weight: 650; }
 #play-surface #play-report .play-report-method { font-size: 14px; }

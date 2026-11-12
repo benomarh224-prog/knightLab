@@ -6,8 +6,8 @@ import { Engine } from './engine.js';
 import { formatEvaluation, terminalEvaluation, uciToSan } from './game.js';
 import { pieceSvg } from './pieces.js';
 import { pieceNames } from './training.js';
-import { PLAY_LEVELS,playSearch } from './play-settings.js';
-import { assessPlayGame, MIN_ASSESSMENT_MOVES, reviewPlayGame } from './play-assessment.js';
+import { LEVEL_TEST_DIFFICULTY, PLAY_LEVELS, playSearch } from './play-settings.js';
+import { assessPlayGame, estimateLevelTestElo, formatLevelTestElo, MIN_ASSESSMENT_MOVES, MIN_LEVEL_TEST_MOVES, reviewPlayGame } from './play-assessment.js';
 import { restoreLevelTestAttempt } from './level-test.js';
 
 const $ = id => document.getElementById(id);
@@ -35,6 +35,7 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
   let scoresheetSession, scoresheetRevision;
   let assessment = null, assisted = false;
   let testMode = false, previousDifficulty = null;
+  let legacyTestDifficulty = null;
   let resignTrigger = null;
   const sessionVisible = () => testMode ? !levelTestMount.hidden : dialog.open;
   const evaluationEnabled = () => !testMode && $('play-show-evaluation').checked;
@@ -51,7 +52,7 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
 
   function saveTestAttempt() {
     if (!testMode) return;
-    onLevelTestAttempt({ difficulty:$('play-difficulty').value, color:variation.color,
+    onLevelTestAttempt({ difficulty:legacyTestDifficulty || LEVEL_TEST_DIFFICULTY, color:variation.color,
       moves:variation.moves.map(move => move.lan), resigned:Boolean(variation.resignedColor), finished:Boolean(variation.ending) });
   }
 
@@ -87,7 +88,10 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     const outcome = game.ending === 'Resignation' ? 'You resigned' : { win: 'You won', loss: 'Stockfish won', draw: 'Game drawn' }[report.outcome];
     $('play-report-title').textContent = testMode ? 'Your test results' : outcome;
     const reason = ['Checkmate','Stalemate'].includes(game.ending) ? `${game.ending} · ` : '';
-    $('play-report-game').textContent = `${testMode ? `${outcome} · ` : ''}${reason}Stockfish ${PLAY_LEVELS[game.difficulty].label} · ${report.moves} of your moves`;
+    const opponent = testMode ? legacyTestDifficulty ? 'Earlier test format' : 'Full-strength Stockfish' : `Stockfish ${PLAY_LEVELS[game.difficulty].label}`;
+    $('play-report-game').textContent = `${testMode ? `${outcome} · ` : ''}${reason}${opponent} · ${report.moves} of your moves`;
+    $('play-report-elo-card').hidden = !testMode;
+    $('play-report-elo').textContent = formatLevelTestElo(report.rating);
     $('play-report-accuracy').textContent = report.accuracy == null ? '—' : `${report.accuracy}%`;
     $('play-report-level').textContent = report.level || '—';
     const progress = $('play-report-progress');
@@ -96,15 +100,22 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     progress.value = scores.filter(Boolean).length;
     $('play-report-count').hidden = state !== 'running';
     $('play-report-count').textContent = `${progress.value} of ${progress.max} positions checked`;
-    const status = state === 'running' ? 'Stockfish is reviewing the game…' : state === 'error' ? 'The review stopped. Retry to analyze the remaining positions.'
-      : game.assisted ? 'For a performance level, finish a game without hints, live evaluation, undo or mid-game settings changes.'
-        : report.moves < MIN_ASSESSMENT_MOVES ? `Play at least ${MIN_ASSESSMENT_MOVES} moves of your own for a performance level.` : '';
+    let status = '';
+    if (state === 'running') status = 'Stockfish is reviewing the game…';
+    else if (state === 'error') status = 'The review stopped. Retry to analyze the remaining positions.';
+    else if (testMode && !report.rating) status = legacyTestDifficulty ? 'Start a fresh test against full-strength Stockfish for an Elo estimate.'
+      : report.moves < MIN_LEVEL_TEST_MOVES ? `Play at least ${MIN_LEVEL_TEST_MOVES} moves of your own for an Elo estimate.`
+        : 'Too few eligible decisions for an Elo estimate. Play beyond the opening and keep the game competitive.';
+    else if (game.assisted) status = 'For a performance level, finish a game without hints, live evaluation, undo or mid-game settings changes.';
+    else if (report.moves < MIN_ASSESSMENT_MOVES) status = `Play at least ${MIN_ASSESSMENT_MOVES} moves of your own for a performance level.`;
     if ($('play-report-status').textContent !== status) $('play-report-status').textContent = status;
     $('play-report-retry').hidden = state !== 'error';
-    $('play-report-next').hidden = !report.recommended;
+    $('play-report-next').hidden = testMode || !report.recommended;
     $('play-report-next').textContent = report.recommended ? `Recommended opponent: Stockfish ${PLAY_LEVELS[report.recommended].label}.` : '';
+    $('play-report-test-method').hidden = !testMode;
+    $('play-report-standard-method').hidden = testMode;
     const again = $('play-report-again');
-    again.textContent = report.recommended ? `Play again · ${PLAY_LEVELS[report.recommended].label}` : 'Play again';
+    again.textContent = !testMode && report.recommended ? `Play again · ${PLAY_LEVELS[report.recommended].label}` : 'Play again';
     again.hidden = testMode && state !== 'done';
     again.disabled = again.hidden;
     $('play-report-done').hidden = !testMode;
@@ -122,8 +133,16 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
       await reviewPlayGame(current.game, current.scores, reviewer, { active, progress: renderAssessment });
       if (!active()) return;
       current.result = assessPlayGame(current.game, current.scores);
-      current.state = current.result.accuracy == null ? 'error' : 'done';
-      if (testMode && current.state === 'done') onLevelTestResult(current.game, current.result);
+      if (current.result.accuracy == null) { current.state = 'error'; return; }
+      if (testMode) {
+        const opening = current.result.moves >= MIN_LEVEL_TEST_MOVES && current.game.difficulty === LEVEL_TEST_DIFFICULTY
+          ? await import('./opening.js').catch(() => null) : null;
+        if (!active()) return;
+        const bookPly = opening?.identifyOpening(current.game).ply ?? 0;
+        current.result.rating = estimateLevelTestElo(current.game, current.scores, bookPly);
+        onLevelTestResult(current.game, current.result);
+      }
+      current.state = 'done';
     } catch { if (active()) current.state = 'error'; }
     finally {
       reviewer.destroy();
@@ -134,8 +153,9 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     if (assessment || variation.mode !== 'engine' || $('play-origin').value !== 'new') return;
     const moves = variation.moves;
     if (!moves.some(move => move.color === variation.color)) return;
+    const difficulty = testMode ? legacyTestDifficulty || LEVEL_TEST_DIFFICULTY : $('play-difficulty').value;
     const game = { moves, fens: [variation.startFen, ...moves.map(move => move.after)], color: variation.color,
-      difficulty: $('play-difficulty').value, result: variation.result, ending: variation.ending, assisted };
+      difficulty, result: variation.result, ending: variation.ending, assisted };
     assessment = { game, scores: [], state: 'running', result: assessPlayGame(game, []), engine: null };
     runAssessment();
     setReportView(true);
@@ -202,7 +222,8 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     const viewingReport = !$('play-report').hidden;
     $('play-settings-summary').hidden = fromPosition || viewingReport;
     $('explore-origin').hidden = !fromPosition || viewingReport;
-    $('play-settings-summary').textContent = variation.mode === 'free' ? 'Free play · Both sides' : `Stockfish · ${PLAY_LEVELS[$('play-difficulty').value].label} · ${variation.color === 'w' ? 'White' : 'Black'}`;
+    const color = variation.color === 'w' ? 'White' : 'Black';
+    $('play-settings-summary').textContent = testMode ? `Full-strength Stockfish · ${color}` : variation.mode === 'free' ? 'Free play · Both sides' : `Stockfish · ${PLAY_LEVELS[$('play-difficulty').value].label} · ${color}`;
     $('play-color-field').hidden = testMode || variation.mode === 'free';
     $('play-difficulty-field').hidden=testMode||variation.mode==='free';
     for (const id of ['play-mode','play-origin','play-show-evaluation']) $(id).closest('label').hidden = testMode;
@@ -214,8 +235,9 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     $('play-new').hidden = testMode;
     const testMoves = testMode ? moves.filter(move => move.color === variation.color).length : 0;
     $('play-test-progress').hidden = !testMode || finishedMatch;
-    $('play-test-count').textContent = testMoves < MIN_ASSESSMENT_MOVES ? `${testMoves} / ${MIN_ASSESSMENT_MOVES} of your moves` : `${testMoves} of your moves · Ready to score`;
-    $('play-test-finish').hidden = testMoves < MIN_ASSESSMENT_MOVES;
+    const testMinimum = legacyTestDifficulty ? MIN_ASSESSMENT_MOVES : MIN_LEVEL_TEST_MOVES;
+    $('play-test-count').textContent = testMoves < testMinimum ? `${testMoves} / ${testMinimum} of your moves` : `${testMoves} of your moves · Ready to score`;
+    $('play-test-finish').hidden = testMoves < testMinimum;
     $('play-report-open').hidden = !assessment;
     $('play-level-test-link').hidden = testMode;
     $('explore-board').setAttribute('aria-label', `Play board, ${variation.ending || (chess.turn() === 'w' ? 'White' : 'Black') + ' to move'}. Select a piece and its destination.`);
@@ -241,7 +263,7 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     let replied = false;
     try {
       const history = { startFen:variation.startFen, moves:variation.moves.map(move=>move.lan) };
-      const search = automaticReply ? playSearch($('play-difficulty').value) : { milliseconds:650, skill:20 };
+      const search = automaticReply ? playSearch(testMode ? LEVEL_TEST_DIFFICULTY : $('play-difficulty').value) : { milliseconds:650, skill:20 };
       const score = await active.evaluate(snapshot.fen, search, history);
       // Let the player's move settle while Stockfish searches in the background.
       const remaining = replyAt - performance.now();
@@ -307,13 +329,14 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     const restored = options.moves ? restoreLevelTestAttempt(options) : null;
     if (options.moves && !restored) return;
     testMode = true;
+    legacyTestDifficulty = options.difficulty !== LEVEL_TEST_DIFFICULTY && restored?.moves.some(move => move.color !== restored.color) ? options.difficulty : null;
     resumeReview = false;
     coursePractice = null;
     previousDifficulty = $('play-difficulty').value;
     $('play-origin').value = 'new';
     $('play-mode').value = 'engine';
     $('play-color').value = options.color;
-    $('play-difficulty').value = options.difficulty;
+    $('play-difficulty').value = LEVEL_TEST_DIFFICULTY;
     surface.dataset.levelTest = 'true';
     surface.querySelector('.play-game-menu').open = false;
     levelTestMount.append(surface);
@@ -328,6 +351,7 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     cancel();
     levelTestMount.hidden = true;
     testMode = false;
+    legacyTestDifficulty = null;
     $('play-difficulty').value = previousDifficulty;
     previousDifficulty = null;
     delete surface.dataset.levelTest;
@@ -418,7 +442,11 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
   };
   $('play-report-open').onclick = () => setReportView(true);
   $('play-report-retry').onclick = () => { $('play-report-title').focus({ preventScroll: true }); runAssessment(); };
-  $('play-report-again').onclick = () => { if (assessment.result?.recommended) $('play-difficulty').value = assessment.result.recommended; newGame(); };
+  $('play-report-again').onclick = () => {
+    if (testMode) legacyTestDifficulty = null;
+    else if (assessment.result?.recommended) $('play-difficulty').value = assessment.result.recommended;
+    newGame();
+  };
   $('play-report-back').onclick = () => {
     setReportView(false);
     focusBoard();
