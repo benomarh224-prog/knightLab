@@ -1,11 +1,9 @@
 import{reviewSearch}from'./review-quality.js';
 import{nextReviewPosition}from'./review-schedule.js';
 
-// Preview the selected decision before its complete two-line search. Avoid a
-// speculative pass over the whole game: the user needs the selected position
-// first, and unrelated searches evict useful transposition-table entries.
-// Recheck navigation between searches; previews never satisfy the depth floor.
-export function createReviewPlan(parsed,mode){
+// Preview the current decision first, then cover the game before entering the
+// slower two-line pass. Previews do not satisfy the requested depth floor.
+export function createReviewPlan(parsed,mode,{extend=false}={}){
   const attempted={preview:new Set(),deepen:new Set(),quick:new Set()};
   let deepStarted=false;
   function take(phase,quality,ply,scores,search){
@@ -16,12 +14,9 @@ export function createReviewPlan(parsed,mode){
   return{
     next(ply,scores){
       if(mode==='quick')return take('quick',mode,ply,scores,()=>reviewSearch(mode));
-      const selected=Math.max(0,Math.min(parsed.fens.length-1,ply));
-      const skip=new Set(attempted.preview);
-      for(let i=0;i<parsed.fens.length;i++)if(i<selected-1||i>selected+1)skip.add(i);
-      const index=nextReviewPosition(parsed.fens.length,selected,scores,'quick',skip);
-      if(index!==null){attempted.preview.add(index);return{index,phase:'preview',search:{depth:12,milliseconds:120,multiPV:1}};}
-      const task=take('deepen',mode,ply,scores,i=>reviewSearch(mode,scores[i]));
+      const preview=take('preview','quick',ply,scores,()=>({depth:12,milliseconds:120,multiPV:1}));
+      if(preview)return preview;
+      const task=take('deepen',mode,ply,scores,i=>reviewSearch(mode,extend?scores[i]:undefined));
       // Preview-only TT bounds can make a later MultiPV search much slower.
       // Start the full pass clean once, then retain its hash between positions.
       if(task&&!deepStarted){task.search={...task.search,clearHash:true};deepStarted=true;}

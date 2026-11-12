@@ -10,12 +10,13 @@ test('move verdicts have explicit starting and not-analyzed states', () => {
   assert.equal(verdict.label,'Not analyzed yet');
   assert.equal(verdict.move,'1. e4');
   assert.equal(verdict.tone,'pending');
+  assert.equal(selectedMoveVerdict(move,null,true).label,'Rating pending');
 });
 
 test('the verdict uses the selected move’s notation and matching rating after navigation', () => {
   const moves = parseGame('1. e4 e5 *').moves;
   const first = selectedMoveVerdict(moves[0],classifyMove(moves[0],{cp:30,best:'e2e4'},{cp:25}));
-  const next = selectedMoveVerdict(moves[1],classifyMove(moves[1],{cp:25,best:'c7c5'},{cp:250}));
+  const next = selectedMoveVerdict(moves[1],classifyMove(moves[1],{cp:25,best:'c7c5',depth:17},{cp:250,depth:17}));
   assert.equal(first.label,'Best move');
   assert.equal(first.move,'1. e4');
   assert.equal(next.label,'Blunder');

@@ -44,7 +44,7 @@ export function gameAccuracy(parsed,evaluations,mode='deep'){
   });
   return {sides,complete,ready,total:n+1,windowSize};
 }
-export function evaluationLossText(move,before,after){
+export function evaluationLossText(move,before,after,loss){
   if(!before||!after)return 'Awaiting evaluation';
   if(before.mate!=null||after.mate!=null){
     const sign=move.color==='w'?1:-1,beforeMate=before.mate!=null?Math.sign(before.cp)*sign:0,afterMate=after.mate!=null?Math.sign(after.cp)*sign:0;
@@ -54,5 +54,5 @@ export function evaluationLossText(move,before,after){
     if(afterMate>0)return beforeMate>0?'Forced mate for the mover remains':'Finds forced mate for the mover';
     return 'Forced-mate evaluation changed';
   }
-  return `${(Math.max(0,(before.cp-after.cp)*(move.color==='w'?1:-1))/100).toFixed(2)} pawns of evaluation lost`;
+  return `${((loss??Math.max(0,(before.cp-after.cp)*(move.color==='w'?1:-1)))/100).toFixed(2)} pawns of evaluation lost`;
 }

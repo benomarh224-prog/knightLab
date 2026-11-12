@@ -11,6 +11,10 @@ test('coach waits for complete move evidence instead of inventing an explanation
   const pending = coachMove(move,score(0,'d2d4'),null);
   assert.equal(pending.status,'pending'); assert.equal(pending.bestMove,null);
   assert.equal(coachMove(move,score(NaN,'d2d4'),score(0,'e7e5')).status,'pending');
+  const uneven=coachMove(move,{...score(30,'d2d4'),depth:10},score(-230,'e7e5'));
+  assert.equal(uneven.status,'pending');
+  assert.match(uneven.summary,/comparable/);
+  assert.doesNotMatch(uneven.summary,/mistake|blunder/i);
 });
 test('engine lines are replayed legally and stop at the first invalid move', () => {
   const line = legalLine(new Chess().fen(),['e2e4','e7e5','g1f3','a1a8','b8c6']);

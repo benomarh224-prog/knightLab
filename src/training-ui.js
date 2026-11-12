@@ -48,7 +48,7 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
       $('start-practice').innerHTML = `${exercises ? `Practice all ${exercises}` : !complete ? 'Waiting for reviewed mistakes' : 'No mistakes to practice'} ${icon('arrow')}`;
       $('practice-description').textContent = exercises
         ? (provisional ? 'From the positions reviewed so far. Results are provisional.' : 'Try a better move in a position from this game.')
-        : (complete ? 'No reviewed mistakes with a valid alternative were found for this side.' : 'Positions appear as the engine reviews the game.');
+        : (complete ? provisional?'No confirmed mistakes in the fast preview. Deepen the review for more evidence.':'No reviewed mistakes with a valid alternative were found for this side.' : 'Positions appear as the engine reviews the game.');
     }
     $('moments-status').textContent = running ? 'Updating as you review' : count === parsed.fens.length ? `${data.moments.length} moments found` : count ? 'From reviewed positions' : 'Awaiting review';
     document.querySelectorAll('[data-moment]').forEach(button => {

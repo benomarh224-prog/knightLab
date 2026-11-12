@@ -107,7 +107,9 @@ function computeCoachMove(move,before,after){
   const empty={why:'',better:'',lesson:'',bestLine:'',replyLine:'',bestMove:null,continuations:[],hasImprovement:false,teaching:null};
   if(!move)return {...empty,status:'start',title:'Your move coach',summary:'Select a move to see its purpose and the engine continuation.'};
   if(!before||!after||!Number.isFinite(before.cp)||!Number.isFinite(after.cp))return {...empty,status:'pending',title:moveLabel(move),summary:'The coach is waiting for the positions before and after this move to be reviewed.'};
-  const rating=classifyMove(move,before,after),bad=badLabels.has(rating.label);
+  const rating=classifyMove(move,before,after);
+  if(!rating)return {...empty,status:'pending',title:moveLabel(move),summary:'Stockfish needs comparable evaluations before rating this move. Let the review deepen or select Deep review.'};
+  const bad=badLabels.has(rating.label);
   const best=preferredLine(move.before,before),replies=preferredLine(move.after,after),reply=replies[0];
   const played=move.from+move.to+(move.promotion||''),sameBest=best.length>0&&before.best===played;
   const hasImprovement=Boolean(bad&&best.length&&!sameBest),sign=move.color==='w'?1:-1;

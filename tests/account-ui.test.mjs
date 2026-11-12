@@ -42,6 +42,9 @@ test('an unchanged delayed session check does not repaint and erase a typed pass
 test('reset uses the managed reset-code flow and returns to sign in',async()=>{
   const f=fixture();try{await f.click('reset');f.nodes.get('account-email').value=user.email;await f.click('code');assert.equal(f.calls.find(c=>c[0]==='code')[1].type,'forget-password');await f.submit({email:user.email,otp:'123456',password:'new long test password'});assert.match(f.root.innerHTML,/Welcome back/);assert.match(f.nodes.get('account-status').textContent,/Password updated/);assert.equal(f.calls.find(c=>c[0]==='reset')[1].otp,'123456');}finally{f.ui.destroy();}
 });
+test('moving from sign in to password reset preserves the typed email',async()=>{
+  const f=fixture();try{f.nodes.get('account-email').value=user.email;await f.click('reset');assert.match(f.root.innerHTML,/value="alice@example.invalid"/);assert.equal(f.nodes.get('account-email').focused,true);}finally{f.ui.destroy();}
+});
 test('the private static Site directs accounts to the canonical public backend',()=>{
   const f=fixture({host:'roqvyn.chatgpt.site'});try{assert.match(f.root.innerHTML,/https:\/\/knightlab.vercel.app\/account\//);assert.equal(f.calls.length,0);}finally{f.ui.destroy();}
 });

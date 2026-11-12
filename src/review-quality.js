@@ -29,7 +29,9 @@ export function evaluationReady(score, mode) {
 
 export function reviewSearch(mode, previous) {
   if(mode==='quick')return 140;
-  return positionSearch(mode==='deep'?STANDARD_DEPTH:PRECISION_DEPTH,previous);
+  const depth=mode==='deep'?STANDARD_DEPTH:PRECISION_DEPTH;
+  const initial=mode==='deep'?2200:4500;
+  return {depth,milliseconds:Math.min(80000,Math.max(initial,(previous?.searchTime||0)*2))};
 }
 
 export function positionSearch(depth=PRECISION_DEPTH, previous) {
@@ -40,6 +42,9 @@ export function positionSearch(depth=PRECISION_DEPTH, previous) {
 }
 
 export function strongerScore(previous,next) {
-  if(previous&&!previous.legacy&&!previous.terminal&&!next.terminal&&previous.depth===next.depth&&previous.alternative?.depth===previous.depth&&next.alternative?.depth!==next.depth)return previous;
-  return !previous || !Number.isFinite(previous.cp) || !Number.isFinite(previous.depth) || previous.legacy || next.terminal || (!previous.terminal&&next.depth>=previous.depth) ? next : previous;
+  const keepAlternative=previous&&!previous.legacy&&!previous.terminal&&!next.terminal&&previous.depth===next.depth&&previous.alternative?.depth===previous.depth&&next.alternative?.depth!==next.depth;
+  const improved=!previous||!Number.isFinite(previous.cp)||!Number.isFinite(previous.depth)||previous.legacy||next.terminal||!previous.terminal&&next.depth>=previous.depth;
+  const strongest=improved&&!keepAlternative?next:previous;
+  const searchTime=Math.max(previous?.searchTime||0,next.interrupted?0:next.searchTime||0);
+  return (strongest.searchTime||0)===searchTime?strongest:{...strongest,searchTime};
 }

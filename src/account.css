@@ -1,21 +1,102 @@
-body[data-page] .account-page { width:100%; max-width:720px; margin:0 auto; padding:24px 16px max(48px,env(safe-area-inset-bottom)); color:var(--ui-text); }
-body[data-page] .account-page>h1 { margin:0 0 8px; font:600 clamp(24px,4vw,36px)/1.15 'DM Sans',sans-serif; color:var(--ui-text); }
-body[data-page] .account-page>p { color:var(--ui-muted); font-size:16px; line-height:1.5; }
-body[data-page] #account-panel { max-width:480px; margin:24px 0 0; padding:24px; background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:var(--ui-card-radius); }
-body[data-page] #account-panel h2 { margin:0 0 12px; color:var(--ui-text); font:600 24px/1.25 'DM Sans',sans-serif; }
-body[data-page] #account-panel p { font-size:16px; line-height:1.5; overflow-wrap:anywhere; }
-body[data-page] #account-form label { display:block; margin:16px 0 6px; font-size:16px; }
-body[data-page] #account-form input { width:100%; min-width:0; min-height:48px; padding:10px 12px; font:16px/1.4 'DM Sans',sans-serif; color:var(--ui-text); background:var(--ui-surface); border:1px solid var(--ui-control-border); border-radius:var(--ui-radius); box-sizing:border-box; }
-body[data-page] :is(.account-primary,.account-secondary,.account-links button) { display:inline-flex; align-items:center; justify-content:center; min-height:44px; max-width:100%; padding:10px 16px; border-radius:var(--ui-radius); font:600 16px/1.4 'DM Sans',sans-serif; text-decoration:none; cursor:pointer; }
-body[data-page] .account-primary { border:1px solid var(--ui-action); color:var(--ui-on-action); background:var(--ui-action); }
-body[data-page] #account-form .account-primary { width:100%; margin-top:24px; }
-body[data-page] .account-secondary { color:var(--ui-text); background:var(--ui-soft); border:1px solid var(--ui-control-border); }
-body[data-page] .account-links { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:12px; }
-body[data-page] .account-links button { color:var(--ui-link); background:transparent; border:0; padding:8px 0; text-align:left; }
-body[data-page] .account-import { display:flex; align-items:flex-start; gap:12px; padding:12px 0; font-size:16px; line-height:1.5; cursor:pointer; }
-body[data-page] .account-import input { width:24px; height:24px; flex-shrink:0; margin:0; accent-color:var(--ui-action); }
-body[data-page] #account-panel .account-note { color:var(--ui-muted); font-size:14px; }
-body[data-page] .account-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:20px; }
-body[data-page] #account-status { max-width:480px; font-size:16px; line-height:1.5; color:var(--ui-text); padding:16px 0; overflow-wrap:anywhere; }
-body[data-page] #account-panel :is(button,input,a):focus-visible { outline:3px solid var(--ui-link); outline-offset:3px; }
-@media(max-width:430px){body[data-page] #account-panel { padding:20px 16px; }}
+body[data-page] .account-page {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+  padding-block: clamp(18px, 4vw, 46px) max(40px, env(safe-area-inset-bottom));
+  color: var(--ui-text);
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.account-card, .account-progress {
+  min-width: 0;
+  padding: clamp(16px, 3vw, 30px);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-card-radius);
+  background: var(--ui-surface);
+}
+
+.account-progress {
+  --account-accent: #23523d;
+  background: #e8eee9;
+  border-color: #d4dfd6;
+}
+html[data-theme="dark"] .account-progress {
+  --account-accent: #a6e6c2;
+  background: #1e3027;
+  border-color: #3b5548;
+}
+
+.account-page :is(#account-panel h2, .account-progress h2) {
+  margin: 0;
+  color: var(--ui-text);
+  font: 650 23px/1.25 'DM Sans', sans-serif;
+  overflow-wrap: anywhere;
+}
+.account-page p { margin: 8px 0 0; color: var(--ui-muted); font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.account-progress dl { margin: 8px 0 0; }
+.account-progress dl > div { padding-block: 12px; }
+.account-progress dl > div + div { border-top: 1px solid var(--ui-border); }
+.account-progress dt { font-weight: 650; }
+.account-progress dd { margin: 3px 0 0; color: var(--ui-muted); font-size: 14px; line-height: 1.45; }
+.account-progress a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  color: var(--account-accent);
+  font-weight: 650;
+  text-underline-offset: 4px;
+}
+.account-progress [data-icon] { display: inline-flex; width: 18px; height: 18px; }
+
+#account-form label { display: block; margin: 15px 0 5px; font-size: 15px; font-weight: 600; }
+body[data-page] #account-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  font: 16px/1.4 'DM Sans', sans-serif;
+  color: var(--ui-text);
+  background: var(--ui-page);
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-radius);
+  box-sizing: border-box;
+}
+
+body[data-page] :is(.account-primary, .account-secondary, .account-links button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--ui-radius);
+  font: 650 15px/1.4 'DM Sans', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+body[data-page] .account-primary { border: 1px solid var(--ui-action); color: var(--ui-on-action); background: var(--ui-action); }
+body[data-page] .account-primary:hover { background: var(--ui-action-hover); }
+body[data-page] .account-primary:disabled { color: var(--ui-disabled-text); background: var(--ui-disabled-bg); border-color: var(--ui-border); cursor: wait; }
+#account-form .account-primary { width: 100%; margin-top: 18px; }
+body[data-page] .account-secondary { color: var(--ui-text); background: var(--ui-soft); border: 1px solid var(--ui-control-border); }
+#account-panel > .account-secondary { margin: 8px 0 0 6px; }
+#account-panel > .account-primary { margin-top: 12px; }
+
+.account-links { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px; }
+body[data-page] .account-links button { padding-inline: 0; color: var(--ui-link); background: transparent; border: 0; text-align: left; }
+.account-links button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.account-import { display: flex; align-items: flex-start; gap: 12px; padding-block: 12px; font-size: 15px; line-height: 1.5; cursor: pointer; }
+.account-import input { width: 24px; height: 24px; flex: none; margin: 0; accent-color: var(--ui-action); }
+.account-page :is(.account-sync-state, #account-status) { padding: 10px 12px; border-radius: var(--ui-radius); color: var(--ui-text); background: var(--ui-soft); }
+.account-page #account-status { margin-top: 12px; }
+.account-page #account-panel .account-note { font-size: 14px; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+@media (max-width: 680px) { .account-layout { grid-template-columns: minmax(0, 1fr); } }

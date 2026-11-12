@@ -10,7 +10,7 @@ export function reviewStatistics(parsed,evaluations,mode='deep'){
     const pairs=parsed.moves.flatMap((move,i)=>move.color===color&&evaluationReady(evaluations[i],mode)&&evaluationReady(evaluations[i+1],mode)?[{move,before:evaluations[i],after:evaluations[i+1]}]:[]);
     const finite=pairs.filter(p=>p.before.mate==null&&p.after.mate==null);
     const finiteAverageLoss=finite.length?finite.reduce((sum,p)=>sum+Math.max(0,(p.before.cp-p.after.cp)*(color==='w'?1:-1)),0)/finite.length:null;
-    return {color,...summary,total,ready,provisional:ready<total||mode==='quick',finiteAverageLoss,finiteCount:finite.length,mateTransitions:pairs.length-finite.length,...accuracy.sides.find(side=>side.color===color)};
+    return {color,...summary,total,ready,provisional:ready<total||summary.count<total||mode==='quick',finiteAverageLoss,finiteCount:finite.length,mateTransitions:pairs.length-finite.length,...accuracy.sides.find(side=>side.color===color)};
   });
   const combined=summarize(parsed,evaluations,null);
   return {sides,combined,accuracy,provisional:sides.some(side=>side.provisional),ready:sides.reduce((sum,side)=>sum+side.ready,0),total:parsed.moves.length};

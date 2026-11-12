@@ -40,7 +40,7 @@ export function createAccountUI({storage,doc=document,win=window,beforeReload=()
   }
   root.addEventListener('click',async event=>{
     const action=event.target.closest('[data-account-action]')?.dataset.accountAction;if(!action||busy)return;
-    if(['signin','signup','reset'].includes(action)){mode=action;message=action==='reset'?'Enter your email and use “Send a new code” to receive a reset code.':'';paint();doc.getElementById('account-email')?.focus();return;}
+    if(['signin','signup','reset'].includes(action)){email=doc.getElementById('account-email')?.value.trim()||email;mode=action;message=action==='reset'?'Enter your email and use “Send a new code” to receive a reset code.':'';paint();doc.getElementById('account-email')?.focus();return;}
     if(action==='reload'){reload();return;}
     if(action==='sync'){await sync?.run();return;}
     busy=true;message='';const include=doc.getElementById('account-import')?.checked;const emailInput=doc.getElementById('account-email')?.value?.trim();paint();

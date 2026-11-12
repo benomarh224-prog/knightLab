@@ -8,10 +8,22 @@ test('deep review requires the target depth and only retries unfinished position
   assert.equal(evaluationReady({cp:0,depth:18},'precise'),false);
   assert.equal(evaluationReady({cp:0,depth:19},'precise'),true);
   assert.equal(evaluationReady({cp:0,terminal:true,depth:0},'precise'),true);
-  assert.deepEqual(reviewSearch('precise'),{depth:19,milliseconds:20000});
+  assert.deepEqual(reviewSearch('precise'),{depth:19,milliseconds:4500});
+  assert.equal(reviewSearch('precise',{searchTime:4500}).milliseconds,9000);
   assert.equal(reviewSearch('precise',{searchTime:20000}).milliseconds,40000);
   assert.equal(reviewSearch('precise',{searchTime:80000}).milliseconds,80000);
-  assert.deepEqual(reviewSearch('deep'),{depth:16,milliseconds:6000});
+  assert.deepEqual(reviewSearch('deep'),{depth:16,milliseconds:2200});
+});
+
+test('retry budgets grow after a completed search even when it returns a shallower score',()=>{
+  const previous={cp:20,depth:18,searchTime:4500};
+  const attempted=strongerScore(previous,{cp:12,depth:16,searchTime:9000});
+  assert.equal(attempted.depth,18);
+  assert.equal(attempted.searchTime,9000);
+  const interrupted=strongerScore(attempted,{cp:22,depth:19,searchTime:18000,interrupted:true});
+  assert.equal(interrupted.depth,19);
+  assert.equal(interrupted.searchTime,9000);
+  assert.equal(strongerScore(undefined,{cp:0,depth:12,searchTime:4500,interrupted:true}).searchTime,0);
 });
 
 test('default review and free analysis have real depth floors; cached legacy evidence stays provisional',()=>{

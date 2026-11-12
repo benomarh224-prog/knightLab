@@ -83,7 +83,7 @@ test('play levels use distinct real skill and search settings with no claimed ra
 
 test('review evidence survives reload by exact PGN and mode, and training can choose either side',()=>{
  const storage=store(),cache=createReviewCache(storage),parsed=parseGame('1. e4 f6 2. a3 *');
- const evaluations=[score(0,'d2d4'),score(-120,'e7e5'),score(80,'g1f3'),score(-70,'e7e5')];cache.save(parsed.pgn,'deep',evaluations);
+ const evaluations=[score(0,'d2d4'),score(-120,'e7e5'),score(80,'g1f3'),score(-70,'e7e5')].map((value,index)=>({...value,searchVersion:2,rootFen:parsed.fens[index]}));cache.save(parsed.pgn,'deep',evaluations);
  const restored=createReviewCache(storage).load(parsed.pgn,'deep',parsed.fens.length);assert.equal(restored.length,4);assert.equal(createReviewCache(storage).load(parsed.pgn,'precise',4).length,0);
  const white=collectTraining(parsed,restored,'w').exercises,black=collectTraining(parsed,restored,'b').exercises,both=collectTraining(parsed,restored,null).exercises;
  assert.ok(white.length);assert.ok(black.length);assert.ok(white.every(e=>e.color==='w'));assert.ok(black.every(e=>e.color==='b'));assert.equal(both.length,white.length+black.length);

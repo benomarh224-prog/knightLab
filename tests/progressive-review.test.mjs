@@ -2,12 +2,12 @@ import test from'node:test';import assert from'node:assert/strict';import{Chess}
 import{createReviewPlan}from'../src/review-plan.js';import{parseGame,terminalEvaluation}from'../src/game.js';import{evaluationReady,strongerScore}from'../src/review-quality.js';import{createReviewCache}from'../src/review-cache.js';import{Engine}from'../src/engine.js';
 const score=(p,i,depth=19)=>({cp:0,mate:null,depth,best:p.moves[i]?p.moves[i].from+p.moves[i].to+(p.moves[i].promotion||''):null,pv:[],rootFen:p.fens[i],searchVersion:2});
 
-test('bounded selected-position previews precede the unchanged complete depth-19 two-line search',()=>{
+test('a bounded whole-game preview starts at the selected move and precedes the depth-19 pass',()=>{
  const p=parseGame('1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 *'),plan=createReviewPlan(p,'precise'),scores=[],visited=[];
- for(let i=0;i<3;i++){const task=plan.next(4,scores);assert.equal(task.phase,'preview');assert.ok(task.search.milliseconds<=140);assert.equal(task.search.multiPV,1);assert.ok(task.search.depth<19);visited.push(task.index);scores[task.index]=score(p,task.index,12);assert.equal(evaluationReady(scores[task.index],'precise'),false);}
- assert.deepEqual(visited.slice(0,3),[3,4,5]);assert.equal(new Set(visited).size,3);
- const deep=plan.next(4,scores);assert.equal(deep.phase,'deepen');assert.equal(deep.search.depth,19);assert.notEqual(deep.search.multiPV,1);assert.equal(deep.search.milliseconds,20000);assert.equal(deep.search.clearHash,true);
- scores[deep.index]=score(p,deep.index,15);let moved=plan.next(1,scores);assert.equal(moved.index,0);assert.equal(moved.phase,'preview');scores[0]=score(p,0,12);for(let i=1;i<3;i++){moved=plan.next(1,scores);assert.equal(moved.phase,'preview');scores[moved.index]=score(p,moved.index,12);}moved=plan.next(1,scores);assert.equal(moved.index,0);assert.equal(moved.search.depth,19);assert.notEqual(moved.search.clearHash,true);plan.retry(moved);assert.equal(plan.next(1,scores).index,0);
+ for(let i=0;i<p.fens.length;i++){const task=plan.next(i<3?4:1,scores);assert.equal(task.phase,'preview');assert.ok(task.search.milliseconds<=140);assert.equal(task.search.multiPV,1);assert.ok(task.search.depth<19);visited.push(task.index);scores[task.index]=score(p,task.index,12);assert.equal(evaluationReady(scores[task.index],'precise'),false);}
+ assert.deepEqual(visited.slice(0,6),[3,4,5,0,1,2]);assert.equal(new Set(visited).size,p.fens.length);
+ const deep=plan.next(4,scores);assert.equal(deep.phase,'deepen');assert.equal(deep.search.depth,19);assert.notEqual(deep.search.multiPV,1);assert.equal(deep.search.milliseconds,4500);assert.equal(deep.search.clearHash,true);
+ scores[deep.index]=score(p,deep.index,15);const moved=plan.next(1,scores);assert.equal(moved.index,0);assert.equal(moved.search.depth,19);assert.notEqual(moved.search.clearHash,true);plan.retry(moved);assert.equal(plan.next(1,scores).index,0);
 });
 
 test('cached progress skips preview/deep work, while legacy and shallow evidence cannot finish Deep',()=>{
@@ -19,7 +19,9 @@ test('cached progress skips preview/deep work, while legacy and shallow evidence
 
 test('timed-out positions remain provisional and resumable; Quick and Standard retain their own quality',()=>{
  const p=parseGame('1. e4 *'),scores=[score(p,0,18),score(p,1)],plan=createReviewPlan(p,'precise'),task=plan.next(1,scores);assert.equal(task.index,0);assert.equal(plan.next(1,scores),null);
- scores[0].searchTime=task.search.milliseconds;const retry=createReviewPlan(p,'precise').next(1,scores);assert.equal(retry.search.milliseconds,40000);
+ scores[0].searchTime=task.search.milliseconds;
+ assert.equal(createReviewPlan(p,'precise').next(1,scores).search.milliseconds,4500);
+ const retry=createReviewPlan(p,'precise',{extend:true}).next(1,scores);assert.equal(retry.search.milliseconds,9000);
  assert.equal(createReviewPlan(p,'deep').next(1,scores),null);scores[0].depth=12;assert.equal(createReviewPlan(p,'deep').next(1,scores).search.depth,16);
  assert.equal(createReviewPlan(p,'quick').next(0,[]).search,140);assert.equal(createReviewPlan(p,'quick').next(0,scores),null);
  const complete={...scores[0],alternative:{cp:-80,depth:12}};assert.equal(strongerScore(complete,{...scores[0],alternative:null}),complete);assert.equal(terminalEvaluation(new Chess('7k/6Q1/5K2/8/8/8/8/8 b - - 0 1').fen()).terminal,true);

@@ -60,18 +60,32 @@ export function uciToSan(fen, uci) {
 }
 
 export function classifyMove(move, before, after) {
-  if (!before || !after) return null;
-  const signature=JSON.stringify([move.before,move.after,move.from,move.to,move.promotion,move.color,move.piece,move.captured,move.flags,move.san,before.cp,after.cp,before.best,before.depth,before.mate,before.terminal,before.pv,after.depth,after.best,after.mate,after.terminal,after.pv,before.alternative?.cp,before.alternative?.depth]);
+  if (!Number.isFinite(before?.cp) || !Number.isFinite(after?.cp)) return null;
+  if (before.rootFen && before.rootFen!==move.before || after.rootFen && after.rootFen!==move.after) return null;
+  const alternative = before.alternative;
+  const signature=JSON.stringify([move.before,move.after,move.from,move.to,move.promotion,move.color,move.piece,move.captured,move.flags,move.san,before.cp,after.cp,before.best,before.depth,before.mate,before.legacy,before.terminal,before.pv,after.depth,after.best,after.mate,after.legacy,after.terminal,after.pv,alternative?.cp,alternative?.depth,alternative?.mate,alternative?.pv?.[0]]);
   const cached=ratingCache.get(move);if(cached?.signature===signature)return cached.result;
   const played = move.from + move.to + (move.promotion || '');
-  const loss = Math.max(0, (before.cp - after.cp) * (move.color === 'w' ? 1 : -1));
   const best = before.best === played;
-  const alternative = before.alternative;
-  const advantage = alternative ? (before.cp - alternative.cp) * (move.color === 'w' ? 1 : -1) : 0;
+  const sign = move.color === 'w' ? 1 : -1;
+  // A played MultiPV candidate has a directly comparable evaluation at the same root.
+  const sameSearch = !before.legacy && before.depth >= 14 && alternative?.depth === before.depth &&
+    alternative?.pv?.[0] === played && Number.isFinite(alternative.cp) && before.mate == null && after.mate == null && alternative.mate == null;
+  const comparable = before.depth >= 14 && (after.terminal || after.depth >= 14 && Math.abs(before.depth-after.depth) <= 3) && !before.legacy && (!after.legacy || after.terminal);
+  const mateTransition = before.mate != null || after.mate != null;
+  // A mate score encodes the outcome, not a hundred-pawn material swing.
+  const bound = cp => mateTransition ? Math.max(-500,Math.min(500,cp)) : cp;
+  const loss = Math.max(0, (bound(before.cp) - bound(sameSearch ? alternative.cp : after.cp)) * sign);
+  const bestSan = uciToSan(move.before, before.best);
+  if (!best && loss >= 50 && (bestSan === '—' || !sameSearch && !comparable)) {
+    ratingCache.set(move,{signature,result:null});
+    return null;
+  }
+  const advantage = alternative ? (before.cp - alternative.cp) * sign : 0;
   const great = best && loss <= 30 && before.depth >= 8 && alternative?.depth === before.depth && advantage >= 100;
   const sacrifice=best?brilliantEvidence(move,before,after):null;
   const label = sacrifice ? 'Brilliant' : great ? 'Great' : best ? 'Best' : loss >= 200 ? 'Blunder' : loss >= 100 ? 'Mistake' : loss >= 50 ? 'Inaccuracy' : 'Good';
-  const result={ label, loss, best: uciToSan(move.before, before.best),...(sacrifice?{sacrifice}:{}) };ratingCache.set(move,{signature,result});return result;
+  const result={ label, loss, best: bestSan,...(sacrifice?{sacrifice}:{}) };ratingCache.set(move,{signature,result});return result;
 }
 
 export function formatEvaluation(value) {

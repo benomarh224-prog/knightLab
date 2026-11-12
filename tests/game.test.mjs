@@ -40,19 +40,41 @@ test('checkmate and drawn terminal positions use correct perspective', () => {
 test('move loss uses the mover’s perspective and identifies first-choice moves', () => {
   const game = parseGame('1. e4 e5 *');
   const white = game.moves[0], black = game.moves[1];
-  assert.equal(classifyMove(white, {cp:40,best:'d2d4'}, {cp:-200}).label, 'Blunder');
-  assert.equal(classifyMove(black, {cp:-40,best:'c7c5'}, {cp:70}).label, 'Mistake');
+  assert.equal(classifyMove(white, {cp:40,best:'d2d4',depth:16}, {cp:-200,depth:16}).label, 'Blunder');
+  assert.equal(classifyMove(black, {cp:-40,best:'c7c5',depth:16}, {cp:70,depth:16}).label, 'Mistake');
   assert.equal(classifyMove(white, {cp:40,best:'e2e4'}, {cp:20}).label, 'Best');
   assert.equal(classifyMove(black, {cp:40,best:'c7c5'}, {cp:-40}).loss, 0);
   assert.equal(classifyMove(white, undefined, {cp:20}), null);
 });
 test('connected account summaries count only the player’s analyzed moves', () => {
   const game = parseGame('1. e4 e5 *');
-  const scores = [{cp:30,best:'e2e4'},{cp:20,best:'c7c5'},{cp:130,best:'g1f3'}];
+  const scores = [{cp:30,best:'e2e4'},{cp:20,best:'c7c5'},{cp:130,best:'g1f3'}].map(score=>({...score,depth:16}));
   assert.equal(summarize(game,scores,'w').counts.Best,1);
   assert.equal(summarize(game,scores,'w').count,1);
   assert.equal(summarize(game,scores,'b').counts.Mistake,1);
   assert.equal(summarize(game,scores,null).count,2);
+});
+
+test('shallow, uneven or mismatched search evidence cannot turn a move into a blunder', () => {
+  const move = parseGame('1. e4 *').moves[0];
+  const before = {cp:35,best:'d2d4',depth:18,rootFen:move.before};
+  const after = {cp:-240,best:'e7e5',depth:18,rootFen:move.after};
+  assert.equal(classifyMove(move,{...before,depth:12},after),null);
+  assert.equal(classifyMove(move,before,{...after,depth:14}),null);
+  assert.equal(classifyMove(move,before,{...after,rootFen:move.before}),null);
+  assert.equal(classifyMove(move,before,after).label,'Blunder');
+  const sameSearch={...before,alternative:{cp:24,depth:18,pv:['e2e4']}};
+  assert.equal(classifyMove(move,sameSearch,after).label,'Good');
+  assert.equal(classifyMove(move,sameSearch,after).loss,11);
+});
+
+test('forced mate does not create a giant swing when the mover was already decisively lost', () => {
+  const move=parseGame('1. f3 e5 2. g4 Qh4# 0-1').moves[2];
+  const after={cp:-10000,mate:-1,best:'d8h4',depth:17};
+  assert.equal(classifyMove(move,{cp:-750,best:'g1h3',depth:18},after).label,'Good');
+  const blunder=classifyMove(move,{cp:0,best:'g1h3',depth:18},after);
+  assert.equal(blunder.label,'Blunder');
+  assert.equal(blunder.loss,500);
 });
 
 test('great moves require a clear same-depth advantage from either color’s perspective', () => {

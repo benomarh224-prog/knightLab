@@ -9,7 +9,7 @@ const cp = [0, -120, 100, -60, 0, -250, -250, -250, -250, -250, -250];
 const evaluations = parsed.fens.map((fen, index) => {
   const played = parsed.moves[index];
   const best = new Chess(fen).moves({ verbose: true }).find(move => !played || move.from + move.to + (move.promotion || '') !== played.from + played.to + (played.promotion || ''));
-  return { cp: cp[index], mate: null, depth: 12, best: best ? best.from + best.to + (best.promotion || '') : null };
+  return { cp: cp[index], mate: null, depth: 16, best: best ? best.from + best.to + (best.promotion || '') : null };
 });
 
 test('key moments select the largest reviewed swings and display them in game order', () => {

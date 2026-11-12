@@ -25,10 +25,10 @@ export function qualityGlyph(label) {
   return `<svg class="rating-glyph" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes[label] || shapes.Good}</svg>`;
 }
 
-export function selectedMoveVerdict(move, classification) {
+export function selectedMoveVerdict(move, classification, needsComparison=false) {
   if (!move) return { label: 'Starting position', symbol: '◇', tone: 'neutral', move: '—', detail: 'Select a move to see its rating.' };
   const notation = `${Number(move.before.split(' ')[5])}${move.color === 'w' ? '.' : '...'} ${move.san}`;
-  if (!classification) return { label: 'Not analyzed yet', symbol: '…', tone: 'pending', move: notation, detail: 'This move’s rating appears after analysis.' };
+  if (!classification) return { label: needsComparison?'Rating pending':'Not analyzed yet', symbol: '…', tone: 'pending', move: notation, detail: needsComparison?'The evaluations need a closer comparison.':'This move’s rating appears after analysis.' };
   const details = {
     Brilliant: 'An engine-supported piece sacrifice under ROQVYN’s independent rule. Deeper review may change this verdict.',
     Best: 'Matches the engine’s first choice.',
