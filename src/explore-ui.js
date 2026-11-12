@@ -11,6 +11,8 @@ import { assessPlayGame, MIN_ASSESSMENT_MOVES, reviewPlayGame } from './play-ass
 import { restoreLevelTestAttempt } from './level-test.js';
 
 const $ = id => document.getElementById(id);
+const MIN_ENGINE_REPLY_MS = 1400;
+
 export function createExploreUI({ context, pause, resume, playSound, onLevelTestResult = () => {}, onLevelTestAttempt = () => {}, onLevelTestDone = () => {} }) {
   const dialog = $('explore-dialog');
   const settings = $('play-settings');
@@ -214,16 +216,22 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
       render();
       return;
     }
-    if(!variation.engineTurn&&!evaluationEnabled()&&!hintRequested&&!playReply){render();return;}
+    const automaticReply = variation.engineTurn;
+    if (!automaticReply && !evaluationEnabled() && !hintRequested && !playReply) { render(); return; }
     const current = run, snapshot = variation.snapshot(), active = engine || new Engine();
     engine = active; busy = true; render();
+    const replyAt = automaticReply ? performance.now() + MIN_ENGINE_REPLY_MS : 0;
     let replied = false;
     try {
       const history = { startFen:variation.startFen, moves:variation.moves.map(move=>move.lan) };
-      const score = await active.evaluate(snapshot.fen,variation.engineTurn?playSearch($('play-difficulty').value):{milliseconds:650,skill:20},history);
+      const search = automaticReply ? playSearch($('play-difficulty').value) : { milliseconds:650, skill:20 };
+      const score = await active.evaluate(snapshot.fen, search, history);
+      // Let the player's move settle while Stockfish searches in the background.
+      const remaining = replyAt - performance.now();
+      if (remaining > 0) await new Promise(resolve => setTimeout(resolve, Math.ceil(remaining)));
       if (current !== run || !dialog.open || !variation?.matches(snapshot)) return;
       result = score;
-      if (variation.engineTurn||playReply) {
+      if (automaticReply || playReply) {
         const outcome = variation.engineMove(score.best, snapshot);
         if (outcome.status !== 'played') throw Error('Stockfish did not supply a legal move.');
         replied = true; selected = null; promotion = null; result = null;hintRequested=false;
