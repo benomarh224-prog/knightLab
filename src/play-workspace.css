@@ -119,6 +119,30 @@ body[data-page] #explore-dialog #explore-reply { margin-top: 8px; }
 #explore-dialog .play-game-menu summary { align-content: center; min-height: 44px; cursor: pointer; color: var(--ui-text); font-size: 15px; }
 #explore-dialog .play-game-menu > div { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 12px; }
 
+#explore-dialog #play-report-open { width: 100%; margin-top: 10px; }
+#play-resign-confirmation p { flex-basis: 100%; margin: 0; font-size: 14px; }
+#play-report {
+  width: min(100%, 650px);
+  margin: 0 auto;
+  padding: clamp(14px, 3vw, 30px);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-card-radius);
+  background: var(--ui-surface);
+}
+.play-report-heading h3 { margin: 0; font: 700 clamp(30px, 5vw, 44px)/1.05 'Cormorant Garamond', Georgia, serif; }
+#play-report-title:focus { outline: none; }
+#explore-dialog #play-report p { margin: 8px 0 0; font-size: 15px; line-height: 1.5; }
+#explore-dialog #play-report-status:empty { margin: 0; }
+.play-report-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 16px 0 12px; border-radius: var(--ui-radius); overflow: hidden; background: var(--ui-border); }
+.play-report-results > div { padding: 12px; background: var(--ui-soft); }
+.play-report-results dt { color: var(--ui-muted); font-size: 14px; }
+.play-report-results dd { margin: 4px 0 0; color: var(--ui-text); font-size: clamp(20px, 5vw, 32px); font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+#play-report-progress { width: 100%; height: 8px; accent-color: var(--ui-progress); }
+#explore-dialog #play-report #play-report-next { color: var(--ui-text); font-weight: 650; }
+#explore-dialog #play-report .play-report-method { font-size: 14px; }
+.play-report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.play-report-actions button { min-height: 44px; }
+
 body[data-page] #play-settings {
   width: min(510px, calc(100% - 24px));
   max-height: calc(100dvh - 24px);

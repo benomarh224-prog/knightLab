@@ -12,14 +12,26 @@ export function playMoveRows(moves) {
 
 export class PlaySession extends Variation {
   constructor(fen, { mode = 'free', color = 'w' } = {}) {
-    super(fen); this.configure(mode, color);
+    super(fen); this.resignedColor = null; this.configure(mode, color);
   }
   configure(mode, color) {
     if (!['free', 'engine'].includes(mode) || !['w', 'b'].includes(color)) throw new Error('Invalid play settings.');
     this.mode = mode; this.color = color; this.revision++;
   }
   get engineTurn() { return this.mode === 'engine' && !this.ending && this.chess.turn() !== this.color; }
-  get canUndo() { return this.mode === 'free' ? this.moves.length > 0 : this.moves.some(move => move.color === this.color); }
+  get ending() { return this.resignedColor ? 'Resignation' : super.ending; }
+  get result() {
+    if (this.resignedColor || this.chess.isCheckmate()) return (this.resignedColor || this.chess.turn()) === 'w' ? '0-1' : '1-0';
+    return this.ending ? '1/2-1/2' : '*';
+  }
+  get canUndo() { return !this.resignedColor && (this.mode === 'free' ? this.moves.length > 0 : this.moves.some(move => move.color === this.color)); }
+  resign() {
+    if (this.mode !== 'engine' || this.ending || !this.canUndo) return false;
+    this.resignedColor = this.color;
+    this.revision++;
+    return true;
+  }
+  reset() { super.reset(); this.resignedColor = null; }
   play(from, to, promotion) {
     if (this.ending) return { status: 'finished' };
     if (this.engineTurn) return { status: 'locked' };
@@ -38,8 +50,7 @@ export class PlaySession extends Variation {
     return undone;
   }
   exportPgn() {
-    const result = this.chess.isCheckmate() ? this.chess.turn() === 'w' ? '0-1' : '1-0' : this.ending ? '1/2-1/2' : '*';
-    this.chess.header('Event', 'ROQVYN Play & Explore', 'White', this.mode === 'engine' && this.color === 'b' ? 'Stockfish' : 'White', 'Black', this.mode === 'engine' && this.color === 'w' ? 'Stockfish' : 'Black', 'Result', result);
+    this.chess.header('Event', 'ROQVYN Play & Explore', 'White', this.mode === 'engine' && this.color === 'b' ? 'Stockfish' : 'White', 'Black', this.mode === 'engine' && this.color === 'w' ? 'Stockfish' : 'Black', 'Result', this.result);
     return this.chess.pgn();
   }
 }

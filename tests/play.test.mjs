@@ -17,6 +17,24 @@ test('the scoresheet keeps Black-first positions and undo in the proper move col
   play.undoTurn();
   assert.deepEqual(playMoveRows(play.moves), [{ number: 2, white: '', black: 'Nc6' }]);
 });
+test('resignation closes an engine match, locks moves, and records the winner in PGN', () => {
+  const play = new PlaySession(start, { mode: 'engine', color: 'b' });
+  assert.equal(play.resign(), false);
+  play.engineMove('e2e4', play.snapshot());
+  assert.equal(play.resign(), false);
+  play.play('e7', 'e5');
+  const pending = play.snapshot();
+  assert.equal(play.resign(), true);
+  assert.equal(play.result, '1-0');
+  assert.equal(play.engineTurn, false);
+  assert.equal(play.engineMove('g1f3', pending).status, 'stale');
+  assert.deepEqual(play.undoTurn(), []);
+  assert.match(play.exportPgn(), /\[Result "1-0"\]/);
+  play.reset();
+  assert.equal(play.result, '*');
+  assert.equal(play.engineTurn, true);
+  assert.equal(new PlaySession(start).resign(), false);
+});
 test('computer mode locks the engine side and accepts its valid response', () => {
   const play = new PlaySession(start, {mode:'engine', color:'w'});
   assert.equal(play.engineTurn, false);

@@ -373,7 +373,7 @@
     <section id="explore-course-practice" class="explore-course-practice" aria-label="Course practice" hidden>
       <strong id="explore-course-goal"></strong><p id="explore-course-progress" role="status"></p><button type="button" id="explore-course-return">Back to lesson</button>
     </section>
-    <div class="play-layout">
+    <div class="play-layout" id="play-workspace">
       <div class="play-board-pane">
         <div class="explore-score"><span id="explore-turn">White to move</span><span id="play-evaluation-perspective" hidden>White’s view <strong id="explore-evaluation">—</strong></span></div>
         <div class="practice-board-frame"><div id="explore-board" class="chess-board practice-board" role="group" aria-label="Play board: select a piece and destination"></div></div>
@@ -386,6 +386,7 @@
         <p id="explore-feedback" class="practice-feedback" role="status"></p>
         <p id="explore-best" role="status" hidden></p>
         <button type="button" id="explore-reply" class="practice-secondary" hidden>Play engine reply</button>
+        <button type="button" id="play-report-open" class="primary-button" hidden>View game report</button>
       </div>
       <aside class="play-sidebar" aria-labelledby="play-moves-title">
         <div class="play-scoresheet">
@@ -401,10 +402,27 @@
             <button type="button" id="play-new" class="practice-secondary">New game</button>
             <button type="button" id="explore-reset" class="practice-secondary" hidden>Reset position</button>
             <button type="button" id="play-export" class="practice-secondary">Export PGN</button>
+            <button type="button" id="play-resign" class="practice-secondary" aria-controls="play-resign-confirmation" aria-expanded="false" hidden>Resign</button>
           </div>
+          <div id="play-resign-confirmation" hidden><p>Resigning ends the game as a loss.</p><button type="button" id="play-resign-confirm" class="practice-secondary">Confirm resignation</button><button type="button" id="play-resign-cancel" class="practice-secondary">Keep playing</button></div>
         </details>
       </aside>
     </div>
+    <section id="play-report" aria-labelledby="play-report-title" hidden>
+      <header class="play-report-heading"><h3 id="play-report-title" tabindex="-1"></h3><p id="play-report-game"></p></header>
+      <div class="play-report-content">
+        <dl class="play-report-results"><div><dt>Estimated accuracy</dt><dd id="play-report-accuracy">—</dd></div><div><dt>Performance level</dt><dd id="play-report-level">—</dd></div></dl>
+        <progress id="play-report-progress" value="0" max="1" aria-label="Game report progress"></progress>
+        <p id="play-report-status" role="status"></p>
+        <p id="play-report-next" hidden></p>
+        <p class="play-report-method">Accuracy uses the Lichess winning-chance method with Stockfish evaluations. The performance level describes this match.</p>
+      </div>
+      <div class="play-report-actions">
+        <button type="button" id="play-report-again" class="primary-button">Play again</button>
+        <button type="button" id="play-report-retry" class="practice-secondary" hidden>Retry review</button>
+        <button type="button" id="play-report-back" class="practice-secondary">Back to board</button>
+      </div>
+    </section>
     <dialog id="play-settings" class="play-settings" aria-labelledby="play-settings-title">
       <header class="dialog-header"><h3 id="play-settings-title">Game settings</h3><button type="button" class="icon-button close-dialog" aria-label="Close game settings">×</button></header>
       <div class="play-settings-grid">
