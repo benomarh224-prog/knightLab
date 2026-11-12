@@ -39,6 +39,7 @@
 
           <button class="nav-item" id="games-nav" type="button"><span class="nav-symbol" data-icon="grid"></span><span class="nav-copy"><strong>Analyze</strong><small>Review every move</small></span><span class="nav-chevron" data-icon="right"></span></button>
           <a class="nav-item" href="/train/" data-route="train"><span class="nav-symbol" data-icon="target"></span><span class="nav-copy"><strong>Train</strong><small>Tactics, coordinates &amp; your mistakes</small></span><span class="nav-chevron" data-icon="right"></span></a><button class="nav-item" id="play-open" type="button"><span class="nav-symbol" data-icon="spark"></span><span class="nav-copy"><strong>Play</strong><small>Face Stockfish or explore</small></span><span class="nav-chevron" data-icon="right"></span></button>
+          <a class="nav-item" href="/train/level-test/" data-route="leveltest"><span class="nav-symbol" data-icon="chart-bars"></span><span class="nav-copy"><strong>Level Test</strong><small>Play Stockfish and see your performance</small></span><span class="nav-chevron" data-icon="right"></span></a>
           <button class="nav-item" id="library-nav" type="button"><span class="nav-symbol" data-icon="collection"></span><span class="nav-copy"><strong>My games</strong><small>Your Chess.com collection</small></span><span class="nav-count" id="game-count">0</span><span class="nav-chevron" data-icon="right"></span></button><a class="nav-item" href="/account/" data-route="account"><span class="nav-symbol" data-icon="user"></span><span class="nav-copy"><strong data-account-label>Sign in</strong><small>Your progress, on every device</small></span><span class="nav-chevron" data-icon="right"></span></a><details class="mobile-nav-more"><summary>More options</summary><div class="mobile-nav-tools"><button type="button" class="theme-toggle" data-theme-toggle><span>Dark mode</span><span class="theme-switch" aria-hidden="true"><i></i></span><span data-theme-state aria-hidden="true">Off</span></button><button type="button" data-audio-open>Sound settings</button><button id="nav-import" type="button"><span data-icon="upload"></span>Import PGN</button><button id="nav-guide" type="button"><span data-icon="help"></span>Quick guide</button></div></details>
         </nav></div>
         <div class="topbar-actions"><button id="sidebar-import" class="quiet-button nav-tool" type="button" aria-label="Import PGN" title="Import PGN"><span data-icon="upload"></span></button><button id="how-it-works" class="quiet-button nav-tool" type="button" aria-label="Quick guide" title="Quick guide"><span data-icon="help"></span></button><button id="open-connect" class="primary-button" type="button"><span data-icon="search"></span><span>Find games</span></button><button id="workspace-menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-haspopup="dialog" aria-controls="navigation-dialog"><span class="menu-bars" aria-hidden="true"><i></i><i></i><i></i></span></button></div>
@@ -58,7 +59,10 @@
                   <a id="home-analyze" class="home-action" href="/analyze/" data-route="analyze">Analyze a game <span aria-hidden="true">→</span></a>
                   <a class="home-inline-link" href="/learn/" data-route="learn">Explore courses <span aria-hidden="true">→</span></a>
                 </div>
-                <a id="home-try-sample" class="home-inline-link home-sample-link" href="/analysis/?sample=opera" data-route="analysis">Try a sample game <span aria-hidden="true">→</span></a>
+                <div class="home-shortcuts">
+                  <a id="home-try-sample" class="home-inline-link home-sample-link" href="/analysis/?sample=opera" data-route="analysis">Try a sample game <span aria-hidden="true">→</span></a>
+                  <a class="home-inline-link home-sample-link home-level-test" href="/train/level-test/" data-route="leveltest">Test your level <span aria-hidden="true">→</span></a>
+                </div>
               </div>
             </div>
           </section>
@@ -207,6 +211,7 @@
     <section class="studio-skills studio-panel" aria-labelledby="train-skills-title">
       <h2 id="train-skills-title">Practice by skill</h2>
       <ul class="studio-skill-list">
+        <li><a class="studio-row" href="/train/level-test/" data-route="leveltest"><span><strong>Level Test</strong><small>Play Stockfish and get your accuracy and a suggested difficulty.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/learn/tactical-vision/" data-route="tactics"><span><strong>Tactical Vision</strong><small>Spot checks, captures and threats.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/learn/calculation/" data-route="calculation"><span><strong>Calculation Lab</strong><small>Work through forcing lines several moves deep.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/train/opening-test/" data-route="openingtest"><span><strong>Opening Test</strong><small>Recall positions from your completed opening lessons.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
@@ -215,6 +220,35 @@
       </ul>
     </section>
     <section class="train-mistakes" aria-labelledby="train-mistakes-title"><h2 id="train-mistakes-title">Practice mistakes from your games</h2><p>Choose a reviewed game and which side to practice. Incomplete reviews produce provisional exercises.</p><div id="train-setup"><label for="train-review">Reviewed game</label><select id="train-review"></select><label for="train-side">Practice mistakes by</label><select id="train-side"><option value="both">Both players</option><option value="w">White</option><option value="b">Black</option></select></div><p id="train-status" role="status"></p><div class="entry-actions"><button id="train-start" class="primary-button" disabled>Practice mistakes</button><button id="train-review-game" class="practice-secondary">Open game review</button><a id="train-choose-game" href="/analyze/" data-route="analyze">Choose a game →</a></div></section>
+  </div>
+</section>
+<section class="entry-page studio-page level-test-page" data-page-view="leveltest" aria-labelledby="level-test-title" hidden>
+  <header class="studio-heading">
+    <h1 id="level-test-title" tabindex="-1">Level Test</h1>
+    <p>Play Stockfish to see your accuracy, performance level and suggested difficulty.</p>
+  </header>
+  <div class="studio-layout level-test-layout">
+    <form id="level-test-form" class="studio-panel" aria-labelledby="level-test-setup-title">
+      <h2 id="level-test-setup-title">Set up your match</h2>
+      <div class="level-test-fields">
+        <label for="level-test-difficulty">Opponent difficulty<select id="level-test-difficulty"></select></label>
+        <label for="level-test-color">Play as<select id="level-test-color"><option value="w">White</option><option value="b">Black</option></select></label>
+      </div>
+      <p class="studio-meta">Play at least <span id="level-test-minimum">10</span> moves of your own for a level. Hints, live evaluation and undo are off during the test.</p>
+      <button type="submit" class="primary-button" id="level-test-start">Start level test <span data-icon="arrow" aria-hidden="true"></span></button>
+    </form>
+    <section class="studio-panel studio-sample level-test-last" aria-labelledby="level-test-result-title">
+      <h2 id="level-test-result-title" tabindex="-1">Latest result</h2>
+      <div id="level-test-empty">
+        <p class="studio-meta">Your first scored test will appear here.</p>
+        <p class="studio-meta">You can finish by resigning from Game actions if you’d like to see your report sooner.</p>
+      </div>
+      <div id="level-test-result" hidden>
+        <p class="studio-meta" id="level-test-result-meta"></p>
+        <dl class="play-report-results"><div><dt>Estimated accuracy</dt><dd id="level-test-result-accuracy"></dd></div><div><dt>Performance level</dt><dd id="level-test-result-level"></dd></div></dl>
+        <p id="level-test-result-next"></p><p class="studio-meta" id="level-test-result-storage"></p>
+      </div>
+    </section>
   </div>
 </section>
 <section class="entry-page opening-test-page" data-page-view="openingtest" aria-labelledby="opening-test-title" hidden>
@@ -406,6 +440,7 @@
           </div>
           <div id="play-resign-confirmation" hidden><p>Resigning ends the game as a loss.</p><button type="button" id="play-resign-confirm" class="practice-secondary">Confirm resignation</button><button type="button" id="play-resign-cancel" class="practice-secondary">Keep playing</button></div>
         </details>
+        <a id="play-level-test-link" href="/train/level-test/" data-route="leveltest">Go to Level Test <span aria-hidden="true">→</span></a>
       </aside>
     </div>
     <section id="play-report" aria-labelledby="play-report-title" hidden>
@@ -421,6 +456,7 @@
         <button type="button" id="play-report-again" class="primary-button">Play again</button>
         <button type="button" id="play-report-retry" class="practice-secondary" hidden>Retry review</button>
         <button type="button" id="play-report-back" class="practice-secondary">Back to board</button>
+        <button type="button" id="play-report-done" class="practice-secondary" hidden>Done</button>
       </div>
     </section>
     <dialog id="play-settings" class="play-settings" aria-labelledby="play-settings-title">

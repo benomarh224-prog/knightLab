@@ -120,6 +120,8 @@ body[data-page] #explore-dialog #explore-reply { margin-top: 8px; }
 #explore-dialog .play-game-menu > div { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0 12px; }
 
 #explore-dialog #play-report-open { width: 100%; margin-top: 10px; }
+#play-level-test-link { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; gap: 8px; color: var(--ui-link); font-weight: 600; }
+#explore-dialog[data-level-test="true"] .play-board-actions { grid-template-columns: minmax(64px, auto); justify-content: end; }
 #play-resign-confirmation p { flex-basis: 100%; margin: 0; font-size: 14px; }
 #play-report {
   width: min(100%, 650px);

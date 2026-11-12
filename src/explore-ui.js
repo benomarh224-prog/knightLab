@@ -10,7 +10,7 @@ import { PLAY_LEVELS,playSearch } from './play-settings.js';
 import { assessPlayGame, MIN_ASSESSMENT_MOVES, reviewPlayGame } from './play-assessment.js';
 
 const $ = id => document.getElementById(id);
-export function createExploreUI({ context, pause, resume, playSound }) {
+export function createExploreUI({ context, pause, resume, playSound, onLevelTestResult = () => {}, onLevelTestDone = () => {} }) {
   const dialog = $('explore-dialog');
   const settings = $('play-settings');
   const settingsButton = $('play-settings-open');
@@ -29,6 +29,8 @@ export function createExploreUI({ context, pause, resume, playSound }) {
   let hintRequested=false,painted=null;
   let scoresheetSession, scoresheetRevision;
   let assessment = null, assisted = false;
+  let testMode = false, previousDifficulty = null;
+  const evaluationEnabled = () => !testMode && $('play-show-evaluation').checked;
   function cancel() { run++; engine?.destroy(); engine = null; busy = false; }
   function reset() { resumeReview = false; cancel(); clearAssessment(); if (dialog.open) dialog.close(); variation = null; }
 
@@ -71,6 +73,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     $('play-report-next').hidden = !report.recommended;
     $('play-report-next').textContent = report.recommended ? `Recommended opponent: Stockfish ${PLAY_LEVELS[report.recommended].label}.` : '';
     $('play-report-again').textContent = report.recommended ? `Play again · ${PLAY_LEVELS[report.recommended].label}` : 'Play again';
+    $('play-report-done').hidden = !testMode;
   }
   async function runAssessment() {
     const current = assessment;
@@ -85,6 +88,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
       if (!active()) return;
       current.result = assessPlayGame(current.game, current.scores);
       current.state = current.result.accuracy == null ? 'error' : 'done';
+      if (testMode && current.result.level) onLevelTestResult(current.game, current.result);
     } catch { if (active()) current.state = 'error'; }
     finally {
       reviewer.destroy();
@@ -142,16 +146,18 @@ export function createExploreUI({ context, pause, resume, playSound }) {
       $('explore-course-progress').textContent=variation.ending?'Position finished. Review your decisions or return to the lesson.':count>=coursePractice.moves?'Practice target reached. Keep playing or return to the lesson.':`${count} / ${coursePractice.moves} of your moves · Apply the idea and compare replies.`;
     }
     $('explore-turn').textContent = variation.ending ? `${variation.ending}${variation.result === '1-0' ? ' · White wins' : variation.result === '0-1' ? ' · Black wins' : ''}` : `${chess.turn() === 'w' ? 'White' : 'Black'} to move${variation.engineTurn ? ' · Stockfish' : variation.mode === 'engine' ? ' · Your turn' : ''}${chess.isCheck() ? ' · Check' : ''}`;
-    $('play-evaluation-perspective').hidden=!$('play-show-evaluation').checked;
+    $('play-evaluation-perspective').hidden=!evaluationEnabled();
     $('explore-evaluation').textContent=result?formatEvaluation(result):'—';
     $('explore-best').hidden=!hintRequested;
     if(hintRequested){
       const suggestion=uciToSan(variation.fen,result?.best);
       $('explore-best').textContent=busy?'Finding a suggestion…':suggestion==='—'?'No suggestion available. Try Hint again.':`Suggested move: ${suggestion} · Depth ${result.depth}`;
     }
-    $('play-hint').disabled=busy||variation.engineTurn||Boolean(variation.ending);
+    $('play-hint').hidden=testMode;
+    $('play-hint').disabled=testMode||busy||variation.engineTurn||Boolean(variation.ending);
     renderScoresheet(moves);
-    $('explore-undo').disabled = !variation.canUndo;
+    $('explore-undo').hidden = testMode;
+    $('explore-undo').disabled = testMode || !variation.canUndo;
     $('explore-undo').setAttribute('aria-label', variation.mode === 'engine' ? 'Undo turn' : 'Undo move');
     $('explore-reset').hidden = !fromPosition;
     $('explore-reset').disabled = !moves.length;
@@ -162,17 +168,19 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     $('play-settings-summary').hidden = fromPosition || viewingReport;
     $('explore-origin').hidden = !fromPosition || viewingReport;
     $('play-settings-summary').textContent = variation.mode === 'free' ? 'Free play · Both sides' : `Stockfish · ${PLAY_LEVELS[$('play-difficulty').value].label} · ${variation.color === 'w' ? 'White' : 'Black'}`;
-    $('play-color-field').hidden = variation.mode === 'free';
-    $('play-difficulty-field').hidden=variation.mode==='free';
+    $('play-color-field').hidden = testMode || variation.mode === 'free';
+    $('play-difficulty-field').hidden=testMode||variation.mode==='free';
+    for (const id of ['play-mode','play-origin','play-show-evaluation']) $(id).closest('label').hidden = testMode;
     $('play-difficulty-description').textContent=PLAY_LEVELS[$('play-difficulty').value].description;
     $('play-export').disabled = !moves.length;
     const finishedMatch = !fromPosition && variation.mode === 'engine' && Boolean(variation.ending);
-    for (const id of ['play-mode','play-color','play-difficulty','play-origin']) $(id).disabled = finishedMatch;
+    for (const id of ['play-mode','play-color','play-difficulty','play-origin','play-show-evaluation']) $(id).disabled = testMode || finishedMatch && id !== 'play-show-evaluation';
     $('play-resign').hidden = fromPosition || variation.mode !== 'engine' || Boolean(variation.ending) || !variation.canUndo;
     $('play-report-open').hidden = !assessment;
+    $('play-level-test-link').hidden = testMode;
     $('explore-board').setAttribute('aria-label', `Play board, ${variation.ending || (chess.turn() === 'w' ? 'White' : 'Black') + ' to move'}. Select a piece and its destination.`);
     $('explore-promotion').hidden = !promotion;
-    if (variation.ending) $('explore-feedback').textContent = variation.canUndo ? 'Undo to try another idea, or start a new game.' : 'Start a new game when you’re ready.';
+    if (variation.ending) $('explore-feedback').textContent = !testMode && variation.canUndo ? 'Undo to try another idea, or start a new game.' : 'Start a new game when you’re ready.';
     if (focusSquare) $('explore-board').querySelector(`[data-square="${focusSquare}"]`)?.focus({ preventScroll: true });
   }
   async function evaluate({playReply=false}={}) {
@@ -184,7 +192,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
       render();
       return;
     }
-    if(!variation.engineTurn&&!$('play-show-evaluation').checked&&!hintRequested&&!playReply){render();return;}
+    if(!variation.engineTurn&&!evaluationEnabled()&&!hintRequested&&!playReply){render();return;}
     const current = run, snapshot = variation.snapshot(), active = new Engine();
     engine = active; busy = true; render();
     let replied = false;
@@ -222,21 +230,26 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     cancel(); clearAssessment(); closeResignation();
     const fen = $('play-origin').value === 'current' ? originFen : new Chess().fen();
     variation = new PlaySession(fen, { mode: $('play-mode').value, color: $('play-color').value });
-    assisted = $('play-show-evaluation').checked;
+    assisted = evaluationEnabled();
     flipped = variation.mode === 'engine' ? variation.color === 'b' : context().flipped;
     selected = null; promotion = null; result = null;hintRequested=false;
     $('explore-origin').textContent = coursePractice?.title || 'From your analysis position';
     $('explore-feedback').textContent = variation.engineTurn ? 'Stockfish is preparing the first move.' : 'Tap a piece, then a highlighted square to play.';
     evaluate();
   }
-  function open(fromGame, fenOverride = null, practice = null) {
+  function open(fromGame, fenOverride = null, practice = null, testOptions = null) {
+    testMode = Boolean(testOptions);
+    previousDifficulty = testMode ? $('play-difficulty').value : null;
+    dialog.dataset.levelTest = String(testMode);
+    $('explore-title').textContent = testMode ? 'Level Test' : 'Play chess';
     coursePractice=practice;
     $('play-origin').querySelector('option[value="current"]').textContent=practice?'Course position':'Analysis position';
     const current = context(); savedGame = current.parsed; resumeReview = pause();
     originFen = fenOverride || current.parsed.fens[current.ply];
     $('play-origin').value = fromGame ? 'current' : 'new';
     $('play-mode').value = practice?'engine':fromGame ? 'free' : 'engine';
-    $('play-color').value = practice?.color||(fromGame ? new Chess(originFen).turn() : 'w');
+    $('play-color').value = testOptions?.color || practice?.color || (fromGame ? new Chess(originFen).turn() : 'w');
+    if (testOptions) $('play-difficulty').value = testOptions.difficulty;
     dialog.querySelector('.play-game-menu').open = false;
     dialog.showModal(); startPosition();
   }
@@ -281,7 +294,7 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     $('explore-feedback').textContent = variation.engineTurn ? 'Stockfish will play the next move.' : 'Settings updated. Choose your next move.';
     evaluate();
   };
-  $('play-show-evaluation').onchange=()=>{if($('play-show-evaluation').checked&&!variation.ending)assisted=true;evaluate();};
+  $('play-show-evaluation').onchange=()=>{if(evaluationEnabled()&&!variation.ending)assisted=true;evaluate();};
   $('play-hint').onclick=()=>{assisted=true;hintRequested=true;evaluate();};
   function newGame() {
     $('play-origin').value = 'new'; startPosition();
@@ -315,13 +328,20 @@ export function createExploreUI({ context, pause, resume, playSound }) {
     setReportView(false);
     $('explore-board').querySelector('[tabindex="0"]')?.focus({ preventScroll: true });
   };
+  $('play-report-done').onclick = () => { dialog.close(); onLevelTestDone(); };
   $('play-export').onclick = () => {
     if (!variation?.moves.length) return;
     const url = URL.createObjectURL(new Blob([variation.exportPgn()], {type:'application/x-chess-pgn'}));
     const link = document.createElement('a'); link.href = url; link.download = 'roqvyn-play.pgn'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
   };
-  dialog.addEventListener('close', () => { if(settings.open)settings.close(); cancel(); clearAssessment(); variation = null; if (resumeReview && savedGame === context().parsed) resume(); resumeReview = false; });
-  return { reset, practice: value=>open(true,value.fen,value), tryMove: (fen, uci) => {
+  dialog.addEventListener('close', () => {
+    if (settings.open) settings.close();
+    cancel(); clearAssessment(); variation = null;
+    if (testMode && previousDifficulty) $('play-difficulty').value = previousDifficulty;
+    if (resumeReview && savedGame === context().parsed) resume();
+    resumeReview = false;
+  });
+  return { reset, levelTest: options=>open(false,null,null,options), practice: value=>open(true,value.fen,value), tryMove: (fen, uci) => {
     if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci || '')) return;
     open(true, fen); $('explore-origin').textContent = 'Trying the coach’s idea · From before the selected move';
     attempt(uci.slice(0,2), uci.slice(2,4), uci[4]);

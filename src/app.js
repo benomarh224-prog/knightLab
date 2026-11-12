@@ -8,6 +8,7 @@ import { evaluationReady, depthReady, positionSearch, strongerScore, DEFAULT_REV
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
+import { createLevelTestUI } from './level-test.js';
 import { createInlineAnalysis } from './inline-analysis.js';
 import { analysisNavigation } from './analysis-navigation.js';
 import { primaryMoveThreat, arrowPath } from './board-visuals.js';
@@ -168,9 +169,12 @@ const training = createTrainingUI({
 const explorer = createExploreUI({
   context: () => ({ parsed: state.parsed, ply: state.ply, flipped: state.flipped }),
   pause: pauseWorkspace,
-  resume: startAnalysis,
+  resume: () => { if (router?.page === 'analysis') startAnalysis(); },
   playSound,feedbackSound,
+  onLevelTestResult: (game, report) => levelTest.save(game, report),
+  onLevelTestDone: () => levelTest.focusResult(),
 });
+const levelTest = createLevelTestUI({ storage: deviceStorage, start: options => explorer.levelTest(options) });
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound,navigate:goTo});
 const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove,onInspect:inspectSelectedMove});
@@ -1130,6 +1134,7 @@ router=createPageRouter(page=>{
   else {if(coachDemo.active)finishCoachDemo({resume:false});saveReviewPosition();if(inline.active)inline.exit(false);stopAnalysis();}
   if(page==='games')setLibraryOpen(true);
   if(page==='account'){account.open();$('account-title').focus({preventScroll:true});}
+  if(page==='leveltest'){levelTest.render();$('level-test-title').focus({preventScroll:true});}
   if(page==='analyze'){
     $('analysis-resume').hidden=!reviewOpened;
     $('analysis-resume-game').textContent=`${$('workspace-title').textContent} · ${state.ply?`Move ${Math.ceil(state.ply/2)}`:'Starting position'}`;

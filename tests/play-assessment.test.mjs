@@ -2,9 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseGame } from '../src/game.js';
 import { assessPlayGame, reviewPlayGame } from '../src/play-assessment.js';
+import { readLevelTestResult } from '../src/level-test.js';
+import { pageFromPath } from '../src/routes.js';
 
 const game = parseGame('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 *');
 const score = cp => ({ cp, mate: null, depth: 14 });
+
+test('the dedicated Level Test route and its saved result work on a fresh visit', () => {
+  assert.equal(pageFromPath('/train/level-test/?from=menu'), 'leveltest');
+  const result = { accuracy:81, moves:15, level:'Solid', outcome:'draw', difficulty:'casual', recommended:'casual' };
+  const storage = value => ({ getItem: () => JSON.stringify(value) });
+  assert.deepEqual(readLevelTestResult(storage(result)), result);
+  assert.equal(readLevelTestResult(storage({ ...result, moves:2 })), null);
+  assert.equal(readLevelTestResult(storage({ ...result, recommended:'invalid' })), null);
+  assert.equal(readLevelTestResult({ getItem() { throw Error('storage blocked'); } }), null);
+});
 
 test('reports the human side accuracy and recommends an adjacent difficulty from the result', () => {
   const steady = game.fens.map(() => score(0));

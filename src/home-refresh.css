@@ -172,6 +172,8 @@ html[data-theme="dark"] .home-refresh {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+.home-refresh .home-shortcuts { display: flex; flex-wrap: wrap; gap: 0 18px; }
+.home-refresh .home-level-test { color: var(--home-accent); }
 .home-refresh .home-daily-band { background: var(--home-plan); }
 
 .home-refresh .home-daily-layout,
