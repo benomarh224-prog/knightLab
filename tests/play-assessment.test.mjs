@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseGame } from '../src/game.js';
 import { assessPlayGame, reviewPlayGame } from '../src/play-assessment.js';
-import { readLevelTestResult } from '../src/level-test.js';
+import { readLevelTestResult, restoreLevelTestAttempt } from '../src/level-test.js';
 import { pageFromPath } from '../src/routes.js';
 
 const game = parseGame('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 *');
@@ -16,6 +16,19 @@ test('the dedicated Level Test route and its saved result work on a fresh visit'
   assert.equal(readLevelTestResult(storage({ ...result, moves:2 })), null);
   assert.equal(readLevelTestResult(storage({ ...result, recommended:'invalid' })), null);
   assert.equal(readLevelTestResult({ getItem() { throw Error('storage blocked'); } }), null);
+});
+
+test('a saved Level Test restores its turn, legal history and final result', () => {
+  const snapshot = { color:'b', difficulty:'casual', moves:['e2e4','c7c5','g1f3','d7d6'], resigned:false };
+  const resumed = restoreLevelTestAttempt(snapshot);
+  assert.equal(resumed.engineTurn, true);
+  assert.deepEqual(resumed.moves.map(move=>move.san), ['e4','c5','Nf3','d6']);
+  assert.equal(restoreLevelTestAttempt({...snapshot, resigned:true}).result,'1-0');
+  assert.equal(restoreLevelTestAttempt({...snapshot, moves:['e2e5']}), null);
+  assert.equal(restoreLevelTestAttempt({...snapshot, resigned:true, moves:['e2e4']}), null);
+  const mate = {...snapshot, moves:['f2f3','e7e5','g2g4','d8h4']};
+  assert.equal(restoreLevelTestAttempt(mate).ending, 'Checkmate');
+  assert.equal(restoreLevelTestAttempt({...mate, moves:[...mate.moves,'e2e4']}), null);
 });
 
 test('reports the human side accuracy and recommends an adjacent difficulty from the result', () => {

@@ -228,6 +228,12 @@
     <p>Play Stockfish to see your accuracy, performance level and suggested difficulty.</p>
   </header>
   <div class="studio-layout level-test-layout">
+    <section id="level-test-resume-panel" class="studio-panel" aria-labelledby="level-test-resume-title" hidden>
+      <h2 id="level-test-resume-title" tabindex="-1">Test in progress</h2>
+      <p id="level-test-resume-meta" class="studio-meta"></p>
+      <button id="level-test-resume" class="primary-button" type="button">Resume test</button>
+      <details id="level-test-discard-options"><summary>Start over</summary><p class="studio-meta">Discard this test to choose a new match.</p><button id="level-test-discard" class="studio-quiet" type="button">Discard saved test</button></details>
+    </section>
     <form id="level-test-form" class="studio-panel" aria-labelledby="level-test-setup-title">
       <h2 id="level-test-setup-title">Set up your match</h2>
       <div class="level-test-fields">
@@ -241,7 +247,6 @@
       <h2 id="level-test-result-title" tabindex="-1">Latest result</h2>
       <div id="level-test-empty">
         <p class="studio-meta">Your first scored test will appear here.</p>
-        <p class="studio-meta">You can finish by resigning from Game actions if you’d like to see your report sooner.</p>
       </div>
       <div id="level-test-result" hidden>
         <p class="studio-meta" id="level-test-result-meta"></p>
@@ -417,6 +422,8 @@
           <button type="button" id="play-hint" class="practice-secondary" aria-controls="explore-best">Hint</button>
           <button type="button" id="explore-flip" class="practice-secondary" aria-label="Flip board">Flip</button>
         </div>
+        <div id="play-test-progress" hidden><p id="play-test-count"></p><button type="button" id="play-test-finish" class="primary-button" aria-controls="play-resign-confirmation" aria-expanded="false" hidden>Finish &amp; score</button></div>
+        <div id="play-resign-confirmation" hidden><p>Resigning ends the game as a loss.</p><button type="button" id="play-resign-confirm" class="practice-secondary">Confirm resignation</button><button type="button" id="play-resign-cancel" class="practice-secondary">Keep playing</button></div>
         <p id="explore-feedback" class="practice-feedback" role="status"></p>
         <p id="explore-best" role="status" hidden></p>
         <button type="button" id="explore-reply" class="practice-secondary" hidden>Play engine reply</button>
@@ -438,7 +445,6 @@
             <button type="button" id="play-export" class="practice-secondary">Export PGN</button>
             <button type="button" id="play-resign" class="practice-secondary" aria-controls="play-resign-confirmation" aria-expanded="false" hidden>Resign</button>
           </div>
-          <div id="play-resign-confirmation" hidden><p>Resigning ends the game as a loss.</p><button type="button" id="play-resign-confirm" class="practice-secondary">Confirm resignation</button><button type="button" id="play-resign-cancel" class="practice-secondary">Keep playing</button></div>
         </details>
         <a id="play-level-test-link" href="/train/level-test/" data-route="leveltest">Go to Level Test <span aria-hidden="true">→</span></a>
       </aside>
@@ -448,6 +454,7 @@
       <div class="play-report-content">
         <dl class="play-report-results"><div><dt>Estimated accuracy</dt><dd id="play-report-accuracy">—</dd></div><div><dt>Performance level</dt><dd id="play-report-level">—</dd></div></dl>
         <progress id="play-report-progress" value="0" max="1" aria-label="Game report progress"></progress>
+        <p id="play-report-count" hidden></p>
         <p id="play-report-status" role="status"></p>
         <p id="play-report-next" hidden></p>
         <p class="play-report-method">Accuracy uses the Lichess winning-chance method with Stockfish evaluations. The performance level describes this match.</p>

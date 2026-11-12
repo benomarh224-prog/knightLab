@@ -172,6 +172,7 @@ const explorer = createExploreUI({
   resume: () => { if (router?.page === 'analysis') startAnalysis(); },
   playSound,feedbackSound,
   onLevelTestResult: (game, report) => levelTest.save(game, report),
+  onLevelTestAttempt: attempt => levelTest.saveAttempt(attempt),
   onLevelTestDone: () => levelTest.focusResult(),
 });
 const levelTest = createLevelTestUI({ storage: deviceStorage, start: options => explorer.levelTest(options) });

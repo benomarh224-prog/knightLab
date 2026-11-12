@@ -142,12 +142,15 @@ body[data-page] .studio-page #daily-level-help { margin-bottom: 12px; }
 .studio-page #train-choose-game { display: inline-flex; min-height: 44px; align-items: center; color: var(--ui-link); }
 .studio-page .entry-actions { gap: 8px 14px; }
 
-.level-test-layout > form { grid-column: span 7; }
+.level-test-layout > :is(form, #level-test-resume-panel) { grid-column: span 7; }
 .level-test-layout > .level-test-last { grid-column: span 5; }
 .level-test-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 16px 0; }
 .level-test-fields label { display: grid; gap: 6px; min-width: 0; font-size: 15px; font-weight: 600; }
 body[data-page] .level-test-fields select { width: 100%; min-width: 0; max-width: none; min-height: 44px; padding: 8px; font-size: 16px; }
 #level-test-start { margin-top: 16px; }
+#level-test-resume { margin: 14px 0 6px; }
+#level-test-discard-options summary { display: list-item; align-content: center; min-height: 44px; color: var(--ui-link); cursor: pointer; }
+#level-test-discard { margin-top: 8px; }
 #level-test-result-title:focus { outline: none; }
 #level-test-result-next { margin: 0; color: var(--ui-text); font-weight: 650; font-size: 15px; }
 
@@ -164,5 +167,5 @@ body[data-page] .level-test-fields select { width: 100%; min-width: 0; max-width
 @media (max-width: 740px) {
   .studio-layout { grid-template-columns: minmax(0,1fr); }
   .studio-layout > :is(.studio-review-tools, .daily-training, .studio-sample, .studio-skills) { grid-column: 1; }
-  .level-test-layout > form { grid-column: 1; }
+  .level-test-layout > :is(form, #level-test-resume-panel) { grid-column: 1; }
 }
