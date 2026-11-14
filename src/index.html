@@ -205,10 +205,11 @@
     <p>Start today’s plan or pick a skill to practice.</p>
   </header>
   <div class="studio-layout studio-training-layout">
-    <section id="daily-training" class="daily-training" aria-labelledby="daily-heading"><div class="daily-heading"><h2 id="daily-heading" tabindex="-1">Daily training</h2><span id="daily-date"></span></div><p id="daily-description">Three focused exercises · About 10 minutes.</p><div class="daily-progress-row"><span id="daily-count" role="status" aria-live="polite">0 of 3 exercises complete</span><progress id="daily-progress" value="0" max="3" aria-label="Daily exercises completed"></progress></div><button type="button" id="daily-start">Start daily training →</button><ol id="daily-tasks"></ol><details class="daily-options"><summary>Session options</summary><div class="daily-level-row"><label for="daily-level">Starting difficulty</label><select id="daily-level" aria-describedby="daily-level-help"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div><p id="daily-level-help"></p></details><section id="daily-report" aria-labelledby="daily-report-title" hidden></section></section>
+    <section id="daily-training" class="daily-training" aria-labelledby="daily-heading"><div class="daily-heading"><h2 id="daily-heading" tabindex="-1">Daily training</h2><span id="daily-date"></span></div><p id="daily-description">Three focused exercises · About 10 minutes.</p><div class="daily-progress-row"><span id="daily-count" role="status" aria-live="polite">0 of 3 exercises complete</span><progress id="daily-progress" value="0" max="3" aria-label="Daily exercises completed"></progress></div><button type="button" id="daily-start">Start daily training →</button><ol id="daily-tasks"></ol><details class="daily-options"><summary>Session options</summary><div class="daily-level-row"><label for="daily-level">Starting difficulty</label><select id="daily-level" aria-describedby="daily-level-help"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div><p id="daily-level-help"></p></details><section id="daily-report" aria-labelledby="daily-report-title" hidden></section><a class="weekly-entry subtle-link" href="/train/weekly/" data-route="weekly">Weekly training report <span aria-hidden="true">→</span></a></section>
     <section class="studio-skills studio-panel" aria-labelledby="train-skills-title">
       <h2 id="train-skills-title">Practice by skill</h2>
       <ul class="studio-skill-list">
+        <li><a class="studio-row" href="/train/endgames/" data-route="endgames"><span><strong>Endgame Lab</strong><small>Practice checkmate, promotion and saving a draw.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/train/level-test/" data-route="leveltest"><span><strong>Level Test</strong><small>Play full-strength Stockfish for an Elo estimate.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/learn/tactical-vision/" data-route="tactics"><span><strong>Tactical Vision</strong><small>Spot checks, captures and threats.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
         <li><a class="studio-row" href="/learn/calculation/" data-route="calculation"><span><strong>Calculation Lab</strong><small>Work through forcing lines several moves deep.</small></span><span data-icon="arrow" aria-hidden="true"></span></a></li>
@@ -218,6 +219,56 @@
       </ul>
     </section>
     <section class="train-mistakes" aria-labelledby="train-mistakes-title"><h2 id="train-mistakes-title">Practice mistakes from your games</h2><p>Choose a reviewed game and which side to practice. Incomplete reviews produce provisional exercises.</p><div id="train-setup"><label for="train-review">Reviewed game</label><select id="train-review"></select><label for="train-side">Practice mistakes by</label><select id="train-side"><option value="both">Both players</option><option value="w">White</option><option value="b">Black</option></select></div><p id="train-status" role="status"></p><div class="entry-actions"><button id="train-start" class="primary-button" disabled>Practice mistakes</button><button id="train-review-game" class="practice-secondary">Open game review</button><a id="train-choose-game" href="/analyze/" data-route="analyze">Choose a game →</a></div></section>
+  </div>
+</section>
+<section class="entry-page studio-page endgame-page" data-page-view="endgames" aria-labelledby="endgames-heading" hidden>
+  <header class="studio-heading training-detail-heading">
+    <h1 id="endgames-heading" tabindex="-1">Endgame Lab</h1>
+    <a class="subtle-link" href="/train/" data-route="train">← Training</a>
+    <p>Study an example, then play Stockfish.</p>
+  </header>
+  <div class="studio-layout training-detail-layout">
+    <section class="studio-panel endgame-instructions" aria-label="Endgame practice">
+      <label for="endgame-technique">Technique</label>
+      <select id="endgame-technique"></select>
+      <p id="endgame-goal"></p>
+      <button id="endgame-practice" class="primary-button" type="button">Practice against Stockfish <span aria-hidden="true">→</span></button>
+    </section>
+    <section class="studio-panel endgame-demonstration" aria-labelledby="endgame-demonstration-title">
+      <h2 id="endgame-demonstration-title">Worked example</h2>
+      <div id="endgame-example" class="chess-board studio-sample-board board-surface" role="img"></div>
+      <div class="endgame-demo-controls">
+        <button id="endgame-previous" class="studio-quiet" type="button" aria-label="Previous example position">←</button>
+        <span id="endgame-example-move" aria-hidden="true"></span>
+        <button id="endgame-next" class="studio-quiet" type="button" aria-label="Show example move">→</button>
+      </div>
+      <p id="endgame-note" class="studio-meta" role="status"></p>
+    </section>
+  </div>
+</section>
+<section class="entry-page studio-page weekly-page" data-page-view="weekly" aria-labelledby="weekly-title" hidden>
+  <header class="studio-heading training-detail-heading">
+    <h1 id="weekly-title" tabindex="-1">Weekly training</h1>
+    <a class="subtle-link" href="/train/" data-route="train">← Training</a>
+    <p id="weekly-date-range"></p>
+  </header>
+  <div class="studio-layout training-detail-layout">
+    <section class="studio-panel weekly-activity" aria-labelledby="weekly-activity-title">
+      <h2 id="weekly-activity-title">Exercises solved</h2>
+      <dl class="weekly-totals">
+        <div><dt>On your own</dt><dd id="weekly-independent">0</dd></div>
+        <div><dt>With help or a retry</dt><dd id="weekly-supported">0</dd></div>
+        <div id="weekly-untracked" hidden><dt>Help not measured</dt><dd id="weekly-untracked-count">0</dd></div>
+      </dl>
+      <ol id="weekly-days" aria-label="Exercises solved by day"></ol>
+      <p id="weekly-empty" class="studio-meta">No recorded solves in these seven days.</p>
+      <p class="studio-meta">Counts recorded board exercises from lessons, endgames and game reviews.</p>
+    </section>
+    <section class="studio-panel weekly-focus" aria-labelledby="weekly-focus-title">
+      <h2 id="weekly-focus-title">Your next practice</h2>
+      <p id="weekly-focus-note"></p>
+      <button id="weekly-practice" class="primary-button" type="button">Open daily training</button>
+    </section>
   </div>
 </section>
 <section class="entry-page studio-page level-test-page" data-page-view="leveltest" aria-labelledby="level-test-title" hidden>
@@ -410,7 +461,7 @@
   <dialog id="connect-dialog" class="search-dialog" aria-labelledby="connect-title"><div class="dialog-header"><div><span class="section-label">CHESS.COM</span><h2 id="connect-title">Find your games</h2></div><button class="icon-button close-dialog" aria-label="Close game search">✕</button></div><div class="connect-card"><label for="username">Chess.com username</label><form id="username-form"><div class="username-input"><span data-icon="user"></span><input id="username" name="username" placeholder="Enter your username" autocomplete="off" spellcheck="false" required maxlength="50" aria-describedby="search-hint"/></div><button id="connect-button" class="primary-button" type="submit">Find my games <span data-icon="arrow"></span></button></form><div class="connect-meta" id="search-hint"><span data-icon="lock"></span> Public games. No password needed.</div><div class="import-divider"><span>Have a game file?</span><button id="hero-import" class="inline-button"><span data-icon="upload"></span> Import a PGN</button></div><p id="search-status" class="search-status" role="status" hidden></p></div></dialog>
   <dialog id="import-dialog"><div class="dialog-header"><div><span class="eyebrow">BRING A GAME</span><h2>Import a PGN</h2></div><button class="icon-button close-dialog" aria-label="Close dialog">✕</button></div><p>Paste one standard chess game or choose a PGN file.</p><label class="file-picker" for="pgn-file"><span data-icon="upload"></span> Choose a .pgn file <input id="pgn-file" type="file" accept=".pgn,.txt,text/plain"/></label><label class="input-label" for="pgn-input">PGN notation</label><textarea id="pgn-input" placeholder='[White "Your name"]&#10;[Black "Opponent"]&#10;&#10;1. e4 e5 2. Nf3 Nc6 ...' rows="9" maxlength="250000"></textarea><p id="import-error" class="analysis-error" role="alert" hidden></p><button id="import-submit" class="primary-button">Import & review <span data-icon="arrow"></span></button></dialog>
   <dialog id="info-dialog"><div class="dialog-header"><h2 id="info-title">How it works</h2><button class="icon-button close-dialog" aria-label="Close dialog">✕</button></div><div id="info-body"></div></dialog>
-  <dialog id="practice-dialog" class="practice-dialog" aria-labelledby="practice-dialog-title"><div class="dialog-header"><div><span class="eyebrow">YOUR PERSONAL TRAINING ROOM</span><h2 id="practice-dialog-title">Find a better move</h2></div><button class="icon-button close-dialog" aria-label="Close practice">✕</button></div><div id="practice-play"><button type="button" data-audio-open>Sound settings</button><div class="practice-progress"><span id="practice-counter">Position 1</span><span id="practice-turn">White to move</span></div><p class="practice-instructions">Find Stockfish’s first choice. Tap a piece, then its destination.</p><div class="practice-board-frame"><div id="practice-board" class="chess-board practice-board" role="group" aria-label="Practice position"></div></div><div id="practice-promotion" class="practice-promotion" hidden><span>Promote to</span><button data-promotion="q">Queen</button><button data-promotion="r">Rook</button><button data-promotion="b">Bishop</button><button data-promotion="n">Knight</button></div><div id="practice-feedback" class="practice-feedback" role="status" aria-live="polite">Choose your move.</div><div id="practice-answer" class="practice-answer" hidden></div><div class="practice-actions"><button id="practice-hint" class="practice-secondary">Hint</button><button id="practice-reveal" class="practice-secondary">Show solution</button><button id="practice-next" class="primary-button" hidden>Next position <span data-icon="arrow"></span></button></div></div><div id="practice-complete" class="practice-complete" hidden><div class="practice-complete-icon" data-icon="spark"></div><h3>Practice complete</h3><p id="practice-complete-summary"></p><div class="practice-complete-actions"><button id="practice-again" class="primary-button">Practice again <span data-icon="arrow"></span></button><button id="practice-back" class="practice-secondary">Back to analysis</button></div></div></dialog>
+  <dialog id="practice-dialog" class="practice-dialog" aria-labelledby="practice-dialog-title"><div class="dialog-header"><div><span class="eyebrow">YOUR PERSONAL TRAINING ROOM</span><h2 id="practice-dialog-title">Find a better move</h2></div><button class="icon-button close-dialog" aria-label="Close practice">✕</button></div><div id="practice-play"><button type="button" data-audio-open>Sound settings</button><div class="practice-progress"><span id="practice-counter">Position 1</span><span id="practice-turn">White to move</span></div><p class="practice-instructions">Find Stockfish’s first choice. Tap a piece, then its destination.</p><div class="practice-board-frame"><div id="practice-board" class="chess-board practice-board" role="group" aria-label="Practice position"></div></div><div id="practice-promotion" class="practice-promotion" hidden><span>Promote to</span><button data-promotion="q">Queen</button><button data-promotion="r">Rook</button><button data-promotion="b">Bishop</button><button data-promotion="n">Knight</button></div><div id="practice-feedback" class="practice-feedback" role="status" aria-live="polite">Choose your move.</div><div id="practice-answer" class="practice-answer" hidden></div><div class="practice-actions"><button id="practice-hint" class="practice-secondary">Hint</button><button id="practice-reveal" class="practice-secondary">Show solution</button><button id="practice-related" class="practice-secondary" type="button" hidden>Try the same idea</button><button id="practice-next" class="primary-button" hidden>Next position <span data-icon="arrow"></span></button></div></div><div id="practice-complete" class="practice-complete" hidden><div class="practice-complete-icon" data-icon="spark"></div><h3>Practice complete</h3><p id="practice-complete-summary"></p><div class="practice-complete-actions"><button id="practice-again" class="primary-button">Practice again <span data-icon="arrow"></span></button><button id="practice-back" class="practice-secondary">Back to analysis</button></div></div></dialog>
   <dialog id="lesson-checkmate-dialog" class="lesson-result-dialog" aria-labelledby="lesson-checkmate-title" aria-describedby="lesson-checkmate-description"><button id="lesson-checkmate-close" class="lesson-result-close" aria-label="Close result and explore other moves">×</button><span class="lesson-result-mark" aria-hidden="true">♔</span><h2 id="lesson-checkmate-title">Checkmate!</h2><p id="lesson-checkmate-description"></p><div class="lesson-result-actions"><button id="lesson-checkmate-continue" class="primary-button">Continue lesson</button><button id="lesson-checkmate-explore">Done · Free play</button></div><small>Your earned lesson progress is saved.</small></dialog>
   <dialog id="focus-dialog" class="focus-dialog" aria-labelledby="focus-title"><div class="focus-header"><div><span class="section-label">ROQVYN</span><h2 id="focus-title">Focus mode</h2></div><button id="exit-focus" class="explore-launch" aria-label="Exit Focus Mode">✕ <span>Exit focus</span></button></div><div id="focus-body"></div></dialog>
   <dialog id="explore-dialog" class="practice-dialog explore-dialog play-dialog" aria-labelledby="explore-title">

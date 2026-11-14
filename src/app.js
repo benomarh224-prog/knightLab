@@ -40,6 +40,8 @@ import { collectTraining } from './training.js';
 import { renderReviewStatistics } from './review-statistics.js';
 import {createDailyTrainingUI} from './daily-training-ui.js';
 import {reviewedDailyMistakes} from './daily-training.js';
+import {createEndgameLab} from './endgame-lab-ui.js';
+import {createWeeklyTrainingUI, weeklyRecommendation} from './weekly-training.js';
 import{createBoardLabUI}from'./board-lab-ui.js';
 import{createAccountStorage}from'./account-storage.js';
 import{createAccountUI}from'./account-ui.js';
@@ -165,6 +167,8 @@ const training = createTrainingUI({
   scrollToBoard: () => { selectWorkspaceView('board'); scrollToSection(document.querySelector('.workspace')); },
   icon,
   playSound,feedbackSound,
+  onExerciseSolved:(exercise,outcome)=>daily.recordReview(exercise,outcome),
+  onExerciseHelp:exercise=>daily.helpReview(exercise),
 });
 const practiceLevelMoment = (exercise, button) => training.startExercises([exercise], {
   backLabel:'Back to Level Test', onClose:() => button.focus({ preventScroll:true }),
@@ -1095,6 +1099,11 @@ function dailyMistakes(){
 }
 const openingReview=createOpeningReview({training:openingTraining,storage:reviewStorage});
 const daily=createDailyTrainingUI({storage:reviewStorage,courses:COURSES,mistakes:dailyMistakes,openingReview,go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options)});
+const endgames=createEndgameLab({play:options=>explorer.practice(options),playSound,onComplete:daily.recordEndgame});
+const weekly=createWeeklyTrainingUI({
+  evidence:daily.weeklyEvidence,nextFor:event=>weeklyRecommendation(event,COURSES,daily.practiceMeta),
+  go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options),
+});
 const boardLab=createBoardLabUI({storage:reviewStorage,playSound,feedbackSound});
 const openingTest=createOpeningTestUI({training:openingTraining,storage:reviewStorage,playSound,openingReview,daily});
 const learning=createLearningUI({storage:reviewStorage,playSound,feedbackSound,daily,onCoursePractice:practice=>explorer.practice(practice),onCourseComplete:course=>{selectLearningCategory(COURSES[course]?.category||'openings');router.go('learn');},onAnalyze:pgn=>{
@@ -1143,6 +1152,11 @@ router=createPageRouter(page=>{
   if(page==='games')setLibraryOpen(true);
   if(page==='account'){account.open();$('account-title').focus({preventScroll:true});}
   if(page==='leveltest'){levelTest.render();$('level-test-title').focus({preventScroll:true});}
+  if(page==='endgames'){
+    endgames.open(new URLSearchParams(location.search).get('technique'));
+    $('endgames-heading').focus({preventScroll:true});
+  }
+  if(page==='weekly'){weekly.render();$('weekly-title').focus({preventScroll:true});}
   if(page==='analyze'){
     $('analysis-resume').hidden=!reviewOpened;
     $('analysis-resume-game').textContent=`${$('workspace-title').textContent} · ${state.ply?`Move ${Math.ceil(state.ply/2)}`:'Starting position'}`;

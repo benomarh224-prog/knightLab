@@ -142,6 +142,43 @@ body[data-page] .studio-page #daily-level-help { margin-bottom: 12px; }
 .studio-page #train-choose-game { display: inline-flex; min-height: 44px; align-items: center; color: var(--ui-link); }
 .studio-page .entry-actions { gap: 8px 14px; }
 
+.training-detail-heading { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 6px 12px; }
+.training-detail-heading p { grid-column: 1 / -1; margin: 0; }
+.training-detail-heading a, .weekly-entry { display: inline-flex; align-items: center; min-height: 44px; gap: 6px; }
+.weekly-entry { margin-top: 10px; color: var(--ui-link); font-size: 15px; }
+.training-detail-layout > :is(.weekly-activity,.endgame-demonstration) { grid-column: span 7; }
+.training-detail-layout > :is(.weekly-focus,.endgame-instructions) { grid-column: span 5; }
+.endgame-instructions label { display: block; color: var(--ui-muted); font-size: 14px; font-weight: 600; }
+body[data-page] #endgame-technique { min-height: 44px; width: 100%; max-width: none; margin: 6px 0 4px; font-size: 16px; }
+.endgame-instructions p, .weekly-focus p { font-size: 16px; line-height: 1.55; margin: 8px 0 14px; }
+#endgame-practice { text-align: start; }
+body[data-page] .endgame-demonstration #endgame-example { margin: 14px auto 0; }
+.endgame-demo-controls {
+  display: grid; align-items: center; grid-template-columns: 44px minmax(0, 1fr) 44px;
+  width: min(100%, 400px); margin: 10px auto 0; text-align: center; gap: 8px; font-size: 15px;
+}
+.endgame-demo-controls button { min-width: 44px; }
+.endgame-demonstration #endgame-note { width: min(100%, 400px); margin: 10px auto 0; min-height: 3em; }
+.weekly-totals { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 18px 0; }
+.weekly-totals > div { border-inline-start: 1px solid var(--ui-rule); padding-inline-start: 12px; }
+.weekly-totals dt { color: var(--ui-muted); font-size: 14px; }
+.weekly-totals dd { color: var(--ui-text); font-size: 27px; font-variant-numeric: tabular-nums; margin: 4px 0 0; }
+#weekly-days { list-style: none; padding: 0; margin: 16px 0 0; }
+#weekly-days li {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 28px; align-items: center;
+  column-gap: 10px; min-height: 34px; border-top: 1px solid var(--ui-rule); font-size: 14px;
+}
+#weekly-days li span { text-align: end; font-variant-numeric: tabular-nums; }
+#weekly-days meter { width: 100%; height: 6px; display: block; appearance: none; }
+#weekly-days meter::-webkit-meter-bar { background: var(--ui-rule); border: 0; border-radius: 3px; }
+#weekly-days meter::-webkit-meter-optimum-value { background: var(--ui-link); border-radius: 3px; }
+#weekly-days meter::-moz-meter-bar { background: var(--ui-link); border-radius: 3px; }
+#practice-related { min-height: 44px; }
+
+@media (max-width: 740px) {
+  .training-detail-layout > :is(.weekly-activity,.weekly-focus,.endgame-instructions,.endgame-demonstration) { grid-column: 1 / -1; }
+}
+
 .studio-layout.level-test-layout {
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   grid-template-areas: "setup result" "history result";

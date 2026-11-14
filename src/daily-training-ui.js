@@ -36,7 +36,7 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice,open
     if(!model.start(date,task.id))return;
     if(task.kind==='mistake'){
       go('train');
-      practice([task.exercise],{backLabel:'Back to daily training',onHelp:()=>model.helpTask(date,task.id),onSolved:(_exercise,outcome)=>{model.solve(date,task.id,outcome);render();},onClose:()=>{
+      practice([task.exercise],{backLabel:'Back to daily training',onSolved:(_exercise,outcome)=>{model.solve(date,task.id,outcome);render();},onClose:()=>{
         render();
         const taskButton=$('daily-tasks').querySelector(`[data-daily-task="${task.id}"]`);
         (taskButton||$('daily-heading')).focus({preventScroll:true});
@@ -56,5 +56,6 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice,open
   return {render,context:(courseId,lessonId,query)=>model.context(courseId,lessonId,query),start:ctx=>model.start(ctx.date,ctx.task.id),
     openingContext:query=>model.openingContext(query),solveOpening: (ctx,move)=>model.solveOpening(ctx,move),
     observe:event=>model.observe(event),solved(ctx,outcome){model.solve(ctx.date,ctx.task.id,outcome);render();},complete:ctx=>model.done(ctx.date,ctx.task.id),advance:ctx=>advance(ctx.date),plan:()=>go('train'),
+    weeklyEvidence:model.weeklyEvidence,practiceMeta:model.practiceMeta,recordReview:model.recordReview,helpReview:model.helpReview,recordEndgame:model.recordEndgame,
     label(ctx){const day=model.get(ctx.date);return `Daily training · ${day.tasks.findIndex(task=>task.id===ctx.task.id)+1} of ${day.tasks.length}`;}};
 }

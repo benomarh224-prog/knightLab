@@ -2,6 +2,8 @@ import {Chess} from 'chess.js';
 import {lessonPlan} from './lesson-player.js';
 import {lessonDisplay} from './lesson-insight.js';
 import {localTrainingDate,trainingDateAfter} from './training-calendar.js';
+import {ENDGAMES} from './endgame-lab.js';
+import {practiceTheme,practiceThemeLabel} from './practice-themes.js';
 
 const KEY='roqvyn-adaptive-training-v1',datePattern=/^\d{4}-\d{2}-\d{2}$/;
 const count=value=>Number.isFinite(value)?Math.max(0,Math.min(10000,Math.floor(value))):0;
@@ -13,8 +15,17 @@ export function practiceOutcome({hints=0,alternatives=0,reviewed=false,known=tru
   return {quality:helped?'supported':known===false?'unknown':'independent',hints:count(hints),alternatives:count(alternatives),reviewed:reviewed===true};
 }
 function practiceMeta(courses,task){
+  if(task?.kind==='endgame'){
+    const technique=ENDGAMES.find(item=>task.id===`endgame-${item.id}`);
+    return technique&&{key:task.id,signature:technique.fen,skill:task.id,name:technique.title,band:null};
+  }
   if(task?.kind==='mistake'){
-    try{const e=task.exercise,b=new Chess(e.fen);if(b.turn()!==e.color||!b.move({from:e.solution.slice(0,2),to:e.solution.slice(2,4),promotion:e.solution[4]}))return null;return {key:task.id,signature:e.fen+e.solution,skill:'reviewed-games',name:'positions from your games',band:null};}catch{return null;}
+    try{
+      const e=task.exercise,b=new Chess(e.fen);
+      if(b.turn()!==e.color||!b.move({from:e.solution.slice(0,2),to:e.solution.slice(2,4),promotion:e.solution[4]}))return null;
+      const theme=practiceTheme(e.fen,e.solution);
+      return {key:task.id,signature:e.fen+e.solution,skill:theme?`theme-${theme}`:'reviewed-games',name:practiceThemeLabel(theme)||'positions from your games',band:null};
+    }catch{return null;}
   }
   if(task?.kind!=='practice'||task.id!==`practice-${task.courseId}-${task.lessonId}-${task.index}`)return null;
   const course=courses[task?.courseId],lesson=course?.lessons.find(l=>l.id===task.lessonId);if(!lesson)return null;
@@ -78,7 +89,13 @@ export function createAdaptiveTraining({storage,courses,now=()=>new Date()}){
       progress:improvement?`Progress: you solved ${improvement.name.toLowerCase()} without help after an earlier supported attempt.`:independent.length?`Solved independently: ${[...new Set(independent.map(e=>e.name.toLowerCase()))].join(', ')}.`:'Hints and retries show which ideas to revisit.',
       focus:focus?`Next focus: ${focus.name.toLowerCase()}. A different position will help you practice the idea.`:'Next focus: a new position at your current difficulty.',band:bands.find(b=>b.id===state.band)?.label||''};
   }
-  return {bands,ensure,help,record,result,due,recommendation,summary,
+  function weeklyEvidence(){
+    read();
+    const today=localTrainingDate(now()),start=trainingDateAfter(today,-6);
+    return state.events.filter(event=>event.date>=start&&event.date<=today)
+      .map(event=>({...event,task:state.records[event.key].task}));
+  }
+  return {bands,ensure,help,record,result,due,recommendation,summary,weeklyEvidence,
     setBand(value){read();const band=bands.find(b=>b.id===value||b.value===value);if(!band)return false;state.band=band.id;state.streak=0;save();return true;},
     has(task){read();return Boolean(state.records[task.id]);},
     seen(task){read();return state.events.some(e=>e.key===task.id);},

@@ -11,6 +11,7 @@ import { assessLevelTestElo, assessPlayGame, formatLevelTestElo, MIN_ASSESSMENT_
 import { restoreLevelTestAttempt } from './level-test.js';
 import { levelTestMoments } from './level-test-moments.js';
 import { renderLevelTestMoments } from './level-test-moments-ui.js';
+import { endgameStatus } from './endgame-lab.js';
 
 const $ = id => document.getElementById(id);
 const MIN_ENGINE_REPLY_MS = 1400;
@@ -32,7 +33,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
   settings.addEventListener('close', () => { if (dialog.open) settingsButton.focus({ preventScroll: true }); });
   let variation, selected = null, promotion = null, flipped = false, engine = null;
   let result = null, busy = false, run = 0, savedGame = null, resumeReview = false;
-  let originFen = null, coursePractice = null;
+  let originFen = null, coursePractice = null, endgameHelped = false, endgameRecorded = false;
   let hintRequested=false,painted=null;
   let scoresheetSession, scoresheetRevision;
   let assessment = null, assisted = false;
@@ -41,7 +42,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
   let testScores = [];
   let resignTrigger = null;
   const sessionVisible = () => testMode ? !levelTestMount.hidden : dialog.open;
-  const evaluationEnabled = () => !testMode && $('play-show-evaluation').checked;
+  const evaluationEnabled = () => !testMode && !coursePractice?.endgame && $('play-show-evaluation').checked;
   function cancel({ keepIdleEngine = false } = {}) {
     run++;
     if (!keepIdleEngine || busy) { engine?.destroy(); engine = null; }
@@ -229,11 +230,26 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     const position={game:variation,fen:variation.fen,last,flipped};animatePieces($('explore-board'),moveTransitions(painted,position));painted=position;
     const fromPosition=$('play-origin').value==='current';
     const practicing=coursePractice&&fromPosition;
+    const endgame = coursePractice?.endgame;
+    const goalStatus = endgame && endgameStatus(endgame, variation);
     $('explore-course-practice').hidden=!practicing;
     if(practicing){
       const count=moves.filter(move=>move.color===coursePractice.color).length;
       $('explore-course-goal').textContent=coursePractice.goal;
-      $('explore-course-progress').textContent=variation.ending?'Position finished. Review your decisions or return to the lesson.':count>=coursePractice.moves?'Practice target reached. Keep playing or return to the lesson.':`${count} / ${coursePractice.moves} of your moves · Apply the idea and compare replies.`;
+      $('explore-course-return').textContent = endgame ? 'Back to Endgame Lab' : 'Back to lesson';
+      const progress = $('explore-course-progress');
+      if (endgame) {
+        const message = goalStatus === 'complete' ? 'Goal reached. You can keep playing or return to the lab.' :
+          goalStatus === 'retry' ? `${variation.ending}. Undo or reset the position to try again.` :
+          count ? `${count} of your moves · Stockfish defends the other side.` : 'Fresh practice position · Stockfish defends the other side.';
+        if (progress.textContent !== message) progress.textContent = message;
+        if (goalStatus === 'complete' && !endgameRecorded) {
+          endgameRecorded = true;
+          coursePractice.onComplete({ hints:Number(endgameHelped) });
+        }
+      } else {
+        progress.textContent=variation.ending?'Position finished. Review your decisions or return to the lesson.':count>=coursePractice.moves?'Practice target reached. Keep playing or return to the lesson.':`${count} / ${coursePractice.moves} of your moves · Apply the idea and compare replies.`;
+      }
     }
     $('explore-turn').textContent = variation.ending ? `${variation.ending}${variation.result === '1-0' ? ' · White wins' : variation.result === '0-1' ? ' · Black wins' : ''}` : `${chess.turn() === 'w' ? 'White' : 'Black'} to move${variation.engineTurn ? ' · Stockfish' : variation.mode === 'engine' ? ' · Your turn' : ''}${chess.isCheck() ? ' · Check' : ''}`;
     $('play-evaluation-perspective').hidden=!evaluationEnabled();
@@ -255,6 +271,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     $('explore-reply').disabled = busy || Boolean(variation.ending) || Boolean(promotion);
     $('explore-reply').textContent = busy ? 'Stockfish is thinking…' : variation.mode === 'engine' ? 'Retry engine reply' : 'Play engine reply';
     const viewingReport = !$('play-report').hidden;
+    settingsButton.hidden = viewingReport || Boolean(endgame);
     $('play-settings-summary').hidden = fromPosition || viewingReport;
     $('explore-origin').hidden = !fromPosition || viewingReport;
     const color = variation.color === 'w' ? 'White' : 'Black';
@@ -265,9 +282,9 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     $('play-difficulty-description').textContent=PLAY_LEVELS[$('play-difficulty').value].description;
     $('play-export').disabled = !moves.length;
     const finishedMatch = !fromPosition && variation.mode === 'engine' && Boolean(variation.ending);
-    for (const id of ['play-mode','play-color','play-difficulty','play-origin','play-show-evaluation']) $(id).disabled = testMode || finishedMatch && id !== 'play-show-evaluation';
+    for (const id of ['play-mode','play-color','play-difficulty','play-origin','play-show-evaluation']) $(id).disabled = testMode || Boolean(endgame) || finishedMatch && id !== 'play-show-evaluation';
     $('play-resign').hidden = fromPosition || variation.mode !== 'engine' || Boolean(variation.ending) || !variation.canUndo;
-    $('play-new').hidden = testMode;
+    $('play-new').hidden = testMode || Boolean(endgame);
     const testMoves = testMode ? moves.filter(move => move.color === variation.color).length : 0;
     $('play-test-progress').hidden = !testMode || finishedMatch;
     const testMinimum = legacyTestDifficulty ? MIN_ASSESSMENT_MOVES : MIN_LEVEL_TEST_MOVES;
@@ -275,10 +292,10 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     $('play-test-finish').hidden = testMoves < testMinimum;
     $('play-test-finish').disabled = !legacyTestDifficulty && (variation.engineTurn || Boolean(promotion));
     $('play-report-open').hidden = !assessment;
-    $('play-level-test-link').hidden = testMode;
+    $('play-level-test-link').hidden = testMode || Boolean(endgame);
     $('explore-board').setAttribute('aria-label', `Play board, ${variation.ending || (chess.turn() === 'w' ? 'White' : 'Black') + ' to move'}. Select a piece and its destination.`);
     $('explore-promotion').hidden = !promotion;
-    if (variation.ending) $('explore-feedback').textContent = !testMode && variation.canUndo ? 'Undo to try another idea, or start a new game.' : 'Start a new game when you’re ready.';
+    if (variation.ending) $('explore-feedback').textContent = endgame ? '' : !testMode && variation.canUndo ? 'Undo to try another idea, or start a new game.' : 'Start a new game when you’re ready.';
     if (focusSquare) $('explore-board').querySelector(`[data-square="${focusSquare}"]`)?.focus({ preventScroll: true });
   }
   async function evaluate({playReply=false}={}) {
@@ -299,7 +316,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     let replied = false;
     try {
       const history = { startFen:variation.startFen, moves:variation.moves.map(move=>move.lan) };
-      const search = automaticReply ? playSearch(testMode ? LEVEL_TEST_DIFFICULTY : $('play-difficulty').value) : { milliseconds:650, skill:20 };
+      const search = automaticReply ? playSearch(testMode ? LEVEL_TEST_DIFFICULTY : coursePractice?.endgame ? 'challenging' : $('play-difficulty').value) : { milliseconds:650, skill:20 };
       const score = await active.evaluate(snapshot.fen, search, history);
       // Let the player's move settle while Stockfish searches in the background.
       const remaining = replyAt - performance.now();
@@ -317,7 +334,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     } catch (error) {
       if (current === run) {
         active.destroy(); engine = null;
-        const retry = testMode ? 'Select Retry engine reply. Your moves are kept.' : 'Use Retry engine reply or switch to Free play.';
+        const retry = testMode || coursePractice?.endgame ? 'Select Retry engine reply. Your moves are kept.' : 'Use Retry engine reply or switch to Free play.';
         $('explore-feedback').textContent = `${error.message} ${variation.engineTurn ? retry : 'Move a piece or reset to try again.'}`;
       }
     } finally {
@@ -352,6 +369,8 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
   function open(fromGame, fenOverride = null, practice = null) {
     leaveLevelTest();
     coursePractice=practice;
+    endgameHelped=false;
+    endgameRecorded=false;
     $('play-origin').querySelector('option[value="current"]').textContent=practice?'Course position':'Analysis position';
     const current = context(); savedGame = current.parsed; resumeReview = pause();
     originFen = fenOverride || current.parsed.fens[current.ply];
@@ -406,7 +425,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
   $('explore-board').onclick = event => {
     const button = event.target.closest('[data-square]'); if (!button || !variation || promotion || variation.ending) return;
     if (variation.engineTurn) {
-      $('explore-feedback').textContent = busy ? 'Waiting for Stockfish’s move…' : testMode ? 'Select Retry engine reply to continue.' : 'Retry the engine reply or switch to Free play.';
+      $('explore-feedback').textContent = busy ? 'Waiting for Stockfish’s move…' : testMode || coursePractice?.endgame ? 'Select Retry engine reply to continue.' : 'Retry the engine reply or switch to Free play.';
       return;
     }
     const square = button.dataset.square, piece = variation.chess.get(square);
@@ -430,8 +449,8 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     const outcome = variation.engineMove(result.best, variation.snapshot());
     if (outcome.status === 'played') afterMove(outcome.move);
   };
-  $('explore-undo').onclick = () => { const undone = variation.undoTurn(); if (!undone.length) return; clearAssessment(); closeResignation(); assisted=true; selected = null; promotion = null;hintRequested=false; $('explore-feedback').textContent = 'Back to your previous position. Try a different idea.'; evaluate(); };
-  $('explore-reset').onclick = () => { variation.reset(); selected = null; promotion = null;hintRequested=false; $('explore-feedback').textContent = 'Back to the game position. Try another move.'; evaluate(); };
+  $('explore-undo').onclick = () => { const undone = variation.undoTurn(); if (!undone.length) return; clearAssessment(); closeResignation(); assisted=true; endgameHelped=true; selected = null; promotion = null;hintRequested=false; $('explore-feedback').textContent = 'Back to your previous position. Try a different idea.'; evaluate(); };
+  $('explore-reset').onclick = () => { variation.reset(); selected = null; promotion = null;hintRequested=false; endgameHelped=true; $('explore-feedback').textContent = 'Back to the starting position. Try another move.'; evaluate(); };
   $('explore-flip').onclick = () => { flipped = !flipped; render(); };
   $('play-origin').onchange = () => startPosition();
   for (const id of ['play-mode', 'play-color','play-difficulty']) $(id).onchange = () => {
@@ -444,7 +463,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     evaluate();
   };
   $('play-show-evaluation').onchange=()=>{if(evaluationEnabled()&&!variation.ending)assisted=true;evaluate();};
-  $('play-hint').onclick=()=>{assisted=true;hintRequested=true;evaluate();};
+  $('play-hint').onclick=()=>{assisted=true;endgameHelped=true;hintRequested=true;evaluate();};
   function newGame() {
     $('play-origin').value = 'new'; startPosition();
     surface.querySelector('.play-game-menu').open = false;
@@ -512,6 +531,7 @@ export function createExploreUI({ context, pause, resume, playSound, startPracti
     if (dialog.open || testMode) return;
     if (settings.open) settings.close();
     cancel(); clearAssessment(); variation = null;
+    coursePractice = null;
     if (resumeReview && savedGame === context().parsed) resume();
     resumeReview = false;
   });

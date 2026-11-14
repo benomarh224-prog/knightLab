@@ -1,5 +1,6 @@
 import { Chess } from 'chess.js';
 import { classifyMove, uciToSan } from './game.js';
+import { practiceTheme } from './practice-themes.js';
 
 export const pieceNames = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 export function moveLabel(move) { return `${move.before.split(' ')[5]}${move.color === 'w' ? '.' : '...'} ${move.san}`; }
@@ -35,7 +36,7 @@ export class PracticeSession {
     this.reset();
   }
   get exercise() { return this.exercises[this.index]; }
-  reset() { this.status = 'playing'; this.selected = null; this.hint = false; this.promotion = null; this.answerFen = null; this.feedback = ''; this.currentAttempts=0; }
+  reset() { this.status = 'playing'; this.selected = null; this.hint = false; this.promotion = null; this.answerFen = null; this.answerMove = null; this.feedback = ''; this.currentAttempts=0; }
   submit(from, to, promotion) {
     if (this.status !== 'playing' || this.finished) return { status: 'locked' };
     const chess = new Chess(this.exercise.fen);
@@ -46,14 +47,16 @@ export class PracticeSession {
     try { move = chess.move({ from, to, promotion }); } catch { return { status: 'illegal' }; }
     this.attempts++;
     this.currentAttempts++;
-    if (move.from + move.to + (move.promotion || '') !== this.exercise.solution) return { status: 'retry', san: move.san };
-    this.status = 'correct'; this.solved++; this.answerFen = chess.fen();
+    const uci = move.from + move.to + (move.promotion || '');
+    const matchesTheme = this.exercise.source === 'followup' && this.exercise.theme && practiceTheme(this.exercise.fen,uci) === this.exercise.theme;
+    if (uci !== this.exercise.solution && !matchesTheme) return { status: 'retry', san: move.san };
+    this.status = 'correct'; this.solved++; this.answerFen = chess.fen(); this.answerMove = move;
     return { status: 'correct', san: move.san };
   }
   reveal() {
     if (this.status !== 'playing' || this.finished) return;
     const chess = new Chess(this.exercise.fen), solution = this.exercise.solution;
-    chess.move({ from: solution.slice(0, 2), to: solution.slice(2, 4), promotion: solution[4] });
+    this.answerMove = chess.move({ from: solution.slice(0, 2), to: solution.slice(2, 4), promotion: solution[4] });
     this.status = 'revealed'; this.revealed++; this.answerFen = chess.fen(); this.promotion = null;
   }
   next() {
