@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { parseGame } from '../src/game.js';
 import { assessLevelTestElo, assessPlayGame, formatLevelTestElo, reviewPlayGame } from '../src/play-assessment.js';
 import { readLevelTestResult, restoreLevelTestAttempt } from '../src/level-test.js';
+import { levelTestMoments, levelTestMomentDetails } from '../src/level-test-moments.js';
+import { PracticeSession } from '../src/training.js';
 import { LEVEL_TEST_DIFFICULTY, playSearch } from '../src/play-settings.js';
 import { pageFromPath } from '../src/routes.js';
 
@@ -135,4 +137,38 @@ test('retry keeps prior scores and a canceled review cannot apply a late respons
   await reviewPlayGame(short, scores, { evaluate:async () => score(0) }, callbacks);
   assert.equal(progressed, 2);
   assert.equal(scores.length, 3);
+});
+
+test('Level Test picks the player’s two biggest supported swings and turns them into legal retries', () => {
+  const game = parseGame('1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 *');
+  const coordinates = ['d2d4', 'c7c5', 'f2f4', 'g8f6', 'f1c4', 'g8f6', 'b5c6', 'd7d6', 'e1g1'];
+  const values = [0, -350, 0, -150, 0, -100, 0, -400, 0];
+  const scores = game.fens.map((rootFen, i) => ({ ...score(values[i]), rootFen, best:coordinates[i] }));
+  const white = levelTestMoments({ ...game, color:'w' }, scores);
+  assert.deepEqual(white.map(moment => moment.ply), [7, 1]);
+  assert.deepEqual(levelTestMoments({ ...game, color:'b' }, scores).map(moment => moment.ply), [8, 2]);
+  const details = levelTestMomentDetails(white[0]);
+  assert.equal(details.title, '4. Ba4');
+  assert.match(details.alternative, /Bxc6/);
+  const session = new PracticeSession([details.exercise]);
+  assert.equal(session.submit('b5','a4').status, 'retry');
+  assert.equal(session.submit('b5','c6').status, 'correct');
+  assert.equal(levelTestMomentDetails({ ...white[0], solution:'a1h8' }), null);
+  scores[6].rootFen = game.fens[0];
+  scores[0].best = 'e2e4';
+  scores[2].depth = 9;
+  scores[4].depth = 9;
+  assert.deepEqual(levelTestMoments({ ...game, color:'w' }, scores), []);
+});
+
+test('a mate swing describes the mating reply without presenting it as a material loss', () => {
+  const game = parseGame('1. f3 e5 2. g4 Qh4# 0-1');
+  const scores = game.fens.map((rootFen, i) => ({ ...score(0), rootFen, best:i === 2 ? 'g2g3' : i === 3 ? 'd8h4' : null }));
+  scores[3].cp = -10000;
+  scores[3].mate = -1;
+  const [moment] = levelTestMoments({ ...game, color:'w' }, scores);
+  const { explanation } = levelTestMomentDetails(moment);
+  assert.equal(moment.ply, 3);
+  assert.match(explanation, /forced mate.*Qh4# is immediate checkmate/);
+  assert.doesNotMatch(explanation, /pawns|10000/);
 });

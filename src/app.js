@@ -166,16 +166,20 @@ const training = createTrainingUI({
   icon,
   playSound,feedbackSound,
 });
+const practiceLevelMoment = (exercise, button) => training.startExercises([exercise], {
+  backLabel:'Back to Level Test', onClose:() => button.focus({ preventScroll:true }),
+});
 const explorer = createExploreUI({
   context: () => ({ parsed: state.parsed, ply: state.ply, flipped: state.flipped }),
   pause: pauseWorkspace,
   resume: () => { if (router?.page === 'analysis') startAnalysis(); },
   playSound,feedbackSound,
+  startPractice:practiceLevelMoment,
   onLevelTestResult: (game, report) => levelTest.save(game, report),
   onLevelTestAttempt: attempt => levelTest.saveAttempt(attempt),
   onLevelTestDone: () => levelTest.focusResult(),
 });
-const levelTest = createLevelTestUI({ storage: deviceStorage, start: options => explorer.levelTest(options) });
+const levelTest = createLevelTestUI({ storage: deviceStorage, start: options => explorer.levelTest(options), startPractice:practiceLevelMoment });
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound,navigate:goTo});
 const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove,onInspect:inspectSelectedMove});

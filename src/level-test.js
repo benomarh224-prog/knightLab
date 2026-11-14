@@ -2,6 +2,7 @@ import { formatLevelTestElo, MIN_ASSESSMENT_MOVES, MIN_LEVEL_TEST_MOVES, MIN_RAT
 import { LEVEL_TEST_DIFFICULTY, PLAY_LEVELS } from './play-settings.js';
 import { PlaySession } from './play.js';
 import { Chess } from 'chess.js';
+import { renderLevelTestMoments } from './level-test-moments-ui.js';
 
 const STORAGE_KEY = 'roqvyn-level-test-result-v1';
 const ATTEMPT_KEY = 'roqvyn-level-test-attempt-v1';
@@ -44,9 +45,10 @@ export function readLevelTestResult(storage) {
   return null;
 }
 
-export function createLevelTestUI({ storage, start, doc = document }) {
+export function createLevelTestUI({ storage, start, startPractice, doc = document }) {
   const get = id => doc.getElementById(id);
   let last = readLevelTestResult(storage), saved = Boolean(last), attempt;
+  let displayedResult;
   get('level-test-minimum').textContent = MIN_LEVEL_TEST_MOVES;
   get('level-test-form').onsubmit = event => {
     event.preventDefault();
@@ -88,6 +90,10 @@ export function createLevelTestUI({ storage, start, doc = document }) {
         decisions != null ? `${decisions} of ${MIN_RATING_DECISIONS} eligible moves.` :
         last.rating === undefined || last.difficulty !== LEVEL_TEST_DIFFICULTY ? 'Start a new Level Test for an Elo estimate.' : 'Too few eligible decisions for an Elo estimate.';
     get('level-test-result-storage').textContent = saved ? 'Saved in this browser.' : 'Available for this visit.';
+    if (displayedResult !== last) {
+      renderLevelTestMoments(get('level-test-saved-moments'), last.moments, startPractice);
+      displayedResult = last;
+    }
   }
 
   function saveAttempt(next, { persist = true } = {}) {

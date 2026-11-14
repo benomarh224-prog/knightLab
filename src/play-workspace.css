@@ -150,6 +150,40 @@ body[data-page] #play-surface #explore-reply { margin-top: 8px; }
 .play-report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .play-report-actions button { min-height: 44px; }
 
+.level-moments { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--ui-rule); }
+.level-moments h3 { margin: 0; color: var(--ui-text); font: 650 20px/1.25 'DM Sans', sans-serif; }
+.level-moments-list { display: grid; gap: 8px; padding: 0; margin: 12px 0 0; list-style: none; }
+.level-moment {
+  display: grid;
+  grid-template-columns: clamp(72px, 22vw, 112px) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-soft);
+}
+.level-moment-board {
+  width: 100%;
+  aspect-ratio: 1;
+  grid-template: repeat(8, minmax(0, 1fr)) / repeat(8, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--board-edge);
+  border-radius: 4px;
+}
+.level-moment h4 { margin: 0; color: var(--ui-text); font: 650 17px/1.3 'DM Sans', sans-serif; }
+.level-moment p,
+#play-surface #play-report .level-moment p { margin: 4px 0 0; color: var(--ui-text-secondary); font-size: 14px; line-height: 1.45; }
+.level-moment summary { align-content: center; min-height: 44px; color: var(--ui-link); font-size: 14px; cursor: pointer; }
+.level-moment button { min-height: 44px; padding-inline: 10px; }
+.level-moment details[open] { margin-bottom: 8px; }
+@media (max-width: 420px) {
+  .level-moment { grid-template-columns: clamp(74px, 21vw, 88px) minmax(0, 1fr); gap: 10px; }
+}
+
+#practice-dialog[data-level-moment] .dialog-header .eyebrow { display: none; }
+#practice-dialog[data-level-moment] #practice-turn { font-size: 14px !important; }
+
 #play-surface:not([data-level-test]) #level-test-exit,
 #level-test-play :is(#explore-title, #play-settings-open, .play-header .close-dialog),
 #level-test-play #play-surface:has(#play-report:not([hidden])) .play-header { display: none; }

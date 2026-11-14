@@ -144,6 +144,8 @@ body[data-page] .studio-page #daily-level-help { margin-bottom: 12px; }
 
 .level-test-layout > :is(form, #level-test-resume-panel) { grid-column: span 7; }
 .level-test-layout > .level-test-last { grid-column: span 5; }
+.level-test-last .play-report-results dd { line-height: 1.2; }
+.level-test-last .play-report-results dd:not(#level-test-result-elo) { font-size: clamp(20px, 3vw, 28px); }
 .level-test-fields { width: min(100%, 240px); margin: 16px 0; }
 .level-test-fields label { display: grid; gap: 6px; min-width: 0; font-size: 15px; font-weight: 600; }
 body[data-page] .level-test-fields select { width: 100%; min-width: 0; max-width: none; min-height: 44px; padding: 8px; font-size: 16px; }
@@ -164,8 +166,13 @@ body[data-page] .level-test-fields select { width: 100%; min-width: 0; max-width
   .studio-skill-list .studio-row { height: 100%; }
 }
 
+@media (max-width: 840px) {
+  .level-test-layout > :is(form, #level-test-resume-panel, .level-test-last) { grid-column: 1 / -1; }
+}
+@media (max-width: 380px) {
+  .level-test-last .play-report-results dd:not(#level-test-result-elo) { font-size: 18px; }
+}
 @media (max-width: 740px) {
   .studio-layout { grid-template-columns: minmax(0,1fr); }
   .studio-layout > :is(.studio-review-tools, .daily-training, .studio-sample, .studio-skills) { grid-column: 1; }
-  .level-test-layout > :is(form, #level-test-resume-panel, .level-test-last) { grid-column: 1; }
 }

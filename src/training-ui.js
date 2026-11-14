@@ -61,6 +61,8 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     const tasks=Array.isArray(exercises)?exercises:data.exercises;
     if (!tasks.length) return;
     practiceOptions=options;
+    dialog.toggleAttribute('data-level-moment', Boolean(tasks[0].reviewNote));
+    $('practice-back').textContent = options.backLabel || 'Back to analysis';
     session = new PracticeSession(tasks);
     savedContext = context().parsed;
     resumeReview = pause();
@@ -105,8 +107,9 @@ export function createTrainingUI({ context, navigate, pause, resume, scrollToBoa
     $('practice-feedback').classList.toggle('success', session.status === 'correct');
     $('practice-promotion').hidden = !session.promotion;
     $('practice-answer').hidden = session.status === 'playing';
-    if (session.status !== 'playing') $('practice-answer').innerHTML = `<strong>Engine’s choice: ${escape(exercise.bestSAN)}</strong><p>In the game, ${escape(exercise.played)} was rated ${exercise.label.toLowerCase()}.${exercise.mateSwing ? ' The engine found a change in the forced-mate evaluation.' : ` Its estimated evaluation loss was ${(exercise.loss / 100).toFixed(2)} pawns.`}</p>`;
-    else $('practice-answer').replaceChildren();
+    if (session.status === 'playing') $('practice-answer').replaceChildren();
+    else if (exercise.reviewNote) $('practice-answer').innerHTML = `<strong>Engine’s choice: ${escape(exercise.bestSAN)}</strong><p>${escape(exercise.reviewNote)}</p>`;
+    else $('practice-answer').innerHTML = `<strong>Engine’s choice: ${escape(exercise.bestSAN)}</strong><p>In the game, ${escape(exercise.played)} was rated ${exercise.label.toLowerCase()}.${exercise.mateSwing ? ' The engine found a change in the forced-mate evaluation.' : ` Its estimated evaluation loss was ${(exercise.loss / 100).toFixed(2)} pawns.`}</p>`;
     $('practice-hint').hidden = session.status !== 'playing';
     $('practice-reveal').hidden = session.status !== 'playing';
     $('practice-next').hidden = session.status === 'playing';

@@ -9,11 +9,13 @@ import { pieceNames } from './training.js';
 import { LEVEL_TEST_DIFFICULTY, PLAY_LEVELS, playSearch } from './play-settings.js';
 import { assessLevelTestElo, assessPlayGame, formatLevelTestElo, MIN_ASSESSMENT_MOVES, MIN_LEVEL_TEST_MOVES, MIN_PROVISIONAL_DECISIONS, reviewPlayGame } from './play-assessment.js';
 import { restoreLevelTestAttempt } from './level-test.js';
+import { levelTestMoments } from './level-test-moments.js';
+import { renderLevelTestMoments } from './level-test-moments-ui.js';
 
 const $ = id => document.getElementById(id);
 const MIN_ENGINE_REPLY_MS = 1400;
 
-export function createExploreUI({ context, pause, resume, playSound, onLevelTestResult = () => {}, onLevelTestAttempt = () => {}, onLevelTestDone = () => {} }) {
+export function createExploreUI({ context, pause, resume, playSound, startPractice, onLevelTestResult = () => {}, onLevelTestAttempt = () => {}, onLevelTestDone = () => {} }) {
   const dialog = $('explore-dialog');
   const surface = $('play-surface');
   const levelTestMount = $('level-test-play');
@@ -139,6 +141,7 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
     back.classList.toggle('primary-button', checkingElo && !canSaveProvisional);
     back.classList.toggle('practice-secondary', !checkingElo || canSaveProvisional);
     $('play-report-done').textContent = state === 'done' && !checkingElo ? 'Done' : 'Continue later';
+    $('play-report-moments').hidden = !testMode || state !== 'done' || checkingElo;
   }
   function finishScoredTest(current) {
     if (!variation.resign()) return;
@@ -169,6 +172,8 @@ export function createExploreUI({ context, pause, resume, playSound, onLevelTest
         const elo = assessLevelTestElo(current.game, current.scores, bookPly);
         Object.assign(current.result, elo);
         if (current.checkingElo && elo.rating && !elo.rating.provisional) finishScoredTest(current);
+        current.result.moments = levelTestMoments(current.game, current.scores);
+        renderLevelTestMoments($('play-report-moments'), current.result.moments, startPractice, { showEmpty:true });
         if (!current.checkingElo) onLevelTestResult(current.game, current.result);
       }
       current.state = 'done';

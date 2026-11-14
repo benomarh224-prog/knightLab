@@ -253,6 +253,11 @@
           <div><dt>Performance level</dt><dd id="level-test-result-level"></dd></div>
         </dl>
         <p id="level-test-result-next"></p><p class="studio-meta" id="level-test-result-storage"></p>
+        <section id="level-test-saved-moments" class="level-moments" aria-labelledby="level-test-saved-moments-title" hidden>
+          <h3 id="level-test-saved-moments-title">Key moments</h3>
+          <p class="level-moments-empty" hidden>No clear turning points to practice were found in this review.</p>
+          <ul class="level-moments-list"></ul>
+        </section>
       </div>
     </section>
   </div>
@@ -477,6 +482,11 @@
         <button type="button" id="play-report-back" class="practice-secondary">Back to board</button>
         <button type="button" id="play-report-done" class="practice-secondary" hidden>Done</button>
       </div>
+      <section id="play-report-moments" class="level-moments" aria-labelledby="play-report-moments-title" hidden>
+        <h3 id="play-report-moments-title">Key moments</h3>
+        <p class="level-moments-empty" hidden>No clear turning points to practice were found in this review.</p>
+        <ul class="level-moments-list"></ul>
+      </section>
     </section>
     </div>
     <dialog id="play-settings" class="play-settings" aria-labelledby="play-settings-title">
@@ -492,6 +502,17 @@
       <button type="button" id="play-settings-done" class="primary-button">Back to board</button>
     </dialog>
   </dialog>
+  <template id="level-moment-template">
+    <li class="level-moment">
+      <div class="chess-board level-moment-board" role="img"></div>
+      <div class="level-moment-copy">
+        <h4></h4>
+        <p class="level-moment-reason"></p>
+        <details><summary>Show Stockfish’s idea</summary><p class="level-moment-alternative"></p></details>
+        <button type="button" class="practice-secondary">Try from here</button>
+      </div>
+    </li>
+  </template>
   <p id="appearance-status" class="sr-only" role="status" aria-live="polite"></p>
   <div id="toast" class="toast" role="status" hidden></div>
   <script type="module" src="/app.js"></script>
