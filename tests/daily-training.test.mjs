@@ -30,6 +30,24 @@ test('new personal evidence can join an unstarted plan; an active plan remains s
  assert.equal(daily.today({mistakes:[mistake]}).tasks[2].kind,'mistake');daily.start(day.date,day.tasks[0].id);
  const before=JSON.stringify(day);daily.today({mistakes:[{...mistake,solution:'a2a1r'}]});assert.equal(JSON.stringify(day),before);
 });
+test('daily training keeps a Level Test position stable after starting, saves a solve and rotates to a different position',()=>{
+ const store=storage();let date=new Date(2026,10,6),daily=make(store,{now:()=>date});
+ const first={...mistake,source:'level-test',title:'Find an alternative to 1... Kg8'};
+ const second={...mistake,solution:'a2a1r',source:'level-test',title:'Find an alternative to your king move'};
+ const day=daily.today({mistakes:[first]}),personal=day.tasks.filter(task=>task.kind==='mistake');
+ assert.equal(day.tasks.length,3);assert.equal(personal.length,1);
+ const [task]=personal;
+ assert.equal(task.title,first.title);assert.equal(task.detail,'From your Level Test');
+ daily.start(day.date,task.id);
+ assert.equal(daily.today({mistakes:[second]}).tasks.find(item=>item.kind==='mistake').id,task.id);
+ assert.equal(daily.solve(day.date,task.id),true);
+ daily=make(store,{now:()=>date});
+ assert.equal(daily.today({mistakes:[second]}).done.includes(task.id),true);
+ date=new Date(2026,10,7);
+ const next=daily.today({mistakes:[first,second]});
+ assert.equal(next.tasks.length,3);
+ assert.deepEqual(next.tasks.filter(item=>item.kind==='mistake').map(item=>item.exercise.solution),[second.solution]);
+});
 test('the local calendar date rolls over without erasing yesterday’s unfinished session',()=>{
  const store=storage();let date=new Date(2026,10,6,23,59);const daily=make(store,{now:()=>date});const first=daily.today();
  daily.start(first.date,first.tasks[0].id);daily.solve(first.date,first.tasks[0].id);date=new Date(2026,10,7,0,1);
@@ -63,6 +81,10 @@ test('personal training excludes samples, missing positions, wrong-position evid
  const pgn='1. e4 e5 *',parsed=parseGame(pgn),entries=[{game:{pgn},demo:false}];
  const scores=[{cp:100,best:'d2d4',depth:19},{cp:-100,best:'e7e5',depth:19},{cp:-100,best:'g1f3',depth:19}].map((score,i)=>({...score,mate:null,rootFen:parsed.fens[i]}));
  assert.equal(reviewedDailyMistakes(entries,()=>scores).length,1);
+ const named={game:{pgn,white:{username:'Alpha'},black:{username:'Beta'}},demo:false};
+ assert.equal(reviewedDailyMistakes([named],()=>scores,'alpha')[0]?.source,'reviewed-move');
+ assert.equal(reviewedDailyMistakes([named],()=>scores,'bEtA').length,0);
+ assert.equal(reviewedDailyMistakes([{...named,color:'b'}],()=>scores).length,0);
  assert.equal(reviewedDailyMistakes([{game:{pgn},demo:true}],()=>scores).length,0);
  for(const broken of [[{...scores[0],depth:18},...scores.slice(1)],[scores[0],null,scores[2]],[{...scores[0],rootFen:parsed.fens[1]},...scores.slice(1)]])assert.equal(reviewedDailyMistakes(entries,()=>broken).length,0);
 });

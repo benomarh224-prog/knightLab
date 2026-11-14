@@ -1,5 +1,13 @@
 const KEY='knightlab-review-memory-v1';
 
+export function reviewPlayerColor(game,username) {
+  const player=String(username||'').toLowerCase();
+  if(!player)return null;
+  if(game.white?.username?.toLowerCase()===player)return 'w';
+  if(game.black?.username?.toLowerCase()===player)return 'b';
+  return null;
+}
+
 export function createReviewMemory(storage) {
   function read() {
     try {
@@ -14,13 +22,16 @@ export function createReviewMemory(storage) {
       const saved=read().find(entry=>entry.game.pgn===pgn);
       return saved?{ply:Math.min(total,saved.ply),flipped:Boolean(saved.flipped)}:null;
     },
-    save(game,{ply,flipped,demo}) {
+    save(game,{ply,flipped,demo,color}) {
       if(typeof game?.pgn!=='string'||game.pgn.length>250000||!Number.isInteger(ply)||ply<0)return false;
       const retained={pgn:game.pgn};
       for(const key of ['white','black'])if(game[key])retained[key]={username:String(game[key].username||''),rating:Number(game[key].rating)||0};
       for(const key of ['url','time_class','time_control','end_time','eco'])if(['string','number'].includes(typeof game[key]))retained[key]=game[key];
       const entry={game:retained,ply,flipped:Boolean(flipped),demo:Boolean(demo)};
-      try { storage?.setItem(KEY,JSON.stringify([entry,...read().filter(item=>item.game.pgn!==game.pgn)].slice(0,8)));return Boolean(storage); }
+      const previous=read();
+      const playerColor=color??previous.find(item=>item.game.pgn===game.pgn)?.color;
+      if(playerColor==='w'||playerColor==='b')entry.color=playerColor;
+      try { storage?.setItem(KEY,JSON.stringify([entry,...previous.filter(item=>item.game.pgn!==game.pgn)].slice(0,8)));return Boolean(storage); }
       catch { return false; }
     },
   };

@@ -3,9 +3,12 @@ import { LEVEL_TEST_DIFFICULTY, PLAY_LEVELS } from './play-settings.js';
 import { PlaySession } from './play.js';
 import { Chess } from 'chess.js';
 import { renderLevelTestMoments } from './level-test-moments-ui.js';
+import { levelTestMomentDetails } from './level-test-moments.js';
 
 const STORAGE_KEY = 'roqvyn-level-test-result-v1';
+const HISTORY_KEY = 'roqvyn-level-test-history-v1';
 const ATTEMPT_KEY = 'roqvyn-level-test-attempt-v1';
+const HISTORY_LIMIT = 20;
 
 export function restoreLevelTestAttempt(attempt) {
   if (!attempt || !Object.hasOwn(PLAY_LEVELS, attempt.difficulty) || !['w','b'].includes(attempt.color) || !Array.isArray(attempt.moves) || typeof attempt.resigned !== 'boolean') return null;
@@ -25,30 +28,83 @@ function readLevelTestAttempt(storage) {
   } catch { return null; }
 }
 
-export function readLevelTestResult(storage) {
-  try {
-    const result = JSON.parse(storage?.getItem(STORAGE_KEY) || 'null');
-    if (result && Number.isInteger(result.accuracy) && result.accuracy >= 0 && result.accuracy <= 100 &&
+function validResult(result) {
+  if (result && Number.isInteger(result.accuracy) && result.accuracy >= 0 && result.accuracy <= 100 &&
         Number.isInteger(result.moves) && result.moves >= MIN_ASSESSMENT_MOVES &&
         ['Foundations', 'Developing', 'Solid', 'Precise'].includes(result.level) &&
         Object.hasOwn(PLAY_LEVELS, result.recommended) && Object.hasOwn(PLAY_LEVELS, result.difficulty) &&
         ['win','loss','draw'].includes(result.outcome)) {
-      const rating = result.rating;
-      if (rating != null && (result.difficulty !== LEVEL_TEST_DIFFICULTY || !Number.isInteger(rating.elo) ||
-          rating.elo < 1600 || rating.elo > 2700 || rating.elo % 100 || ![null,'above','below'].includes(rating.bound) ||
-          (rating.provisional !== undefined && typeof rating.provisional !== 'boolean'))) {
-        return { ...result, rating:null };
-      }
-      return result;
+    const rating = result.rating;
+    if (rating != null && (result.difficulty !== LEVEL_TEST_DIFFICULTY || !Number.isInteger(rating.elo) ||
+        rating.elo < 1600 || rating.elo > 2700 || rating.elo % 100 || ![null,'above','below'].includes(rating.bound) ||
+        (rating.provisional !== undefined && typeof rating.provisional !== 'boolean'))) {
+      return { ...result, rating:null };
     }
-  } catch {}
+    return result;
+  }
   return null;
 }
 
-export function createLevelTestUI({ storage, start, startPractice, doc = document }) {
+function read(key, storage) {
+  try { return JSON.parse(storage?.getItem(key) || 'null'); } catch { return null; }
+}
+
+export function readLevelTestHistory(storage) {
+  const history = read(HISTORY_KEY, storage);
+  const results = Array.isArray(history) ? history.slice(0, HISTORY_LIMIT).map(validResult).filter(Boolean) : [];
+  if (results.length) return results;
+  const last = validResult(read(STORAGE_KEY, storage));
+  return last ? [last] : [];
+}
+
+export function readLevelTestResult(storage) {
+  return readLevelTestHistory(storage)[0] ?? null;
+}
+
+export function createLevelTestHistory(storage, now = Date.now) {
+  let results = readLevelTestHistory(storage);
+  let saved = Boolean(results.length);
+  let pending = false;
+  return {
+    list:() => results,
+    get saved() { return saved; },
+    add(game, report) {
+      const result = validResult({ ...report, difficulty:game.difficulty, savedAt:now() });
+      if (!result) return false;
+      results = [result, ...(pending ? results : readLevelTestHistory(storage))].slice(0, HISTORY_LIMIT);
+      try { storage?.setItem(HISTORY_KEY, JSON.stringify(results)); saved = Boolean(storage); }
+      catch { saved = false; }
+      pending = !saved;
+      return true;
+    },
+  };
+}
+
+export function levelTestPracticeExercises(results) {
+  const exercises = new Map();
+  for (const result of results) {
+    if (!Array.isArray(result.moments)) continue;
+    for (const moment of result.moments.slice(0, 2)) {
+      const entry = levelTestMomentDetails(moment);
+      if (!entry) continue;
+      const { exercise, title } = entry;
+      const key = `${exercise.fen}|${exercise.solution}`;
+      if (!exercises.has(key)) exercises.set(key, { ...exercise, source:'level-test', title:`Find an alternative to ${title}` });
+    }
+  }
+  return [...exercises.values()];
+}
+
+const dateLabel = (result, fallback = 'Earlier test') => {
+  const date = new Date(result.savedAt);
+  return Number.isFinite(result.savedAt) && Number.isFinite(date.getTime())
+    ? date.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' }) : fallback;
+};
+const outcomeLabel = result => ({ win:'Win', loss:'Loss', draw:'Draw' })[result.outcome];
+
+export function createLevelTestUI({ storage, history = createLevelTestHistory(storage), start, startPractice, doc = document }) {
   const get = id => doc.getElementById(id);
-  let last = readLevelTestResult(storage), saved = Boolean(last), attempt;
-  let displayedResult;
+  let attempt, displayedResult;
   get('level-test-minimum').textContent = MIN_LEVEL_TEST_MOVES;
   get('level-test-form').onsubmit = event => {
     event.preventDefault();
@@ -62,7 +118,32 @@ export function createLevelTestUI({ storage, start, startPractice, doc = documen
     get('level-test-start').focus();
   };
 
+  function renderHistory(results) {
+    const list = get('level-test-history-list');
+    const rows = results.map(result => {
+      const fragment = get('level-test-history-template').content.cloneNode(true);
+      const disclosure = fragment.querySelector('details');
+      fragment.querySelector('.level-history-date').textContent = dateLabel(result);
+      fragment.querySelector('.level-history-accuracy').textContent = `${result.accuracy}% accuracy`;
+      fragment.querySelector('.level-history-elo').textContent = result.rating ? formatLevelTestElo(result.rating) : 'Elo unavailable';
+      fragment.querySelector('.level-history-qualifier').hidden = !result.rating?.provisional;
+      fragment.querySelector('.level-history-meta').textContent = `${outcomeLabel(result)} · ${result.moves} of your moves · ${result.level}`;
+      const moments = fragment.querySelector('.level-moments');
+      function loadMoments() {
+        if (!disclosure.open) return;
+        renderLevelTestMoments(moments, result.moments, startPractice, { showEmpty:true });
+        disclosure.removeEventListener('toggle', loadMoments);
+      }
+      disclosure.addEventListener('toggle', loadMoments);
+      return fragment;
+    });
+    list.replaceChildren(...rows);
+    get('level-test-history-empty').hidden = Boolean(rows.length);
+    list.hidden = !rows.length;
+  }
+
   function render() {
+    const [last, ...previous] = history.list();
     if (attempt === undefined) attempt = readLevelTestAttempt(storage);
     get('level-test-form').hidden = Boolean(attempt);
     get('level-test-resume-panel').hidden = !attempt;
@@ -75,10 +156,10 @@ export function createLevelTestUI({ storage, start, startPractice, doc = documen
     }
     get('level-test-empty').hidden = Boolean(last);
     get('level-test-result').hidden = !last;
+    get('level-test-history').hidden = !last;
     if (!last) return;
-    const outcome = { win:'Win', loss:'Loss', draw:'Draw' }[last.outcome];
     const opponent = last.difficulty === LEVEL_TEST_DIFFICULTY ? 'Full-strength Stockfish' : `Earlier test · Stockfish ${PLAY_LEVELS[last.difficulty].label}`;
-    get('level-test-result-meta').textContent = `${outcome} · ${opponent} · ${last.moves} of your moves`;
+    get('level-test-result-meta').textContent = [dateLabel(last, ''), outcomeLabel(last), opponent, `${last.moves} of your moves`].filter(Boolean).join(' · ');
     get('level-test-result-accuracy').textContent = `${last.accuracy}%`;
     get('level-test-result-level').textContent = last.level;
     get('level-test-result-elo-label').textContent = last.rating?.provisional ? 'Provisional Elo' : 'Estimated Elo';
@@ -89,9 +170,10 @@ export function createLevelTestUI({ storage, start, startPractice, doc = documen
       sample != null ? `${sample} decisions outside known theory.` :
         decisions != null ? `${decisions} of ${MIN_RATING_DECISIONS} eligible moves.` :
         last.rating === undefined || last.difficulty !== LEVEL_TEST_DIFFICULTY ? 'Start a new Level Test for an Elo estimate.' : 'Too few eligible decisions for an Elo estimate.';
-    get('level-test-result-storage').textContent = saved ? 'Saved in this browser.' : 'Available for this visit.';
+    get('level-test-result-storage').textContent = history.saved ? 'Saved in this browser.' : 'Available for this visit.';
     if (displayedResult !== last) {
       renderLevelTestMoments(get('level-test-saved-moments'), last.moments, startPractice);
+      renderHistory(previous);
       displayedResult = last;
     }
   }
@@ -110,15 +192,11 @@ export function createLevelTestUI({ storage, start, startPractice, doc = documen
   return {
     render, saveAttempt,
     save(game, report) {
-      if (report.level) {
-        last = { ...report, difficulty: game.difficulty };
-        try { storage?.setItem(STORAGE_KEY, JSON.stringify(last)); saved = Boolean(storage); }
-        catch { saved = false; }
-      }
-      saveAttempt(null, { persist: !report.level || saved });
+      const added = history.add(game, report);
+      saveAttempt(null, { persist: !added || history.saved });
     },
     focusResult() {
-      const target = get(attempt ? 'level-test-resume' : last ? 'level-test-result-title' : 'level-test-start');
+      const target = get(attempt ? 'level-test-resume' : history.list().length ? 'level-test-result-title' : 'level-test-start');
       target.focus({ preventScroll: true });
       target.scrollIntoView({ block: 'nearest' });
     },

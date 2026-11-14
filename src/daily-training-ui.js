@@ -36,7 +36,11 @@ export function createDailyTrainingUI({storage,courses,mistakes,go,practice,open
     if(!model.start(date,task.id))return;
     if(task.kind==='mistake'){
       go('train');
-      practice([task.exercise],{onHelp:()=>model.helpTask(date,task.id),onSolved:(_exercise,outcome)=>{model.solve(date,task.id,outcome);render();},onClose:()=>{render();($('daily-start').hidden?$('daily-heading'):$('daily-start')).focus({preventScroll:true});}});
+      practice([task.exercise],{backLabel:'Back to daily training',onHelp:()=>model.helpTask(date,task.id),onSolved:(_exercise,outcome)=>{model.solve(date,task.id,outcome);render();},onClose:()=>{
+        render();
+        const taskButton=$('daily-tasks').querySelector(`[data-daily-task="${task.id}"]`);
+        (taskButton||$('daily-heading')).focus({preventScroll:true});
+      }});
     }
     else go(task.kind==='opening'?'openingtest':task.courseId,{search:'?'+model.link(date,task).split('?')[1]});
   }

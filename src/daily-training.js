@@ -5,14 +5,16 @@ import {parseGame} from './game.js';
 import {collectTraining} from './training.js';
 import {depthReady,PRECISION_DEPTH} from './review-quality.js';
 import {createAdaptiveTraining} from './adaptive-training.js';
-import {localTrainingDate} from './training-calendar.js';
+import {localTrainingDate,trainingDateAfter} from './training-calendar.js';
 import {OpeningTestSession} from './opening-training.js';
+import {reviewPlayerColor} from './review-memory.js';
 export {localTrainingDate} from './training-calendar.js';
 
 const KEY='roqvyn-daily-training-v1';
 export const DAILY_LEVELS=['beginner','intermediate','advanced'];
 const hash=text=>{let n=2166136261;for(const char of text){n^=char.charCodeAt(0);n=Math.imul(n,16777619);}return (n>>>0).toString(36);};
 const openingTaskId=(position,source)=>`opening-${hash(position+(source?'|'+source:''))}`;
+const mistakeTaskId=exercise=>`mistake-${hash(exercise.fen+exercise.solution)}`;
 const isPosition=value=>typeof value==='string'&&/^[prnbqkPRNBQK1-8/]+ [wb] (?:-|[KQkq]+) (?:-|[a-h][36])$/.test(value);
 const isMove=value=>typeof value==='string'&&/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(value);
 function openingTask(item){
@@ -21,14 +23,23 @@ function openingTask(item){
   return {id:openingTaskId(position,source),kind:'opening',position,source,title:source?'Try a related position':'Opening recall',
     detail:'Opening review',reason:source?'Use what you learned in a new position':'Recall a position from your Opening Test'};
 }
-export function reviewedDailyMistakes(entries,load){
+export function reviewedDailyMistakes(entries,load,username){
   return entries.filter(entry=>!entry.demo).flatMap(entry=>{
     try{
       const parsed=parseGame(entry.game.pgn),scores=load(entry.game.pgn,parsed.fens.length);
       const ready=scores.map((score,index)=>depthReady(score,PRECISION_DEPTH)&&score.rootFen===parsed.fens[index]?score:null);
-      return collectTraining(parsed,ready).exercises;
+      const side=reviewPlayerColor(entry.game,username)??(['w','b'].includes(entry.color)?entry.color:null);
+      return collectTraining(parsed,ready,side).exercises.map(exercise=>({...exercise,source:side?'reviewed-move':'reviewed-game'}));
     }catch{return [];}
   }).slice(0,20);
+}
+function mistakeTask(exercise){
+  const fromTest = exercise.source === 'level-test';
+  const fromUnassignedGame = exercise.source === 'reviewed-game';
+  return { id:mistakeTaskId(exercise), kind:'mistake', exercise,
+    title:fromTest ? exercise.title : fromUnassignedGame ? 'A moment from a reviewed game' : 'A moment from your game',
+    detail:fromTest ? 'From your Level Test' : fromUnassignedGame ? 'Reviewed game' : 'Your reviewed mistakes',
+    reason:'Find the engine’s alternative' };
 }
 export function validDailyMistake(exercise){
   try{
@@ -50,7 +61,7 @@ export function dailyPracticeTask(courses,courseId,lessonId,index=0){
   }catch{return null;}
 }
 function taskValid(task,courses){
-  if(task?.kind==='mistake')return validDailyMistake(task.exercise)&&task.id===`mistake-${hash(task.exercise.fen+task.exercise.solution)}`;
+  if(task?.kind==='mistake')return validDailyMistake(task.exercise)&&task.id===mistakeTaskId(task.exercise);
   if(task?.kind==='opening')return isPosition(task.position)&&(task.source===null||isPosition(task.source)&&task.source!==task.position)&&task.id===openingTaskId(task.position,task.source);
   const current=dailyPracticeTask(courses,task?.courseId,task?.lessonId,task?.index);
   return Boolean(current&&current.id===task.id&&current.signature===task.signature);
@@ -63,9 +74,18 @@ export function createDailyTraining({storage,courses,learningMemory,openingRevie
   const save=()=>{try{storage?.setItem(KEY,JSON.stringify(state));}catch{}};
   const completed=course=>createCourseProgress(storage,course.lessons.map(lesson=>lesson.id),course.key).read();
   const practiced=()=>new Set(state.days.flatMap(day=>day.done));
-  function personalFor(mistakes,date,exclude=[]){
-    const pool=mistakes.filter(validDailyMistake).filter(item=>!exclude.includes(`mistake-${hash(item.fen+item.solution)}`)),done=practiced();
-    return pool.find(item=>!done.has(`mistake-${hash(item.fen+item.solution)}`))||pool[pool.length?parseInt(hash(date).slice(0,4),36)%pool.length:0];
+  function personalFor(mistakes,date){
+    const pool=new Map();
+    for(const exercise of mistakes){
+      if(!validDailyMistake(exercise))continue;
+      const id=mistakeTaskId(exercise);
+      if(!pool.has(id))pool.set(id,exercise);
+    }
+    const done=practiced(),yesterday=state.days.find(day=>day.date===trainingDateAfter(date,-1));
+    const previous=new Set(yesterday?.tasks.filter(task=>task.kind==='mistake').map(task=>task.id));
+    const fresh=[...pool].filter(([id])=>!previous.has(id));
+    const choices=fresh.length?fresh:[...pool];
+    return (choices.find(([id])=>!done.has(id))||choices[parseInt(hash(date).slice(0,4),36)%(choices.length||1)])?.[1];
   }
   function initialBand(){
     if(state.level)return state.level;
@@ -98,9 +118,9 @@ export function createDailyTraining({storage,courses,learningMemory,openingRevie
     if(day){
       if(!day.started){const band=adaptive.recommendation().band;for(let i=0;i<day.tasks.length;i++){const task=day.tasks[i];if(courses[task.courseId]?.training?.adaptive&&`${task.courseId}:${task.level}`!==band?.id){const replacement=challenge(date,day.tasks);if(replacement)day.tasks[i]=replacement;}}}
       if(recall){if(day.tasks.length<3)day.tasks.unshift(recall);else if(day.tasks[0].kind==='practice')day.tasks[0]=recall;}
-      const personal=personalFor(mistakes,date);
-      if(!day.started&&personal&&day.tasks.at(-1)?.kind!=='opening'&&!day.tasks.some(task=>task.kind==='mistake')){
-        day.tasks[day.tasks.length-1]={id:`mistake-${hash(personal.fen+personal.solution)}`,kind:'mistake',title:'A moment from your game',detail:'Your reviewed mistakes',reason:'Find the engine’s alternative',exercise:personal};save();
+      if(!day.started&&day.tasks.at(-1)?.kind!=='opening'&&!day.tasks.some(task=>task.kind==='mistake')){
+        const personal=personalFor(mistakes,date);
+        if(personal)day.tasks[day.tasks.length-1]=mistakeTask(personal);
       }
       save();return day;
     }
@@ -113,8 +133,8 @@ export function createDailyTraining({storage,courses,learningMemory,openingRevie
     else if(adaptive.recommendation().band?.id!==adaptive.bands[0]?.id)add(challenge(date));
     else add(choose(Object.values(courses).find(course=>course.category==='beginners'),date));
     add(challenge(date,tasks));
-    const personal=personalFor(mistakes,date,tasks.map(task=>task.id));
-    if(personal)add({id:`mistake-${hash(personal.fen+personal.solution)}`,kind:'mistake',title:'A moment from your game',detail:'Your reviewed mistakes',reason:'Find the engine’s alternative',exercise:personal});
+    const personal=tasks.some(task=>task.kind==='mistake') ? null : personalFor(mistakes,date);
+    if(personal)add(mistakeTask(personal));
     else {
       const last=learningMemory?.last?.(),preferred=courses[last?.courseId];
       const opening=preferred?.category==='openings'?preferred:Object.values(courses).find(course=>course.category==='openings');

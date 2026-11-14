@@ -260,6 +260,11 @@
         </section>
       </div>
     </section>
+    <section id="level-test-history" class="studio-panel" aria-labelledby="level-test-history-title" hidden>
+      <h2 id="level-test-history-title">Test history</h2>
+      <p id="level-test-history-empty" class="studio-meta">Earlier results will appear here as you finish more tests.</p>
+      <ul id="level-test-history-list" hidden></ul>
+    </section>
   </div>
   <div id="level-test-play" hidden></div>
 </section>
@@ -511,6 +516,22 @@
         <details><summary>Show Stockfish’s idea</summary><p class="level-moment-alternative"></p></details>
         <button type="button" class="practice-secondary">Try from here</button>
       </div>
+    </li>
+  </template>
+  <template id="level-test-history-template">
+    <li>
+      <details>
+        <summary>
+          <span><strong class="level-history-date"></strong><small class="level-history-accuracy"></small></span>
+          <span><strong class="level-history-elo"></strong><small class="level-history-qualifier" hidden>Provisional</small></span>
+        </summary>
+        <p class="studio-meta level-history-meta"></p>
+        <section class="level-moments" aria-label="Key moments" hidden>
+          <h3>Key moments</h3>
+          <p class="level-moments-empty" hidden>No key moments were saved for this test.</p>
+          <ul class="level-moments-list"></ul>
+        </section>
+      </details>
     </li>
   </template>
   <p id="appearance-status" class="sr-only" role="status" aria-live="polite"></p>

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseGame } from '../src/game.js';
 import { assessLevelTestElo, assessPlayGame, formatLevelTestElo, reviewPlayGame } from '../src/play-assessment.js';
-import { readLevelTestResult, restoreLevelTestAttempt } from '../src/level-test.js';
+import { createLevelTestHistory, levelTestPracticeExercises, readLevelTestHistory, readLevelTestResult, restoreLevelTestAttempt } from '../src/level-test.js';
 import { levelTestMoments, levelTestMomentDetails } from '../src/level-test-moments.js';
 import { PracticeSession } from '../src/training.js';
 import { LEVEL_TEST_DIFFICULTY, playSearch } from '../src/play-settings.js';
@@ -38,6 +38,33 @@ test('a saved Level Test restores its turn, legal history and final result', () 
   const mate = {...snapshot, moves:['f2f3','e7e5','g2g4','d8h4']};
   assert.equal(restoreLevelTestAttempt(mate).ending, 'Checkmate');
   assert.equal(restoreLevelTestAttempt({...mate, moves:[...mate.moves,'e2e4']}), null);
+});
+
+test('Level Test history keeps the previous saved result and stores new dated results newest first', () => {
+  const legacy = { accuracy:81, moves:19, level:'Solid', outcome:'draw', difficulty:LEVEL_TEST_DIFFICULTY,
+    recommended:'casual', rating:{ elo:2000, bound:null, provisional:true }, moments:[
+      { fen:game.fens[0], ply:1, played:'a2a3', solution:'e2e4', reply:'e7e5', swing:20, mateChange:null },
+    ] };
+  const data = new Map([['roqvyn-level-test-result-v1',JSON.stringify(legacy)]]);
+  const store = { getItem:key=>data.get(key), setItem:(key,value)=>data.set(key,value) };
+  let time = Date.UTC(2026,10,14);
+  const history = createLevelTestHistory(store, () => time);
+  assert.deepEqual(history.list(), [legacy]);
+  assert.equal(history.add(legacy, {...legacy, accuracy:86, rating:{ elo:2200, bound:null }}), true);
+  time += 86400000;
+  assert.equal(history.add(legacy, {...legacy, accuracy:90}), true);
+  assert.equal(history.add(legacy, {...legacy, accuracy:null}), false);
+  const reloaded = readLevelTestHistory(store);
+  assert.deepEqual(reloaded.map(result=>result.savedAt), [time, time-86400000, undefined]);
+  assert.deepEqual(reloaded.map(result=>result.accuracy), [90,86,81]);
+  assert.deepEqual(reloaded[2], legacy);
+  assert.equal(readLevelTestResult(store).accuracy, 90);
+  const exercises = levelTestPracticeExercises([{ moments:[{ ...legacy.moments[0], solution:'e2e5' }] }, ...reloaded]);
+  assert.equal(exercises.length, 1);
+  assert.equal(exercises[0].source, 'level-test');
+  assert.equal(new PracticeSession(exercises).submit('e2','e4').status, 'correct');
+  for(let i=0;i<21;i++) history.add(legacy, legacy);
+  assert.equal(readLevelTestHistory(store).length, 20);
 });
 
 test('reports the human side accuracy and recommends an adjacent difficulty from the result', () => {

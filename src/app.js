@@ -8,7 +8,7 @@ import { evaluationReady, depthReady, positionSearch, strongerScore, DEFAULT_REV
 import { coachMove } from './coach.js';
 import { createTrainingUI } from './training-ui.js';
 import { createExploreUI } from './explore-ui.js';
-import { createLevelTestUI } from './level-test.js';
+import { createLevelTestHistory, createLevelTestUI, levelTestPracticeExercises } from './level-test.js';
 import { createInlineAnalysis } from './inline-analysis.js';
 import { analysisNavigation } from './analysis-navigation.js';
 import { primaryMoveThreat, arrowPath } from './board-visuals.js';
@@ -24,7 +24,7 @@ import {createViewportMenu} from './viewport-menu.js';
 import {evaluationLossText} from './accuracy.js';
 import {createReviewPlan} from './review-plan.js';
 import { finishBoard,enableBoardDrag } from './board-surface.js';
-import { createReviewMemory } from './review-memory.js';
+import { createReviewMemory, reviewPlayerColor } from './review-memory.js';
 import {paintEvaluationBar,keepMoveInList} from './workspace-layout.js';
 import { moveTransitions, animatePieces, fadePreviousHighlights } from './piece-motion.js';
 import { compactCoachText, compactMoveText,reviewPlayerName } from './compact-review.js';
@@ -105,7 +105,7 @@ const openingTraining=createOpeningTraining(COURSES);
 let reviewOpened=false;
 let paintedPosition=null, stripPosition=null, stripSource=null, stripSignature='';
 function saveReviewPosition() {
-  if(state.selected&&reviewOpened)reviewMemory.save(state.selected,{ply:state.ply,flipped:state.flipped,demo:state.demo});
+  if(state.selected&&reviewOpened)reviewMemory.save(state.selected,{ply:state.ply,flipped:state.flipped,demo:state.demo,color:reviewPlayerColor(state.selected,state.username)});
 }
 let boardDragging=false, inline, coachDemo, demoResume=false, showThreats=true, selectedThreat=null, threatFen=null, threats=[];
 function pauseWorkspace() {
@@ -179,7 +179,8 @@ const explorer = createExploreUI({
   onLevelTestAttempt: attempt => levelTest.saveAttempt(attempt),
   onLevelTestDone: () => levelTest.focusResult(),
 });
-const levelTest = createLevelTestUI({ storage: deviceStorage, start: options => explorer.levelTest(options), startPractice:practiceLevelMoment });
+const levelHistory = createLevelTestHistory(deviceStorage);
+const levelTest = createLevelTestUI({ storage:deviceStorage, history:levelHistory, start:options=>explorer.levelTest(options), startPractice:practiceLevelMoment });
 inline=createInlineAnalysis({context:()=>state,pause:()=>{const running=state.running;stopAnalysis();return running;},resume:startAnalysis,onChange:render,playSound,navigate:goTo});
 const boardCard = document.querySelector('.board-card');
 const boardCoach=createBoardCoach({showBoard:()=>selectWorkspaceView('board'),navigate:stepMove,onInspect:inspectSelectedMove});
@@ -1089,7 +1090,8 @@ try {
   else setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});
 } catch {setGame({pgn:DEMO_PGN},{demo:true,analyze:false,remember:false});}
 function dailyMistakes(){
-  return reviewedDailyMistakes(reviewMemory.list(),(pgn,total)=>state.cache.get(pgn+'precise')||reviewCache.load(pgn,'precise',total));
+  const fromReviews=reviewedDailyMistakes(reviewMemory.list(),(pgn,total)=>state.cache.get(pgn+'precise')||reviewCache.load(pgn,'precise',total),state.username);
+  return [...levelTestPracticeExercises(levelHistory.list()),...fromReviews];
 }
 const openingReview=createOpeningReview({training:openingTraining,storage:reviewStorage});
 const daily=createDailyTrainingUI({storage:reviewStorage,courses:COURSES,mistakes:dailyMistakes,openingReview,go:(page,options)=>router.go(page,options),practice:(tasks,options)=>training.startExercises(tasks,options)});

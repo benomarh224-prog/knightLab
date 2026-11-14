@@ -6,8 +6,10 @@ function storage(){let value=null;return {getItem:()=>value,setItem:(_,next)=>{v
 test('review memory restores the exact game, position, and orientation across instances',()=>{
   const local=storage(),memory=createReviewMemory(local);
   const game={pgn:'1. e4 e5 2. Nf3 *',white:{username:'Player',rating:800},black:{username:'Opponent'},secret:'not retained'};
-  memory.save(game,{ply:3,flipped:true,demo:false});
+  memory.save(game,{ply:3,flipped:true,demo:false,color:'w'});
   const resumed=createReviewMemory(local);
+  resumed.save(game,{ply:3,flipped:true,demo:false});
+  assert.equal(resumed.last().color,'w');
   assert.deepEqual(resumed.position(game.pgn,3),{ply:3,flipped:true});
   assert.equal(resumed.last().game.white.username,'Player');
   assert.equal(resumed.last().game.secret,undefined);
